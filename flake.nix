@@ -35,6 +35,15 @@
           vulkan-tools
           vulkan-memory-allocator
           vulkan-validation-layers
+
+          glfw
+          wayland
+          wayland-protocols
+          wayland-scanner
+          libffi
+          libxkbcommon
+          dbus
+          freetype
         ];
         shellHook = ''
           export SHELL=${pkgs.zsh}/bin/zsh
