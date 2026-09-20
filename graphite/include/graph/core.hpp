@@ -1,8 +1,11 @@
 #pragma once
 
 #include "graph/alias.hpp"
-#include "graph/platform.hpp"
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+#    include "graph/platform.hpp"
+#endif
 #include "tkit/memory/memory.hpp"
+#include "tkit/utils/limits.hpp"
 
 #ifdef GRAPH_PLATFORM_BACKEND_GLFW
 struct GLFWwindow;
@@ -40,6 +43,10 @@ enum CapabilityFlagBit : Capabilities
     Capability_DynamicRendering = 1U << 8,
     Capability_TimelineSemaphores = 1U << 9,
     Capability_ImageMultiFormat = 1U << 10,
+    Capability_RequireGraphicsQueue = 1U << 11,
+    Capability_RequireTransferQueue = 1U << 12,
+    Capability_RequireComputeQueue = 1U << 13,
+    Capability_All = TKit::Limits<Capabilities>::Max(),
 };
 
 struct Specs
@@ -49,7 +56,10 @@ struct Specs
     const char *DumpPath = nullptr;
     Allocation Allocators{};
     Capabilities EnabledCapabilities = 0;
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
     Platform TargetPlatform = Platform_Auto;
+    u32 MaxSurfaces = 32;
+#endif
 };
 
 void Initialize(const Specs &specs);

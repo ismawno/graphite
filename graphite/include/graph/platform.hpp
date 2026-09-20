@@ -1,5 +1,10 @@
 #pragma once
 
+#ifndef GRAPH_HAS_PLATFORM_BACKEND
+#    error                                                                                                             \
+        "[GRAPH][PLATFORM] To use platform capabilities, a platform backend must be specified with the CMake option GRAPHITE_PLATFORM_BACKEND"
+#endif
+
 #include "graph/alias.hpp"
 
 namespace Graph

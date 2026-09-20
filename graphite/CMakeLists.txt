@@ -3,15 +3,23 @@ project(graphite)
 
 include(FetchContent)
 set(SOURCES source/pch.cpp source/handle.cpp)
+
+if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
+  list(APPEND SOURCES source/vk_core.cpp)
+  if(GRAPHITE_PLATFORM_BACKEND STREQUAL "glfw")
+    list(APPEND SOURCES source/vk_core.cpp source/vk_glfw_platform.cpp
+         source/vk_surface.cpp)
+  endif()
+endif()
+
+add_library(graphite STATIC ${SOURCES})
+
 if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
 
-  list(APPEND SOURCES source/vk_core.cpp source/vk_glfw_platform.cpp
-       source/vk_surface.cpp)
-
-  add_library(graphite STATIC ${SOURCES})
   target_compile_definitions(graphite PUBLIC GRAPH_VERSION=\"v0.1.x\")
 
   if(GRAPHITE_PLATFORM_BACKEND STREQUAL "glfw")
+
     find_package(glfw3 QUIET)
 
     if(NOT TARGET glfw)
@@ -43,7 +51,8 @@ if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
       message(STATUS "GRAPHITE - GLFW found")
     endif()
 
-    target_compile_definitions(graphite PRIVATE GRAPH_PLATFORM_BACKEND_GLFW)
+    target_compile_definitions(graphite PRIVATE GRAPH_HAS_PLATFORM_BACKEND
+                                                GRAPH_PLATFORM_BACKEND_GLFW)
     target_link_libraries(graphite PRIVATE glfw)
   endif()
 

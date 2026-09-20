@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "graph/surface.hpp"
+#include "graph/execution.hpp"
 
 namespace Graph
 {
@@ -13,6 +14,12 @@ bool Handle_IsValid(const Handle handle, const HandleType htype)
     {
     case Handle_Surface:
         return Surface_IsHandleValid(handle);
+    case Handle_Queue:
+        return Queue_IsHandleValid(handle);
+    case Handle_CommandPool:
+        return CommandPool_IsHandleValid(handle);
+    case Handle_CommandBuffer:
+        return CommandBuffer_IsHandleValid(handle);
     default:
         return false;
     }

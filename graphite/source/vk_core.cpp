@@ -68,6 +68,10 @@ static void createInstance()
         builder.SetValidationFeature(VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT);
     }
 
+#ifndef GRAPH_HAS_PLATFORM_BACKEND
+    builder.SetHeadless();
+#endif
+
     *s_Instance = GRAPH_CHECK_VKIT_RESULT(builder.Build());
     const VKit::Instance::Info &info = s_Instance->GetInfo();
     TKIT_LOG_INFO("[GRAPH][CORE] Created vulkan instance. API version: {}.{}.{}", VKIT_EXPAND_VERSION(info.ApiVersion));
@@ -118,13 +122,15 @@ static void createDevice()
         !dev, "[GRAPH][CORE] The environment variable 'GRAPH_DEVICE' was not set, meaning the physical device will be "
               "chosen automatically. To force a specific option, set such variable with the device name or device ID");
 
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
     const VkSurfaceKHR dummy = CreateDummySurface();
-    selector.SetSurface(dummy)
-        .PreferType(VKit::Device_Discrete)
+    selector.SetSurface(dummy);
+#endif
+
+    selector.PreferType(VKit::Device_Discrete)
         .AddFlags(VKit::DeviceSelectorFlag_AnyType | VKit::DeviceSelectorFlag_PortabilitySubset |
                   VKit::DeviceSelectorFlag_RequireGraphicsQueue | VKit::DeviceSelectorFlag_RequirePresentQueue |
                   VKit::DeviceSelectorFlag_RequireTransferQueue)
-        // Auto-enabled — Graphite always needs these
         .RequireExtension("VK_KHR_synchronization2")
         .RequireExtension("VK_KHR_copy_commands2")
         .RequireApiVersion(1, 2, 0)
@@ -147,7 +153,10 @@ static void createDevice()
         selector.RequestExtension("VK_EXT_device_fault");
 
     *s_Physical = GRAPH_CHECK_VKIT_RESULT(selector.Select());
+
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
     DestroyDummySurface();
+#endif
 
     TKIT_LOG_INFO("[GRAPH][CORE] Selected vulkan device: {}. API version: {}.{}.{}",
                   s_Physical->GetInfo().Properties.Core.deviceName,
@@ -257,12 +266,19 @@ static void createDevice()
         TKIT_ASSERT(s_Physical->EnableFeatures(features), "[GRAPH][CORE] Failed to enable requested features");
     }
 
-    *s_Device = GRAPH_CHECK_VKIT_RESULT(VKit::LogicalDevice::Builder(&s_Instance.Get(), &s_Physical.Get())
-                                            .RequireQueue(VKit::Queue_Graphics)
-                                            .RequireQueue(VKit::Queue_Present)
-                                            .RequireQueue(VKit::Queue_Transfer)
-                                            .Build());
+    VKit::LogicalDevice::Builder devBuild{&s_Instance.Get(), &s_Physical.Get()};
+    if (caps & Capability_RequireGraphicsQueue)
+        devBuild.RequireQueue(VKit::Queue_Graphics);
+    if (caps & Capability_RequireTransferQueue)
+        devBuild.RequireQueue(VKit::Queue_Transfer);
+    if (caps & Capability_RequireComputeQueue)
+        devBuild.RequireQueue(VKit::Queue_Compute);
 
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+    devBuild.RequireQueue(VKit::Queue_Present);
+#endif
+
+    *s_Device = GRAPH_CHECK_VKIT_RESULT(devBuild.Build());
     if (IsDebugUtilsEnabled())
     {
         GRAPH_CHECK_VKIT_RESULT(s_Device->SetName("graph-device"));
@@ -289,9 +305,10 @@ void Initialize(const Specs &specs)
     vspecs.LoaderPath = specs.LoaderPath;
     GRAPH_CHECK_VKIT_RESULT(VKit::Initialize(vspecs));
 
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
     Platform_Initialize(specs.TargetPlatform);
-
-    Surface_Initialize();
+    Surface_Initialize(specs.MaxSurfaces);
+#endif
 
     createInstance();
     createDevice();
@@ -306,7 +323,9 @@ void Terminate()
 
     Surface_Terminate();
 
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
     Platform_Terminate();
+#endif
 
     VKit::Terminate();
 

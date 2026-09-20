@@ -9,7 +9,7 @@
 
 ///
 
-#define GRAPH_HANDLE_TYPE_BITS 8U
+#define GRAPH_HANDLE_TYPE_BITS 4U
 
 #define GRAPH_HANDLE_TYPE_SHIFT (GRAPH_HANDLE_WIDTH - GRAPH_HANDLE_TYPE_BITS)
 #define GRAPH_HANDLE_ID_BITS GRAPH_HANDLE_TYPE_SHIFT
@@ -20,7 +20,7 @@
 #define GRAPH_NULL_HANDLE_ID GRAPH_HANDLE_ID_MASK
 
 #define GRAPH_MAX_HANDLE_TYPES ((1U << GRAPH_HANDLE_TYPE_BITS) - 1U)
-#define GRAPH_MAX_HANDLE_IDS ((1U << GRAPH_HANDLE_ID_BITS) - 1U) // per pool
+#define GRAPH_MAX_HANDLE_IDS ((1U << GRAPH_HANDLE_ID_BITS) - 1U)
 
 #ifdef TKIT_ENABLE_ENSURE
 #    define GRAPH_CHECK_HANDLE_HAS_VALID_TYPE(hndl)                                                                    \
@@ -76,6 +76,9 @@ constexpr Id NullId = GRAPH_NULL_HANDLE_ID;
 enum HandleType : u8
 {
     Handle_Surface,
+    Handle_Queue,
+    Handle_CommandPool,
+    Handle_CommandBuffer,
     Handle_Count,
     Handle_None = Handle_Count
 };

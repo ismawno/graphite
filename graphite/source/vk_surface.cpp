@@ -21,17 +21,14 @@ struct DummySurface
 static TKit::Storage<TKit::ArenaHive<VkSurfaceKHR>> s_Surfaces{};
 static DummySurface s_Dummy{};
 
-void Surface_Initialize()
+void Surface_Initialize(const u32 maxSurfaces)
 {
     s_Surfaces.Construct();
+    s_Surfaces->Reserve(maxSurfaces);
 }
 void Surface_Terminate()
 {
-    TKIT_LOG_WARNING_IF(!s_Surfaces->IsEmpty(), "[GRAPH][SURFACE] {} surfaces have not been freed. Cleaning up...",
-                        s_Surfaces->GetSize());
-    for (const VkSurfaceKHR surf : *s_Surfaces)
-        Platform_DestroySurface(surf);
-
+    GRAPH_CLEANUP_WITH_WARNING(s_Surfaces, "SURFACE", "surfaces", Platform_DestroySurface);
     s_Surfaces.Destruct();
 }
 
