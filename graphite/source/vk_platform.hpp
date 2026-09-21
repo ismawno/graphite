@@ -10,6 +10,7 @@
 
 namespace Graph
 {
+void Platform_InitializeVulkanLoader();
 VkSurfaceKHR Platform_CreateSurface(Window win);
 void Platform_DestroySurface(VkSurfaceKHR surf);
 } // namespace Graph

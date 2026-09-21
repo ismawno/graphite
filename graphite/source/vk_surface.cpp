@@ -15,7 +15,7 @@ namespace Graph
 struct DummySurface
 {
     VkSurfaceKHR Surface = VK_NULL_HANDLE;
-    Window Window = nullptr;
+    Window Window;
 };
 
 static TKit::Storage<TKit::ArenaHive<VkSurfaceKHR>> s_Surfaces{};
@@ -60,15 +60,19 @@ VkSurfaceKHR GetSurface(const Surface surf)
 
 VkSurfaceKHR CreateDummySurface()
 {
-    TKIT_ASSERT(!s_Dummy.Window && !s_Dummy.Surface,
-                "[GRAPH][SURFACE] Can only create a single dummy surface at the same time");
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    const Window eduardo = glfwCreateWindow(120, 120, "Eduardo", nullptr, nullptr);
+    TKIT_ASSERT(!s_Dummy.Surface, "[GRAPH][SURFACE] Can only create a single dummy surface at the same time");
+    const Window eduardo = Window_Create({.Title = "Eduardo", .Dimensions = 120, .Flags = 0});
 
     s_Dummy.Window = eduardo;
     s_Dummy.Surface = Platform_CreateSurface(eduardo);
     return s_Dummy.Surface;
+}
+
+void DestroyDummySurface()
+{
+    TKIT_ASSERT(s_Dummy.Surface, "[GRAPH][SURFACE] Can only destroy a dummy surface if one was created");
+
+    Platform_DestroySurface(s_Dummy.Surface);
+    s_Dummy.Surface = VK_NULL_HANDLE;
 }
 } // namespace Graph

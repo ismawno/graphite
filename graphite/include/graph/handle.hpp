@@ -73,12 +73,27 @@ constexpr Handle NullHandle = TKit::Limits<Handle>::Max();
 using Id = Handle;
 constexpr Id NullId = GRAPH_NULL_HANDLE_ID;
 
+using Window = Handle;
+using Monitor = Handle;
+using Surface = Handle;
+using Queue = Handle;
+using CommandPool = Handle;
+using CommandBuffer = Handle;
+using Buffer = Handle;
+using Image = Handle;
+using Sampler = Handle;
+
 enum HandleType : u8
 {
+    Handle_Window,
+    Handle_Monitor,
     Handle_Surface,
     Handle_Queue,
     Handle_CommandPool,
     Handle_CommandBuffer,
+    Handle_Buffer,
+    Handle_Image,
+    Handle_Sampler,
     Handle_Count,
     Handle_None = Handle_Count
 };

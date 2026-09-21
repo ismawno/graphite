@@ -1,8 +1,10 @@
 #include "vk_core.hpp"
 #include "vk_error.hpp"
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+#    include "vk_platform.hpp"
+#endif
 #include "vkit/core/core.hpp"
 #include "vkit/device/logical_device.hpp"
-#include "vkit/memory/allocator.hpp"
 #include "tkit/container/stack_array.hpp"
 
 namespace Graph
@@ -306,6 +308,7 @@ void Initialize(const Specs &specs)
     GRAPH_CHECK_VKIT_RESULT(VKit::Initialize(vspecs));
 
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
+    Platform_InitializeVulkanLoader();
     Platform_Initialize(specs.TargetPlatform);
     Surface_Initialize(specs.MaxSurfaces);
 #endif
@@ -436,6 +439,10 @@ VKit::PhysicalDevice &GetPhysical()
 VKit::LogicalDevice &GetDevice()
 {
     return *s_Device;
+}
+VmaAllocator GetAllocator()
+{
+    return s_VulkanAllocator;
 }
 
 const VKit::Vulkan::InstanceTable *GetInstanceTable()

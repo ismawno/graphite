@@ -48,8 +48,7 @@ void Execution_Initialize(const u32 maxPools, const u32 maxCmdBuffers)
 
 void Execution_Terminate()
 {
-    GRAPH_CLEANUP_WITH_WARNING(s_CommandPools, "EXECUTION", "command pools",
-                               [](Vulkan_CommandPool &pool) { pool.Pool.Destroy(); });
+    GRAPH_CLEANUP_WITH_WARNING_ACCESSOR(s_CommandPools, "EXECUTION", "command pools", Pool.Destroy());
 
     s_Queues = {};
     s_CommandPools.Destruct();
@@ -76,6 +75,12 @@ u64 Queue_GetTimelineSubmissions(const Queue queue)
     GRAPH_CHECK_HANDLE(queue, Handle_Queue);
 
     return s_Queues[Handle_GetId(queue)]->GetTimelineSubmissions();
+}
+void Queue_SetName(const Queue queue, const char *name)
+{
+    GRAPH_CHECK_HANDLE(queue, Handle_Queue);
+
+    GRAPH_CHECK_VKIT_RESULT(s_Queues[Handle_GetId(queue)]->SetName(name));
 }
 bool Queue_IsHandleValid(const Queue queue)
 {

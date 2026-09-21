@@ -4,10 +4,6 @@
 
 namespace Graph
 {
-using CommandPool = Handle;
-using CommandBuffer = Handle;
-using Queue = Handle;
-
 enum QueueType : u8
 {
     Queue_Graphics,
@@ -26,6 +22,7 @@ Queue Queue_Get(QueueType type);
 QueueType Queue_GetType(Queue queue);
 u64 Queue_GetCompletedTimeline(Queue queue);
 u64 Queue_GetTimelineSubmissions(Queue queue);
+void Queue_SetName(Queue queue, const char *name);
 bool Queue_IsHandleValid(Queue queue);
 
 CommandPool CommandPool_Create(QueueType type, CommandPoolFlags flags = 0);

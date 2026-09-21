@@ -10,8 +10,6 @@
 
 namespace Graph
 {
-using Surface = Handle;
-
 Surface Surface_Create(Window win);
 void Surface_Destroy(Surface surf);
 

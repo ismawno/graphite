@@ -7,19 +7,6 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/limits.hpp"
 
-#ifdef GRAPH_PLATFORM_BACKEND_GLFW
-struct GLFWwindow;
-namespace Graph
-{
-using Window = GLFWwindow *;
-}
-#else
-namespace Graph
-{
-using Window = void *;
-}
-#endif
-
 namespace Graph
 {
 struct Allocation
