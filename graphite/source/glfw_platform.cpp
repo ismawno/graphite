@@ -811,6 +811,14 @@ Window Window_Create(const WindowSpecs &specs)
     return win.Handle;
 }
 
+void Window_Destroy(const Window win)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    const Id id = Handle_GetId(win);
+    glfwDestroyWindow(s_Windows->At(id).Window);
+    s_Windows->Remove(id);
+}
+
 void *Window_GetUserData(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);

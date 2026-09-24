@@ -28,7 +28,7 @@ void Surface_Initialize(const u32 maxSurfaces)
 }
 void Surface_Terminate()
 {
-    GRAPH_CLEANUP_WITH_WARNING(s_Surfaces, "SURFACE", "surfaces", Platform_DestroySurface);
+    GRAPH_CLEANUP_WITH_WARNING_LAMBDA(s_Surfaces, "SURFACE", "surfaces", Platform_DestroySurface);
     s_Surfaces.Destruct();
 }
 
@@ -40,9 +40,7 @@ Surface Surface_Create(const Window win)
 void Surface_Destroy(const Surface surf)
 {
     GRAPH_CHECK_HANDLE(surf, Handle_Surface);
-    const auto &instance = GetInstance();
-    const auto table = GetInstanceTable();
-    table->DestroySurfaceKHR(instance, s_Surfaces->At(Handle_GetId(surf)), instance.GetInfo().AllocationCallbacks);
+    GRAPH_DESTROY_FUNCTION_BODY_LAMBDA(s_Surfaces, surf, Platform_DestroySurface);
 }
 
 bool Surface_IsHandleValid(const Surface surf)

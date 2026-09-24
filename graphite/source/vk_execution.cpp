@@ -109,14 +109,12 @@ void CommandPool_Destroy(const CommandPool pool)
 {
     GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
 
-    const Id id = Handle_GetId(pool);
-    s_CommandPools->At(id).Pool.Destroy();
-    s_CommandPools->Remove(id);
-
     const TKit::StackArray<Id> cmdBufIds = s_CommandBuffers->GetValidIds();
     for (const Id id : cmdBufIds)
         if (s_CommandBuffers->At(id).Pool == pool)
             s_CommandBuffers->Remove(id);
+
+    GRAPH_DESTROY_FUNCTION_BODY_ACCESSOR(s_CommandPools, pool, Pool.Destroy());
 }
 void CommandPool_Reset(const CommandPool pool)
 {
@@ -149,6 +147,12 @@ CommandBuffer CommandPool_NextCommandBuffer(const CommandPool pool)
 
     p.NextCommand++;
     return commandPool_Allocate(pool);
+}
+
+void CommandPool_SetName(const CommandPool pool, const char *name)
+{
+    GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
+    GRAPH_CHECK_VKIT_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.SetName(name));
 }
 
 bool CommandPool_IsHandleValid(const CommandPool pool)

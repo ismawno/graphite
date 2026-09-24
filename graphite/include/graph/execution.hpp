@@ -29,6 +29,7 @@ CommandPool CommandPool_Create(QueueType type, CommandPoolFlags flags = 0);
 void CommandPool_Destroy(CommandPool pool);
 void CommandPool_Reset(CommandPool pool);
 CommandBuffer CommandPool_NextCommandBuffer(CommandPool pool);
+void CommandPool_SetName(CommandPool pool, const char *name);
 bool CommandPool_IsHandleValid(CommandPool pool);
 
 bool CommandBuffer_IsHandleValid(CommandBuffer cmd);

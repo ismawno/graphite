@@ -81,6 +81,7 @@ using CommandPool = Handle;
 using CommandBuffer = Handle;
 using Buffer = Handle;
 using Image = Handle;
+using ImageView = Handle;
 using Sampler = Handle;
 
 enum HandleType : u8
@@ -93,6 +94,7 @@ enum HandleType : u8
     Handle_CommandBuffer,
     Handle_Buffer,
     Handle_Image,
+    Handle_ImageView,
     Handle_Sampler,
     Handle_Count,
     Handle_None = Handle_Count

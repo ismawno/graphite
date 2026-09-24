@@ -7,6 +7,16 @@
         return false;                                                                                                  \
     return stvar->Contains(Handle_GetId(handle))
 
+#define GRAPH_DESTROY_FUNCTION_BODY_LAMBDA(stvar, handle, dctor)                                                       \
+    const Id id = Handle_GetId(handle);                                                                                \
+    dctor(stvar->At(id));                                                                                              \
+    stvar->Remove(id)
+
+#define GRAPH_DESTROY_FUNCTION_BODY_ACCESSOR(stvar, handle, accessor)                                                  \
+    GRAPH_DESTROY_FUNCTION_BODY_LAMBDA(stvar, handle, [](auto &elm) { elm.accessor; })
+
+#define GRAPH_DESTROY_FUNCTION_BODY(stvar, handle) GRAPH_DESTROY_FUNCTION_BODY_ACCESSOR(stvar, handle, Destroy())
+
 #define GRAPH_CLEANUP_WITH_WARNING_LAMBDA(stvar, section, resType, dctor)                                              \
     TKIT_LOG_WARNING_IF(!stvar->IsEmpty(), "[GRAPH][" section "] {} " resType " have not been freed. Cleaning up...",  \
                         stvar->GetSize());                                                                             \
@@ -28,7 +38,7 @@ void Surface_Terminate();
 void Execution_Initialize(u32 maxPools, u32 maxCmdBuffers);
 void Execution_Terminate();
 
-void Resources_Initialize(u32 maxBuffers, u32 maxImages, u32 maxSamplers);
+void Resources_Initialize(u32 maxBuffers, u32 maxImages, u32 maxSamplers, u32 maxViews);
 void Resources_Terminate();
 
 } // namespace Graph
