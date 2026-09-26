@@ -457,4 +457,370 @@ bool IsDebugUtilsEnabled()
 {
     return s_Instance->IsExtensionEnabled("VK_EXT_debug_utils");
 }
+
+VkFormat ToVulkan(const Format format)
+{
+    switch (format)
+    {
+    case Format_Undefined:
+        return VK_FORMAT_UNDEFINED;
+
+    case Format_R8_UNORM:
+        return VK_FORMAT_R8_UNORM;
+    case Format_R8_SNORM:
+        return VK_FORMAT_R8_SNORM;
+    case Format_R8_UINT:
+        return VK_FORMAT_R8_UINT;
+    case Format_R8_SINT:
+        return VK_FORMAT_R8_SINT;
+    case Format_R8_SRGB:
+        return VK_FORMAT_R8_SRGB;
+
+    case Format_R8G8_UNORM:
+        return VK_FORMAT_R8G8_UNORM;
+    case Format_R8G8_SNORM:
+        return VK_FORMAT_R8G8_SNORM;
+    case Format_R8G8_UINT:
+        return VK_FORMAT_R8G8_UINT;
+    case Format_R8G8_SINT:
+        return VK_FORMAT_R8G8_SINT;
+    case Format_R8G8_SRGB:
+        return VK_FORMAT_R8G8_SRGB;
+
+    case Format_R8G8B8_UNORM:
+        return VK_FORMAT_R8G8B8_UNORM;
+    case Format_R8G8B8_SNORM:
+        return VK_FORMAT_R8G8B8_SNORM;
+    case Format_R8G8B8_UINT:
+        return VK_FORMAT_R8G8B8_UINT;
+    case Format_R8G8B8_SINT:
+        return VK_FORMAT_R8G8B8_SINT;
+    case Format_R8G8B8_SRGB:
+        return VK_FORMAT_R8G8B8_SRGB;
+
+    case Format_R8G8B8A8_UNORM:
+        return VK_FORMAT_R8G8B8A8_UNORM;
+    case Format_R8G8B8A8_SNORM:
+        return VK_FORMAT_R8G8B8A8_SNORM;
+    case Format_R8G8B8A8_UINT:
+        return VK_FORMAT_R8G8B8A8_UINT;
+    case Format_R8G8B8A8_SINT:
+        return VK_FORMAT_R8G8B8A8_SINT;
+    case Format_R8G8B8A8_SRGB:
+        return VK_FORMAT_R8G8B8A8_SRGB;
+
+    case Format_B8G8R8A8_UNORM:
+        return VK_FORMAT_B8G8R8A8_UNORM;
+    case Format_B8G8R8A8_SNORM:
+        return VK_FORMAT_B8G8R8A8_SNORM;
+    case Format_B8G8R8A8_UINT:
+        return VK_FORMAT_B8G8R8A8_UINT;
+    case Format_B8G8R8A8_SINT:
+        return VK_FORMAT_B8G8R8A8_SINT;
+    case Format_B8G8R8A8_SRGB:
+        return VK_FORMAT_B8G8R8A8_SRGB;
+
+    case Format_R16_UNORM:
+        return VK_FORMAT_R16_UNORM;
+    case Format_R16_SNORM:
+        return VK_FORMAT_R16_SNORM;
+    case Format_R16_UINT:
+        return VK_FORMAT_R16_UINT;
+    case Format_R16_SINT:
+        return VK_FORMAT_R16_SINT;
+    case Format_R16_SFLOAT:
+        return VK_FORMAT_R16_SFLOAT;
+
+    case Format_R16G16_UNORM:
+        return VK_FORMAT_R16G16_UNORM;
+    case Format_R16G16_SNORM:
+        return VK_FORMAT_R16G16_SNORM;
+    case Format_R16G16_UINT:
+        return VK_FORMAT_R16G16_UINT;
+    case Format_R16G16_SINT:
+        return VK_FORMAT_R16G16_SINT;
+    case Format_R16G16_SFLOAT:
+        return VK_FORMAT_R16G16_SFLOAT;
+
+    case Format_R16G16B16_UNORM:
+        return VK_FORMAT_R16G16B16_UNORM;
+    case Format_R16G16B16_SNORM:
+        return VK_FORMAT_R16G16B16_SNORM;
+    case Format_R16G16B16_UINT:
+        return VK_FORMAT_R16G16B16_UINT;
+    case Format_R16G16B16_SINT:
+        return VK_FORMAT_R16G16B16_SINT;
+    case Format_R16G16B16_SFLOAT:
+        return VK_FORMAT_R16G16B16_SFLOAT;
+
+    case Format_R16G16B16A16_UNORM:
+        return VK_FORMAT_R16G16B16A16_UNORM;
+    case Format_R16G16B16A16_SNORM:
+        return VK_FORMAT_R16G16B16A16_SNORM;
+    case Format_R16G16B16A16_UINT:
+        return VK_FORMAT_R16G16B16A16_UINT;
+    case Format_R16G16B16A16_SINT:
+        return VK_FORMAT_R16G16B16A16_SINT;
+    case Format_R16G16B16A16_SFLOAT:
+        return VK_FORMAT_R16G16B16A16_SFLOAT;
+
+    case Format_R32_UINT:
+        return VK_FORMAT_R32_UINT;
+    case Format_R32_SINT:
+        return VK_FORMAT_R32_SINT;
+    case Format_R32_SFLOAT:
+        return VK_FORMAT_R32_SFLOAT;
+
+    case Format_R32G32_UINT:
+        return VK_FORMAT_R32G32_UINT;
+    case Format_R32G32_SINT:
+        return VK_FORMAT_R32G32_SINT;
+    case Format_R32G32_SFLOAT:
+        return VK_FORMAT_R32G32_SFLOAT;
+
+    case Format_R32G32B32_UINT:
+        return VK_FORMAT_R32G32B32_UINT;
+    case Format_R32G32B32_SINT:
+        return VK_FORMAT_R32G32B32_SINT;
+    case Format_R32G32B32_SFLOAT:
+        return VK_FORMAT_R32G32B32_SFLOAT;
+
+    case Format_R32G32B32A32_UINT:
+        return VK_FORMAT_R32G32B32A32_UINT;
+    case Format_R32G32B32A32_SINT:
+        return VK_FORMAT_R32G32B32A32_SINT;
+    case Format_R32G32B32A32_SFLOAT:
+        return VK_FORMAT_R32G32B32A32_SFLOAT;
+
+    case Format_D16_UNORM:
+        return VK_FORMAT_D16_UNORM;
+    case Format_D32_SFLOAT:
+        return VK_FORMAT_D32_SFLOAT;
+
+    case Format_D24_UNORM_S8_UINT:
+        return VK_FORMAT_D24_UNORM_S8_UINT;
+    case Format_D32_SFLOAT_S8_UINT:
+        return VK_FORMAT_D32_SFLOAT_S8_UINT;
+
+    case Format_BC1_RGBA_UNORM:
+        return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+    case Format_BC1_RGBA_SRGB:
+        return VK_FORMAT_BC1_RGBA_SRGB_BLOCK;
+    case Format_BC5_UNORM:
+        return VK_FORMAT_BC5_UNORM_BLOCK;
+    case Format_BC5_SNORM:
+        return VK_FORMAT_BC5_SNORM_BLOCK;
+    case Format_BC7_UNORM:
+        return VK_FORMAT_BC7_UNORM_BLOCK;
+    case Format_BC7_SRGB:
+        return VK_FORMAT_BC7_SRGB_BLOCK;
+
+    default:
+        return VK_FORMAT_UNDEFINED;
+    }
+}
+
+VkImageTiling ToVulkan(const ImageTiling tiling)
+{
+    switch (tiling)
+    {
+    case ImageTiling_Optimal:
+        return VK_IMAGE_TILING_OPTIMAL;
+    case ImageTiling_Linear:
+        return VK_IMAGE_TILING_LINEAR;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown image tiling: {}", u32(tiling));
+        return VK_IMAGE_TILING_OPTIMAL;
+    }
+}
+
+VkImageLayout ToVulkan(const ImageLayout layout)
+{
+    switch (layout)
+    {
+    case ImageLayout_Undefined:
+        return VK_IMAGE_LAYOUT_UNDEFINED;
+    case ImageLayout_General:
+        return VK_IMAGE_LAYOUT_GENERAL;
+    case ImageLayout_ColorAttachment:
+        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    case ImageLayout_DepthStencilAttachment:
+        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    case ImageLayout_DepthStencilReadOnly:
+        return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+    case ImageLayout_ShaderReadOnly:
+        return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    case ImageLayout_TransferSrc:
+        return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    case ImageLayout_TransferDst:
+        return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    case ImageLayout_Present:
+        return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown image layout: {}", u32(layout));
+        return VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+}
+
+VkSampleCountFlagBits ToVulkan(const SampleCount samples)
+{
+    switch (samples)
+    {
+    case SampleCount_1:
+        return VK_SAMPLE_COUNT_1_BIT;
+    case SampleCount_2:
+        return VK_SAMPLE_COUNT_2_BIT;
+    case SampleCount_4:
+        return VK_SAMPLE_COUNT_4_BIT;
+    case SampleCount_8:
+        return VK_SAMPLE_COUNT_8_BIT;
+    case SampleCount_16:
+        return VK_SAMPLE_COUNT_16_BIT;
+    case SampleCount_32:
+        return VK_SAMPLE_COUNT_32_BIT;
+    case SampleCount_64:
+        return VK_SAMPLE_COUNT_64_BIT;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown sample count: {}", u32(samples));
+        return VK_SAMPLE_COUNT_1_BIT;
+    }
+}
+
+VkImageType ToVulkan(const ImageType type)
+{
+    switch (type)
+    {
+    case ImageType_1D:
+        return VK_IMAGE_TYPE_1D;
+    case ImageType_2D:
+        return VK_IMAGE_TYPE_2D;
+    case ImageType_3D:
+        return VK_IMAGE_TYPE_3D;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown image type: {}", u32(type));
+        return VK_IMAGE_TYPE_2D;
+    }
+}
+
+VkImageViewType ToVulkan(const ImageViewType type)
+{
+    switch (type)
+    {
+    case ImageViewType_1D:
+        return VK_IMAGE_VIEW_TYPE_1D;
+    case ImageViewType_2D:
+        return VK_IMAGE_VIEW_TYPE_2D;
+    case ImageViewType_3D:
+        return VK_IMAGE_VIEW_TYPE_3D;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown image view type: {}", u32(type));
+        return VK_IMAGE_VIEW_TYPE_2D;
+    }
+}
+
+VkImageAspectFlags ToVulkan(const ImageAspectFlags aspects)
+{
+    VkImageAspectFlags result = 0;
+    if (aspects & ImageAspectFlag_Color)
+        result |= VK_IMAGE_ASPECT_COLOR_BIT;
+    if (aspects & ImageAspectFlag_Depth)
+        result |= VK_IMAGE_ASPECT_DEPTH_BIT;
+    if (aspects & ImageAspectFlag_Stencil)
+        result |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    return result;
+}
+
+VkSamplerMipmapMode ToVulkan(const SamplerMode mode)
+{
+    switch (mode)
+    {
+    case SamplerMode_Linear:
+        return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    case SamplerMode_Nearest:
+        return VK_SAMPLER_MIPMAP_MODE_NEAREST;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown sampler mode: {}", u32(mode));
+        return VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    }
+}
+
+VkFilter ToVulkan(const Filter filter)
+{
+    switch (filter)
+    {
+    case Filter_Linear:
+        return VK_FILTER_LINEAR;
+    case Filter_Nearest:
+        return VK_FILTER_NEAREST;
+    case Filter_Cubic:
+        return VK_FILTER_CUBIC_EXT;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown filter: {}", u32(filter));
+        return VK_FILTER_LINEAR;
+    }
+}
+
+VkSamplerAddressMode ToVulkan(const Wrap wrap)
+{
+    switch (wrap)
+    {
+    case Wrap_Repeat:
+        return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    case Wrap_ClampToEdge:
+        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    case Wrap_MirroredRepeat:
+        return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown wrap mode: {}", u32(wrap));
+        return VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    }
+}
+
+VkCompareOp ToVulkan(const CompareOp op)
+{
+    switch (op)
+    {
+    case CompareOp_Never:
+        return VK_COMPARE_OP_NEVER;
+    case CompareOp_Less:
+        return VK_COMPARE_OP_LESS;
+    case CompareOp_Equal:
+        return VK_COMPARE_OP_EQUAL;
+    case CompareOp_LessOrEqual:
+        return VK_COMPARE_OP_LESS_OR_EQUAL;
+    case CompareOp_Greater:
+        return VK_COMPARE_OP_GREATER;
+    case CompareOp_NotEqual:
+        return VK_COMPARE_OP_NOT_EQUAL;
+    case CompareOp_GreaterOrEqual:
+        return VK_COMPARE_OP_GREATER_OR_EQUAL;
+    case CompareOp_Always:
+        return VK_COMPARE_OP_ALWAYS;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown compare operation: {}", u32(op));
+        return VK_COMPARE_OP_NEVER;
+    }
+}
+
+VkBorderColor ToVulkan(const BorderColor color)
+{
+    switch (color)
+    {
+    case BorderColor_FloatTransparentBlack:
+        return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    case BorderColor_IntTransparentBlack:
+        return VK_BORDER_COLOR_INT_TRANSPARENT_BLACK;
+    case BorderColor_FloatOpaqueBlack:
+        return VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+    case BorderColor_IntOpaqueBlack:
+        return VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    case BorderColor_FloatOpaqueWhite:
+        return VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    case BorderColor_IntOpaqueWhite:
+        return VK_BORDER_COLOR_INT_OPAQUE_WHITE;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown border color: {}", u32(color));
+        return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    }
+}
 } // namespace Graph

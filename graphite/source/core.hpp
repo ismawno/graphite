@@ -22,8 +22,11 @@
                         stvar->GetSize());                                                                             \
     for (auto &elm : *stvar)                                                                                           \
     dctor(elm)
+
 #define GRAPH_CLEANUP_WITH_WARNING_ACCESSOR(stvar, section, resType, accessor)                                         \
     GRAPH_CLEANUP_WITH_WARNING_LAMBDA(stvar, section, resType, [](auto &elm) { elm.accessor; })
+#define GRAPH_CLEANUP_WITH_WARNING(stvar, section, resType)                                                            \
+    GRAPH_CLEANUP_WITH_WARNING_ACCESSOR(stvar, section, resType, Destroy())
 
 namespace Graph
 {
@@ -40,5 +43,13 @@ void Execution_Terminate();
 
 void Resources_Initialize(u32 maxBuffers, u32 maxImages, u32 maxSamplers, u32 maxViews);
 void Resources_Terminate();
+
+void Shader_Initialize(u32 maxShaders);
+void Shader_Terminate();
+
+#ifdef GRAPH_HAS_SHADER_COMPILATION_BACKEND
+void Compilation_Initialize(u32 maxCompilations);
+void Compilation_Terminate();
+#endif
 
 } // namespace Graph

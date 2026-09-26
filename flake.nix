@@ -36,6 +36,7 @@
           vulkan-memory-allocator
           vulkan-validation-layers
 
+          shader-slang
           glfw
           wayland
           wayland-protocols

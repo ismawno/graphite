@@ -73,169 +73,6 @@ enum ImageFlagBit : ImageFlags
     ImageFlag_CubeCompatible = 1U << 12,
 };
 
-enum ImageTiling : u8
-{
-    ImageTiling_Optimal,
-    ImageTiling_Linear,
-};
-
-enum ImageLayout : u8
-{
-    ImageLayout_Undefined,
-    ImageLayout_General,
-    ImageLayout_ColorAttachment,
-    ImageLayout_DepthStencilAttachment,
-    ImageLayout_DepthStencilReadOnly,
-    ImageLayout_ShaderReadOnly,
-    ImageLayout_TransferSrc,
-    ImageLayout_TransferDst,
-    ImageLayout_Present,
-};
-
-enum SampleCount : u8
-{
-    SampleCount_1,
-    SampleCount_2,
-    SampleCount_4,
-    SampleCount_8,
-    SampleCount_16,
-    SampleCount_32,
-    SampleCount_64,
-};
-
-enum ImageFormat : u8
-{
-    ImageFormat_Undefined,
-    // 8-bit single channel
-    ImageFormat_R8_UNORM,
-    ImageFormat_R8_SNORM,
-    ImageFormat_R8_UINT,
-    ImageFormat_R8_SINT,
-    ImageFormat_R8_SRGB,
-
-    // 8-bit dual channel
-    ImageFormat_R8G8_UNORM,
-    ImageFormat_R8G8_SNORM,
-    ImageFormat_R8G8_UINT,
-    ImageFormat_R8G8_SINT,
-    ImageFormat_R8G8_SRGB,
-
-    // 8-bit RGB
-    ImageFormat_R8G8B8_UNORM,
-    ImageFormat_R8G8B8_SNORM,
-    ImageFormat_R8G8B8_UINT,
-    ImageFormat_R8G8B8_SINT,
-    ImageFormat_R8G8B8_SRGB,
-
-    // 8-bit RGBA
-    ImageFormat_R8G8B8A8_UNORM,
-    ImageFormat_R8G8B8A8_SNORM,
-    ImageFormat_R8G8B8A8_UINT,
-    ImageFormat_R8G8B8A8_SINT,
-    ImageFormat_R8G8B8A8_SRGB,
-
-    // 8-bit BGRA
-    ImageFormat_B8G8R8A8_UNORM,
-    ImageFormat_B8G8R8A8_SNORM,
-    ImageFormat_B8G8R8A8_UINT,
-    ImageFormat_B8G8R8A8_SINT,
-    ImageFormat_B8G8R8A8_SRGB,
-
-    // 16-bit single channel
-    ImageFormat_R16_UNORM,
-    ImageFormat_R16_SNORM,
-    ImageFormat_R16_UINT,
-    ImageFormat_R16_SINT,
-    ImageFormat_R16_SFLOAT,
-
-    // 16-bit dual channel
-    ImageFormat_R16G16_UNORM,
-    ImageFormat_R16G16_SNORM,
-    ImageFormat_R16G16_UINT,
-    ImageFormat_R16G16_SINT,
-    ImageFormat_R16G16_SFLOAT,
-
-    // 16-bit RGB
-    ImageFormat_R16G16B16_UNORM,
-    ImageFormat_R16G16B16_SNORM,
-    ImageFormat_R16G16B16_UINT,
-    ImageFormat_R16G16B16_SINT,
-    ImageFormat_R16G16B16_SFLOAT,
-
-    // 16-bit RGBA
-    ImageFormat_R16G16B16A16_UNORM,
-    ImageFormat_R16G16B16A16_SNORM,
-    ImageFormat_R16G16B16A16_UINT,
-    ImageFormat_R16G16B16A16_SINT,
-    ImageFormat_R16G16B16A16_SFLOAT,
-
-    // 32-bit single channel
-    ImageFormat_R32_UINT,
-    ImageFormat_R32_SINT,
-    ImageFormat_R32_SFLOAT,
-
-    // 32-bit dual channel
-    ImageFormat_R32G32_UINT,
-    ImageFormat_R32G32_SINT,
-    ImageFormat_R32G32_SFLOAT,
-
-    // 32-bit RGB
-    ImageFormat_R32G32B32_UINT,
-    ImageFormat_R32G32B32_SINT,
-    ImageFormat_R32G32B32_SFLOAT,
-
-    // 32-bit RGBA
-    ImageFormat_R32G32B32A32_UINT,
-    ImageFormat_R32G32B32A32_SINT,
-    ImageFormat_R32G32B32A32_SFLOAT,
-
-    // Packed HDR
-    ImageFormat_B10G11R11_UnsignedFloat,
-
-    // Depth
-    ImageFormat_D16_UNORM,
-    ImageFormat_D32_SFLOAT,
-
-    // Depth + Stencil
-    ImageFormat_D24_UNORM_S8_UINT,
-    ImageFormat_D32_SFLOAT_S8_UINT,
-
-    // Compressed
-    ImageFormat_BC1_RGBA_UNORM,
-    ImageFormat_BC1_RGBA_SRGB,
-    ImageFormat_BC5_UNORM,
-    ImageFormat_BC5_SNORM,
-    ImageFormat_BC7_UNORM,
-    ImageFormat_BC7_SRGB,
-
-    ImageFormat_Count,
-    ImageFormat_Auto = ImageFormat_Count,
-};
-
-enum ImageType : u8
-{
-    ImageType_1D,
-    ImageType_2D,
-    ImageType_3D,
-};
-
-enum ImageViewType : u8
-{
-    ImageViewType_1D,
-    ImageViewType_2D,
-    ImageViewType_3D,
-    ImageViewType_Auto,
-};
-
-using ImageAspectFlags = u8;
-enum ImageAspectFlagBit : ImageAspectFlags
-{
-    ImageAspectFlag_Color = 1U << 0,
-    ImageAspectFlag_Depth = 1U << 1,
-    ImageAspectFlag_Stencil = 1U << 2,
-    ImageAspectFlag_Auto = 1U << 3,
-};
-
 #define GRAPH_IMAGE_SUBRESOURCE_RANGE_AUTO TKIT_U32_MAX
 
 struct ImageSubresourceRange
@@ -250,14 +87,14 @@ struct ImageSubresourceRange
 struct ImageViewSpecs
 {
     ImageSubresourceRange Range{};
-    ImageFormat Format = ImageFormat_Auto;
+    Format Format = Format_Auto;
     ImageViewType Type = ImageViewType_Auto;
 };
 
 struct ImageSpecs
 {
     TKit::Span<const ImageViewSpecs> ImageViews{};
-    TKit::Span<const ImageFormat> Formats{};
+    TKit::Span<const Format> Formats{};
     u32 MipLevels = 1;
     u32 ArrayLayers = 1;
     ImageType Type = ImageType_2D;
@@ -289,48 +126,6 @@ bool Image_IsHandleValid(Image img);
 void ImageView_SetName(ImageView view, const char *name);
 bool ImageView_IsHandleValid(ImageView view);
 
-enum SamplerMode : u8
-{
-    SamplerMode_Linear,
-    SamplerMode_Nearest,
-};
-
-enum Filter : u8
-{
-    Filter_Linear,
-    Filter_Nearest,
-    Filter_Cubic,
-};
-
-enum Wrap : u8
-{
-    Wrap_Repeat,
-    Wrap_ClampToEdge,
-    Wrap_MirroredRepeat,
-};
-
-enum CompareOperation : u8
-{
-    Compare_Never = 0,
-    Compare_Less = 1,
-    Compare_Equal = 2,
-    Compare_LessOrEqual = 3,
-    Compare_Greater = 4,
-    Compare_NotEqual = 5,
-    Compare_GreaterOrEqual = 6,
-    Compare_Always = 7,
-};
-
-enum BorderColor : u8
-{
-    BorderColor_FloatTransparentBlack,
-    BorderColor_IntTransparentBlack,
-    BorderColor_FloatOpaqueBlack,
-    BorderColor_IntOpaqueBlack,
-    BorderColor_FloatOpaqueWhite,
-    BorderColor_IntOpaqueWhite,
-};
-
 using SamplerFlags = u8;
 enum SamplerFlagBit : SamplerFlags
 {
@@ -347,7 +142,7 @@ struct SamplerSpecs
     vec3<Wrap> Wraps = Wrap_ClampToEdge;
     f32v2 LodRange = {0.f, 1000.f};
     f32 MaxAnisotropy = 1.f;
-    CompareOperation Compare = Compare_Always;
+    CompareOp Compare = CompareOp_Always;
     BorderColor Border = BorderColor_IntOpaqueBlack;
 };
 

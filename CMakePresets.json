@@ -64,7 +64,7 @@
 
         "GRAPHITE_GRAPHICS_BACKEND": "vulkan",
         "GRAPHITE_PLATFORM_BACKEND": "glfw",
-        "GRAPHITE_ENABLE_GLFW_SURFACE_CREATION": "ON"
+        "GRAPHITE_SHADER_COMPILATION_BACKEND": "slang"
       }
     },
     {

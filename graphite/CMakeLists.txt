@@ -5,10 +5,16 @@ include(FetchContent)
 set(SOURCES source/pch.cpp source/handle.cpp)
 
 if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
-  list(APPEND SOURCES source/vk_core.cpp)
+  list(
+    APPEND
+    SOURCES
+    source/vk_core.cpp
+    source/vk_execution.cpp
+    source/vk_resources.cpp
+    source/vk_shader.cpp
+    source/vk_surface.cpp)
   if(GRAPHITE_PLATFORM_BACKEND STREQUAL "glfw")
-    list(APPEND SOURCES source/vk_core.cpp source/vk_glfw_platform.cpp
-         source/vk_surface.cpp)
+    list(APPEND SOURCES source/glfw_platform.cpp source/vk_glfw_platform.cpp)
   endif()
 endif()
 
@@ -75,4 +81,78 @@ if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
                             ${CMAKE_CURRENT_SOURCE_DIR}/source/pch.hpp)
 
   tkit_default_configure(graphite)
+endif()
+
+if(GRAPHITE_SHADER_COMPILATION_BACKEND STREQUAL "slang")
+  if(DEFINED ENV{VCPKG_ROOT})
+    include($ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+  endif()
+  find_package(slang QUIET)
+  find_path(SLANG_INCLUDE_DIR slang.h)
+  find_library(SLANG_LIB slang)
+  if(slang_FOUND)
+    message(STATUS "GRAPHITE - Slang found")
+    target_link_libraries(graphite PRIVATE slang::slang)
+  elseif(SLANG_INCLUDE_DIR AND SLANG_LIB)
+    message(STATUS "GRAPHITE - Slang library found")
+    target_include_directories(graphite PRIVATE ${SLANG_INCLUDE_DIR})
+    target_link_libraries(graphite PRIVATE ${SLANG_LIB})
+  else()
+    message(STATUS "GRAPHITE - Slang not found... fetching source")
+
+    FetchContent_Declare(
+      slang
+      GIT_REPOSITORY https://github.com/shader-slang/slang.git
+      GIT_TAG v2026.3.1
+      GIT_SHALLOW TRUE
+      GIT_SUBMODULES_RECURSE TRUE
+      GIT_PROGRESS TRUE)
+
+    set(SLANG_ENABLE_DXIL
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_GFX
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_SLANG_GLSLANG
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_SLANGC
+        ON
+        CACHE BOOL "")
+    set(SLANG_ENABLE_SLANGD
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_SLANGI
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_TESTS
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_CUDA
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_EXAMPLES
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_RELEASE_DEBUG_INFO
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_SPLIT_DEBUG_INFO
+        OFF
+        CACHE BOOL "")
+    set(SLANG_ENABLE_SLANG_RHI
+        OFF
+        CACHE BOOL "")
+    set(SLANG_LIB_TYPE
+        "STATIC"
+        CACHE STRING "")
+
+    FetchContent_MakeAvailable(slang)
+    tkit_configure_compile_link_options(slang NO_EXCEPTIONS NO_RTTI)
+
+    target_link_libraries(graphite PRIVATE slang)
+  endif()
+  target_compile_definitions(graphite
+                             PUBLIC GRAPH_HAS_SHADER_COMPILATION_BACKEND)
 endif()

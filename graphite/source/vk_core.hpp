@@ -27,4 +27,27 @@ VKit::Sampler &GetSampler(Sampler sampler);
 
 void DestroyDummySurface();
 bool IsDebugUtilsEnabled();
+
+VkFormat ToVulkan(Format format);
+VkImageTiling ToVulkan(ImageTiling tiling);
+VkImageLayout ToVulkan(ImageLayout layout);
+VkSampleCountFlagBits ToVulkan(SampleCount samples);
+VkImageType ToVulkan(ImageType type);
+VkImageViewType ToVulkan(ImageViewType type);
+VkImageAspectFlags ToVulkan(ImageAspectFlags aspects);
+VkSamplerMipmapMode ToVulkan(SamplerMode mode);
+VkFilter ToVulkan(Filter filter);
+VkSamplerAddressMode ToVulkan(Wrap wrap);
+VkCompareOp ToVulkan(CompareOp op);
+VkBorderColor ToVulkan(BorderColor color);
+VkPrimitiveTopology ToVulkan(Topology topology);
+VkPolygonMode ToVulkan(PolygonMode mode);
+VkCullModeFlags ToVulkan(CullMode mode);
+VkFrontFace ToVulkan(FrontFace face);
+VkBlendFactor ToVulkan(BlendFactor factor);
+VkBlendOp ToVulkan(BlendOp op);
+VkColorComponentFlags ToVulkan(ColorWriteMask mask);
+VkStencilOp ToVulkan(StencilOp op);
+VkVertexInputRate ToVulkan(VertexInputRate rate);
+VkShaderStageFlags ToVulkan(ShaderStageFlags stages);
 } // namespace Graph

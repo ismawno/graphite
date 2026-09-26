@@ -16,9 +16,11 @@ set(CMAKE_BUILD_TYPE
 set(GRAPHITE_GRAPHICS_BACKEND
     "vulkan"
     CACHE STRING "")
-
-set(GRAPHITE_ENABLE_GLFW_SURFACE_CREATION
-    OFF
-    CACHE BOOL "")
+set(GRAPHITE_PLATFORM_BACKEND
+    "none" # glfw
+    CACHE STRING "")
+set(GRAPHITE_SHADER_COMPILATION_BACKEND
+    "none" # slang
+    CACHE STRING "")
 
 add_subdirectory(graphite)
