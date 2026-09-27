@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graph/handle.hpp"
+#include "graph/core.hpp"
 
 namespace Graph
 {

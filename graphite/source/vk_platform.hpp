@@ -5,7 +5,7 @@
         "[GRAPH][PLATFORM] To use platform capabilities, a platform backend must be specified with the CMake option GRAPHITE_PLATFORM_BACKEND"
 #endif
 
-#include "graph/core.hpp"
+#include "graph/platform.hpp"
 #include <vulkan/vulkan.h>
 
 namespace Graph

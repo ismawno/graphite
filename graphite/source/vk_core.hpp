@@ -1,12 +1,13 @@
 #pragma once
 
-#include "graph/handle.hpp"
+#include "graph/core.hpp"
 #include "core.hpp"
 #include "vkit/device/logical_device.hpp"
 #include "vkit/memory/allocator.hpp"
 #include "vkit/resource/device_buffer.hpp"
 #include "vkit/resource/device_image.hpp"
 #include "vkit/resource/sampler.hpp"
+#include "vkit/state/descriptor_set_layout.hpp"
 
 namespace Graph
 {
@@ -23,7 +24,9 @@ VmaAllocator GetAllocator();
 
 VKit::DeviceBuffer &GetBuffer(Buffer buffer);
 VKit::DeviceImage &GetImage(Image image);
+VkImageView GetImageView(ImageView view);
 VKit::Sampler &GetSampler(Sampler sampler);
+VKit::DescriptorSetLayout &GetDescriptorSetLayout(DescriptorSetLayout layout);
 
 void DestroyDummySurface();
 bool IsDebugUtilsEnabled();
@@ -34,7 +37,7 @@ VkImageLayout ToVulkan(ImageLayout layout);
 VkSampleCountFlagBits ToVulkan(SampleCount samples);
 VkImageType ToVulkan(ImageType type);
 VkImageViewType ToVulkan(ImageViewType type);
-VkImageAspectFlags ToVulkan(ImageAspectFlags aspects);
+VkImageAspectFlags ToVulkanImageAspectFlags(ImageAspectFlags aspects);
 VkSamplerMipmapMode ToVulkan(SamplerMode mode);
 VkFilter ToVulkan(Filter filter);
 VkSamplerAddressMode ToVulkan(Wrap wrap);
@@ -46,8 +49,10 @@ VkCullModeFlags ToVulkan(CullMode mode);
 VkFrontFace ToVulkan(FrontFace face);
 VkBlendFactor ToVulkan(BlendFactor factor);
 VkBlendOp ToVulkan(BlendOp op);
-VkColorComponentFlags ToVulkan(ColorWriteMask mask);
+VkColorComponentFlags ToVulkanColorWriteMask(ColorWriteMask mask);
 VkStencilOp ToVulkan(StencilOp op);
 VkVertexInputRate ToVulkan(VertexInputRate rate);
-VkShaderStageFlags ToVulkan(ShaderStageFlags stages);
+VkShaderStageFlags ToVulkanShaderStageFlags(ShaderStageFlags stages);
+VkDescriptorBindingFlags ToVulkanDescriptorBindingFlags(DescriptorBindingFlags flags);
+VkDescriptorType ToVulkan(DescriptorType type);
 } // namespace Graph

@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include "graph/core.hpp"
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
 #    include "graph/surface.hpp"
 #endif
@@ -42,6 +43,46 @@ bool Handle_IsValid(const Handle handle, const HandleType htype)
 #endif
     default:
         return false;
+    }
+}
+
+const char *ToString(const HandleType htype)
+{
+    switch (htype)
+    {
+    case Handle_Window:
+        return "Handle_Window";
+    case Handle_Monitor:
+        return "Handle_Monitor";
+    case Handle_Surface:
+        return "Handle_Surface";
+    case Handle_Queue:
+        return "Handle_Queue";
+    case Handle_CommandPool:
+        return "Handle_CommandPool";
+    case Handle_CommandBuffer:
+        return "Handle_CommandBuffer";
+    case Handle_Buffer:
+        return "Handle_Buffer";
+    case Handle_Image:
+        return "Handle_Image";
+    case Handle_ImageView:
+        return "Handle_ImageView";
+    case Handle_Sampler:
+        return "Handle_Sampler";
+    case Handle_Shader:
+        return "Handle_Shader";
+    case Handle_Compilation:
+        return "Handle_Compilation";
+    case Handle_PipelineLayout:
+        return "Handle_PipelineLayout";
+    case Handle_Pipeline:
+        return "Handle_Pipeline";
+    case Handle_None:
+        return "Handle_None";
+    default:
+        TKIT_ASSERT(false, "[GRAPH] Unknown handle type: {}", u32(htype));
+        return "Handle_Unknown";
     }
 }
 } // namespace Graph

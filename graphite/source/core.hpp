@@ -44,6 +44,9 @@ void Execution_Terminate();
 void Resources_Initialize(u32 maxBuffers, u32 maxImages, u32 maxSamplers, u32 maxViews);
 void Resources_Terminate();
 
+void Descriptor_Initialize(u32 maxSets, const TKit::FixedArray<u32, Descriptor_Count> &poolSizes);
+void Descriptor_Terminate();
+
 void Shader_Initialize(u32 maxShaders);
 void Shader_Terminate();
 
@@ -51,5 +54,8 @@ void Shader_Terminate();
 void Compilation_Initialize(u32 maxCompilations);
 void Compilation_Terminate();
 #endif
+
+void Pipeline_Initialize(u32 maxLayouts, u32 maxPipelines);
+void Pipeline_Terminate();
 
 } // namespace Graph

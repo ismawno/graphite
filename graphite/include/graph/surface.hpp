@@ -5,7 +5,7 @@
         "[GRAPH][PLATFORM] To use surface capabilities, a platform backend must be specified with the CMake option GRAPHITE_PLATFORM_BACKEND"
 #endif
 
-#include "graph/handle.hpp"
+#include "graph/core.hpp"
 #include "graph/core.hpp"
 
 namespace Graph

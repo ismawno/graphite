@@ -1,10 +1,34 @@
 #pragma once
 
-#include "graph/handle.hpp"
+#include "graph/descriptor.hpp"
 #include "tkit/container/span.hpp"
 
 namespace Graph
 {
+struct PushConstantRange
+{
+    ShaderStageFlags Stages;
+    u32 Offset;
+    u32 Size;
+
+    static constexpr PushConstantRange Create(const ShaderStageFlags stages, const u32 size, const u32 offset = 0)
+    {
+        return {stages, offset, size};
+    }
+};
+
+struct PipelineLayoutSpecs
+{
+    TKit::Span<const DescriptorSetLayout> DescriptorSetLayouts{};
+    TKit::Span<const PushConstantRange> PushRanges{};
+};
+
+PipelineLayout PipelineLayout_Create(const PipelineLayoutSpecs &specs);
+void PipelineLayout_Destroy();
+
+void PipelineLayout_SetName(PipelineLayout layout, const char *name);
+bool PipelineLayout_IsHandleValid(PipelineLayout layout);
+
 struct StencilOpState
 {
     StencilOp FailOp = StencilOp_Keep;
@@ -60,7 +84,7 @@ struct ShaderStageInfo
     const char *EntryPoint = "main";
     Shader Module = NullHandle;
     SpecializationInfo Specialization{};
-    ShaderStageFlagBit Stage = ShaderStageFlag_Vertex;
+    ShaderStageFlagBit Stage = ShaderStageFlag_None;
 };
 
 struct DepthStencilState
@@ -110,9 +134,18 @@ struct GraphicsPipelineSpecs
     MultisampleState Multisample{};
     DepthStencilState DepthStencil{};
 
-    PipelineLayout Layout = NullHandle;
-
     Format DepthFormat = Format_Undefined;
     Format StencilFormat = Format_Undefined;
 };
+
+Pipeline Pipeline_CreateGraphics(PipelineLayout layout, const GraphicsPipelineSpecs &specs);
+Pipeline Pipeline_CreateCompute(PipelineLayout layout, const ShaderStageInfo &shaderStage);
+
+void Pipeline_Destroy(Pipeline pip);
+
+PipelineType Pipeline_GetType(Pipeline pip);
+
+void Pipeline_SetName(Pipeline pip, const char *name);
+bool Pipeline_IsHandleValid(Pipeline pip);
+
 } // namespace Graph

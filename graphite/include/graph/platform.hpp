@@ -5,57 +5,12 @@
         "[GRAPH][PLATFORM] To use platform capabilities, a platform backend must be specified with the CMake option GRAPHITE_PLATFORM_BACKEND"
 #endif
 
-#include "graph/handle.hpp"
+#include "graph/core.hpp"
 #include "graph/input.hpp"
 #include "tkit/math/tensor.hpp"
 
 namespace Graph
 {
-enum Platform : u8
-{
-    Platform_Any,
-    Platform_Win32,
-    Platform_Cocoa,
-    Platform_Wayland,
-    Platform_X11,
-#ifdef TKIT_OS_LINUX
-    Platform_Auto = Platform_X11,
-#elif defined(TKIT_OS_APPLE)
-    Platform_Auto = Platform_Cocoa,
-#elif defined(TKIT_OS_WINDOWS)
-    Platform_Auto = Platform_Win32,
-#else
-    Platform_Auto = Platform_Any,
-#endif
-};
-
-using WindowFlags = u8;
-enum WindowFlagBit : WindowFlags
-{
-    WindowFlag_Resizable = 1U << 0,
-    WindowFlag_Visible = 1U << 1,
-    WindowFlag_Decorated = 1U << 2,
-    WindowFlag_Focused = 1U << 3,
-    WindowFlag_Floating = 1U << 4,
-    WindowFlag_FocusOnShow = 1U << 5,
-    WindowFlag_Iconified = 1U << 6,
-    WindowFlag_NoClientApi = 1U << 7,
-};
-
-enum MouseCursor : u8
-{
-    MouseCursor_Default,
-    MouseCursor_Arrow,
-    MouseCursor_NS,
-    MouseCursor_EW,
-    MouseCursor_NWSE,
-    MouseCursor_NESW,
-    MouseCursor_Hand,
-    MouseCursor_CrossHair,
-    MouseCursor_IBeam,
-    MouseCursor_NotAllowed,
-    MouseCursor_Count,
-};
 
 struct VideoMode
 {

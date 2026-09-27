@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graph/handle.hpp"
+#include "graph/core.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/container/tier_array.hpp"
 #include "tkit/utils/result.hpp"

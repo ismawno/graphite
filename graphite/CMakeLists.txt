@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(graphite)
 
 include(FetchContent)
-set(SOURCES source/pch.cpp source/handle.cpp)
+set(SOURCES source/pch.cpp source/core.cpp)
 
 if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
   list(

@@ -270,6 +270,11 @@ VKit::DeviceImage &GetImage(const Image img)
     GRAPH_CHECK_HANDLE(img, Handle_Image);
     return s_Images->At(Handle_GetId(img));
 }
+VkImageView GetImageView(const ImageView view)
+{
+    GRAPH_CHECK_HANDLE(view, Handle_ImageView);
+    return s_Views->At(Handle_GetId(view)).View;
+}
 VKit::Sampler &GetSampler(const Sampler smp)
 {
     GRAPH_CHECK_HANDLE(smp, Handle_Sampler);

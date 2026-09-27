@@ -309,7 +309,7 @@ void Initialize(const Specs &specs)
 
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
     Platform_InitializeVulkanLoader();
-    Platform_Initialize(specs.TargetPlatform);
+    Platform_Initialize(specs.TargetPlatform, specs.MaxSurfaces);
     Surface_Initialize(specs.MaxSurfaces);
 #endif
 
@@ -718,7 +718,7 @@ VkImageViewType ToVulkan(const ImageViewType type)
     }
 }
 
-VkImageAspectFlags ToVulkan(const ImageAspectFlags aspects)
+VkImageAspectFlags ToVulkanImageAspectFlags(const ImageAspectFlags aspects)
 {
     VkImageAspectFlags result = 0;
     if (aspects & ImageAspectFlag_Color)
@@ -821,6 +821,222 @@ VkBorderColor ToVulkan(const BorderColor color)
     default:
         TKIT_FATAL("[GRAPH] Unknown border color: {}", u32(color));
         return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    }
+}
+VkShaderStageFlags ToVulkanShaderStageFlags(const ShaderStageFlags stages)
+{
+    VkShaderStageFlags result = 0;
+    if (stages & ShaderStageFlag_Vertex)
+        result |= VK_SHADER_STAGE_VERTEX_BIT;
+    if (stages & ShaderStageFlag_Fragment)
+        result |= VK_SHADER_STAGE_FRAGMENT_BIT;
+    if (stages & ShaderStageFlag_Compute)
+        result |= VK_SHADER_STAGE_COMPUTE_BIT;
+    return result;
+}
+VkDescriptorBindingFlags ToVulkanDescriptorBindingFlags(const DescriptorBindingFlags flags)
+{
+    VkDescriptorBindingFlags result = 0;
+    if (flags & DescriptorBindingFlag_UpdateAfterBind)
+        result |= VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT;
+    if (flags & DescriptorBindingFlag_UpdateUnusedWhilePending)
+        result |= VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT;
+    if (flags & DescriptorBindingFlag_PartiallyBound)
+        result |= VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
+    if (flags & DescriptorBindingFlag_VariableDescriptorCount)
+        result |= VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT;
+    return result;
+}
+VkPrimitiveTopology ToVulkan(const Topology topology)
+{
+    switch (topology)
+    {
+    case Topology_PointList:
+        return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    case Topology_LineList:
+        return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    case Topology_LineStrip:
+        return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    case Topology_TriangleList:
+        return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    case Topology_TriangleStrip:
+        return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    case Topology_TriangleFan:
+        return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown topology: {}", u32(topology));
+        return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    }
+}
+
+VkPolygonMode ToVulkan(const PolygonMode mode)
+{
+    switch (mode)
+    {
+    case PolygonMode_Fill:
+        return VK_POLYGON_MODE_FILL;
+    case PolygonMode_Line:
+        return VK_POLYGON_MODE_LINE;
+    case PolygonMode_Point:
+        return VK_POLYGON_MODE_POINT;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown polygon mode: {}", u32(mode));
+        return VK_POLYGON_MODE_FILL;
+    }
+}
+
+VkCullModeFlags ToVulkan(const CullMode mode)
+{
+    switch (mode)
+    {
+    case CullMode_None:
+        return VK_CULL_MODE_NONE;
+    case CullMode_Front:
+        return VK_CULL_MODE_FRONT_BIT;
+    case CullMode_Back:
+        return VK_CULL_MODE_BACK_BIT;
+    case CullMode_FrontAndBack:
+        return VK_CULL_MODE_FRONT_AND_BACK;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown cull mode: {}", u32(mode));
+        return VK_CULL_MODE_NONE;
+    }
+}
+
+VkFrontFace ToVulkan(const FrontFace face)
+{
+    switch (face)
+    {
+    case FrontFace_CounterClockwise:
+        return VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    case FrontFace_Clockwise:
+        return VK_FRONT_FACE_CLOCKWISE;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown front face: {}", u32(face));
+        return VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    }
+}
+
+VkBlendFactor ToVulkan(const BlendFactor factor)
+{
+    switch (factor)
+    {
+    case BlendFactor_Zero:
+        return VK_BLEND_FACTOR_ZERO;
+    case BlendFactor_One:
+        return VK_BLEND_FACTOR_ONE;
+    case BlendFactor_SrcColor:
+        return VK_BLEND_FACTOR_SRC_COLOR;
+    case BlendFactor_OneMinusSrcColor:
+        return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+    case BlendFactor_DstColor:
+        return VK_BLEND_FACTOR_DST_COLOR;
+    case BlendFactor_OneMinusDstColor:
+        return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+    case BlendFactor_SrcAlpha:
+        return VK_BLEND_FACTOR_SRC_ALPHA;
+    case BlendFactor_OneMinusSrcAlpha:
+        return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    case BlendFactor_DstAlpha:
+        return VK_BLEND_FACTOR_DST_ALPHA;
+    case BlendFactor_OneMinusDstAlpha:
+        return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown blend factor: {}", u32(factor));
+        return VK_BLEND_FACTOR_ZERO;
+    }
+}
+
+VkBlendOp ToVulkan(const BlendOp op)
+{
+    switch (op)
+    {
+    case BlendOp_Add:
+        return VK_BLEND_OP_ADD;
+    case BlendOp_Subtract:
+        return VK_BLEND_OP_SUBTRACT;
+    case BlendOp_ReverseSubtract:
+        return VK_BLEND_OP_REVERSE_SUBTRACT;
+    case BlendOp_Min:
+        return VK_BLEND_OP_MIN;
+    case BlendOp_Max:
+        return VK_BLEND_OP_MAX;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown blend op: {}", u32(op));
+        return VK_BLEND_OP_ADD;
+    }
+}
+
+VkColorComponentFlags ToVulkanColorWriteMask(const ColorWriteMask mask)
+{
+    VkColorComponentFlags result = 0;
+    if (mask & ColorWrite_R)
+        result |= VK_COLOR_COMPONENT_R_BIT;
+    if (mask & ColorWrite_G)
+        result |= VK_COLOR_COMPONENT_G_BIT;
+    if (mask & ColorWrite_B)
+        result |= VK_COLOR_COMPONENT_B_BIT;
+    if (mask & ColorWrite_A)
+        result |= VK_COLOR_COMPONENT_A_BIT;
+    return result;
+}
+
+VkStencilOp ToVulkan(const StencilOp op)
+{
+    switch (op)
+    {
+    case StencilOp_Keep:
+        return VK_STENCIL_OP_KEEP;
+    case StencilOp_Zero:
+        return VK_STENCIL_OP_ZERO;
+    case StencilOp_Replace:
+        return VK_STENCIL_OP_REPLACE;
+    case StencilOp_IncrementAndClamp:
+        return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+    case StencilOp_DecrementAndClamp:
+        return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+    case StencilOp_Invert:
+        return VK_STENCIL_OP_INVERT;
+    case StencilOp_IncrementAndWrap:
+        return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+    case StencilOp_DecrementAndWrap:
+        return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown stencil op: {}", u32(op));
+        return VK_STENCIL_OP_KEEP;
+    }
+}
+
+VkVertexInputRate ToVulkan(const VertexInputRate rate)
+{
+    switch (rate)
+    {
+    case VertexInputRate_Vertex:
+        return VK_VERTEX_INPUT_RATE_VERTEX;
+    case VertexInputRate_Instance:
+        return VK_VERTEX_INPUT_RATE_INSTANCE;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown vertex input rate: {}", u32(rate));
+        return VK_VERTEX_INPUT_RATE_VERTEX;
+    }
+}
+VkDescriptorType ToVulkan(const DescriptorType type)
+{
+    switch (type)
+    {
+    case Descriptor_StorageBuffer:
+        return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    case Descriptor_Sampler:
+        return VK_DESCRIPTOR_TYPE_SAMPLER;
+    case Descriptor_SampledImage:
+        return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    case Descriptor_CombinedImageSampler:
+        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    case Descriptor_StorageImage:
+        return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown descriptor type: {}", u32(type));
+        return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     }
 }
 } // namespace Graph

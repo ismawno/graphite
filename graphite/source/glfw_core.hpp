@@ -2,7 +2,7 @@
 
 #include "glfw.hpp"
 #include "core.hpp"
-#include "graph/handle.hpp"
+#include "graph/core.hpp"
 
 namespace Graph
 {
