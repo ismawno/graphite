@@ -167,7 +167,7 @@ ImageView Image_AddView(const Image img, const ImageViewSpecs &specs)
     VkImageViewCreateInfo info{};
     info.image = VK_NULL_HANDLE;
     info.viewType = ToVulkan(specs.Type);
-    info.subresourceRange.aspectMask = ToVulkan(specs.Range.Aspect);
+    info.subresourceRange.aspectMask = ToVulkanImageAspectFlags(specs.Range.Aspect);
     info.subresourceRange.baseMipLevel = specs.Range.MipStart;
     info.subresourceRange.levelCount = specs.Range.MipCount;
     info.subresourceRange.baseArrayLayer = specs.Range.LayerStart;

@@ -8,6 +8,8 @@
 #include "vkit/resource/device_image.hpp"
 #include "vkit/resource/sampler.hpp"
 #include "vkit/state/descriptor_set_layout.hpp"
+#include "vkit/state/pipeline_layout.hpp"
+#include "vkit/state/shader.hpp"
 
 namespace Graph
 {
@@ -27,6 +29,8 @@ VKit::DeviceImage &GetImage(Image image);
 VkImageView GetImageView(ImageView view);
 VKit::Sampler &GetSampler(Sampler sampler);
 VKit::DescriptorSetLayout &GetDescriptorSetLayout(DescriptorSetLayout layout);
+VKit::Shader &GetShader(Shader sh);
+VKit::PipelineLayout &GetPipelineLayout(PipelineLayout layout);
 
 void DestroyDummySurface();
 bool IsDebugUtilsEnabled();

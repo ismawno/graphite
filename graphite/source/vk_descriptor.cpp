@@ -49,10 +49,10 @@ void Descriptor_Terminate()
     s_DescriptorPool.Destruct();
 }
 
-DescriptorSetLayout DescriptorSetLayout_Create(const TKit::Span<const DescriptorBinding> bindings)
+DescriptorSetLayout DescriptorSetLayout_Create(const DescriptorSetLayoutSpecs &specs)
 {
     VKit::DescriptorSetLayout::Builder builder{GetDevice()};
-    for (const DescriptorBinding &b : bindings)
+    for (const DescriptorBinding &b : specs.Bindings)
         builder.AddBinding2(b.Binding, ToVulkan(b.Type), ToVulkanShaderStageFlags(b.ShaderStages), b.DescriptorCount,
                             ToVulkanDescriptorBindingFlags(b.Flags));
 

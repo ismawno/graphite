@@ -47,4 +47,10 @@ bool Shader_IsHandleValid(const Shader sh)
 {
     GRAPH_IS_HANDLE_VALID_FUNCTION_BODY(s_Shaders, sh, Handle_Shader);
 }
+
+VKit::Shader &GetShader(const Shader sh)
+{
+    GRAPH_CHECK_HANDLE(sh, Handle_Shader);
+    return s_Shaders->At(Handle_GetId(sh));
+}
 } // namespace Graph

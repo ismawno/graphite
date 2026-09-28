@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graph/descriptor.hpp"
+#include "graph/core.hpp"
 #include "tkit/container/span.hpp"
 
 namespace Graph
@@ -82,7 +82,7 @@ struct SpecializationInfo
 struct ShaderStageInfo
 {
     const char *EntryPoint = "main";
-    Shader Module = NullHandle;
+    Shader Shader = NullHandle;
     SpecializationInfo Specialization{};
     ShaderStageFlagBit Stage = ShaderStageFlag_None;
 };
@@ -136,6 +136,7 @@ struct GraphicsPipelineSpecs
 
     Format DepthFormat = Format_Undefined;
     Format StencilFormat = Format_Undefined;
+    DynamicStateFlags DynamicState = 0;
 };
 
 Pipeline Pipeline_CreateGraphics(PipelineLayout layout, const GraphicsPipelineSpecs &specs);
