@@ -50,12 +50,7 @@ struct DescriptorImageInfo
     }
 };
 
-struct DescriptorSetLayoutSpecs
-{
-    TKit::Span<const DescriptorBinding> Bindings{};
-};
-
-DescriptorSetLayout DescriptorSetLayout_Create(const DescriptorSetLayoutSpecs &specs);
+DescriptorSetLayout DescriptorSetLayout_Create(TKit::Span<const DescriptorBinding> bindings);
 void DescriptorSetLayout_Destroy(DescriptorSetLayout layout);
 
 void DescriptorSetLayout_SetName(DescriptorSetLayout layout, const char *name);

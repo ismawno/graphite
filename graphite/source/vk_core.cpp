@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "vk_core.hpp"
 #include "vk_error.hpp"
 #ifdef GRAPH_HAS_PLATFORM_BACKEND

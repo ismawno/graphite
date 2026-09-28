@@ -22,5 +22,8 @@ set(GRAPHITE_PLATFORM_BACKEND
 set(GRAPHITE_SHADER_COMPILATION_BACKEND
     "none" # slang
     CACHE STRING "")
+set(GRAPHITE_SHADER_REFLECTION_BACKEND
+    "none" # spirv-reflect
+    CACHE STRING "")
 
 add_subdirectory(graphite)

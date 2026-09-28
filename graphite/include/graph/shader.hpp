@@ -1,6 +1,7 @@
 #pragma once
 
-#include "graph/core.hpp"
+#include "graph/descriptor.hpp"
+#include "graph/pipeline.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/container/tier_array.hpp"
 #include "tkit/utils/result.hpp"
@@ -325,6 +326,49 @@ inline Shader Compilation_CreateShader(const Compilation comp, const char *entry
 }
 
 bool Compilation_IsHandleValid(Compilation comp);
+
+#endif
+
+#ifdef GRAPH_HAS_SHADER_REFLECTION_BACKEND
+
+struct VertexAttributeReflectionInfo
+{
+    u32 Location;
+    Format Format;
+};
+
+Reflection Reflection_Create(TKit::Span<const Shader> shaders);
+void Reflection_Destroy(Reflection refl);
+
+u32 Reflection_GetDescriptorSetCount(Reflection refl);
+
+TKit::Span<const DescriptorBinding> Reflection_GetBindings(Reflection refl, u32 setIdx = 0);
+const DescriptorBinding &Reflection_GetBinding(const Reflection refl, const u32 setIdx = 0, const u32 bindingIdx = 0)
+{
+    return Reflection_GetBindings(refl, setIdx)[bindingIdx];
+}
+
+TKit::Span<const PushConstantRange> Reflection_GetPushConstantRanges(Reflection refl);
+const PushConstantRange &Reflection_GetPushConstantRange(const Reflection refl, const u32 rangeIdx = 0)
+{
+    return Reflection_GetPushConstantRanges(refl)[rangeIdx];
+}
+
+TKit::Span<const ShaderStageInfo> Reflection_GetShaderStages(Reflection refl);
+const ShaderStageInfo &Reflection_GetShaderStage(const Reflection refl, const u32 shaderIdx = 0)
+{
+    return Reflection_GetShaderStages(refl)[shaderIdx];
+}
+
+TKit::Span<const VertexAttributeReflectionInfo> Reflection_GetVertexAttributes(Reflection refl);
+const VertexAttributeReflectionInfo &Reflection_GetVertexAttribute(const Reflection refl, const u32 attIdx = 0)
+{
+    return Reflection_GetVertexAttributes(refl)[attIdx];
+}
+
+PipelineLayout Reflection_GetPipelineLayout(Reflection refl);
+
+bool Reflection_IsHandleValid(Reflection refl);
 
 #endif
 } // namespace Graph

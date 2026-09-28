@@ -89,6 +89,7 @@ using DescriptorSet = Handle;
 using DescriptorSetLayout = Handle;
 using Shader = Handle;
 using Compilation = Handle;
+using Reflection = Handle;
 using PipelineLayout = Handle;
 using Pipeline = Handle;
 

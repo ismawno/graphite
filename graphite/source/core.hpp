@@ -55,6 +55,11 @@ void Compilation_Initialize(u32 maxCompilations);
 void Compilation_Terminate();
 #endif
 
+#ifdef GRAPH_HAS_SHADER_REFLECTION_BACKEND
+void Reflection_Initialize(u32 maxReflections);
+void Reflection_Terminate();
+#endif
+
 void Pipeline_Initialize(u32 maxLayouts, u32 maxPipelines);
 void Pipeline_Terminate();
 

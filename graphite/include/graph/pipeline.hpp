@@ -58,8 +58,11 @@ struct VertexBinding
     VertexInputRate InputRate = VertexInputRate_Vertex;
 };
 
+#define GRAPH_INDEXED_LOCATION TKIT_U32_MAX
+
 struct VertexAttribute
 {
+    u32 Location = GRAPH_INDEXED_LOCATION;
     u32 Binding = 0;
     u32 Offset = 0;
     Format Format = Format_Undefined;

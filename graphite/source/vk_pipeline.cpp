@@ -116,7 +116,7 @@ Pipeline Pipeline_CreateGraphics(const PipelineLayout layout, const GraphicsPipe
     for (const VertexBinding &vbinding : specs.VertexBindings)
         builder.AddBindingDescription(vbinding.Stride, ToVulkan(vbinding.InputRate));
     for (const VertexAttribute &vatt : specs.VertexAttributes)
-        builder.AddAttributeDescription(vatt.Binding, ToVulkan(vatt.Format), vatt.Offset);
+        builder.AddAttributeDescription(vatt.Binding, ToVulkan(vatt.Format), vatt.Offset, vatt.Location);
     for (const ColorAttachment &catt : specs.ColorAttachments)
     {
         builder.BeginColorAttachment()

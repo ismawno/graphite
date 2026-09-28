@@ -17,6 +17,12 @@ if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
     list(APPEND SOURCES source/glfw_platform.cpp source/vk_glfw_platform.cpp)
   endif()
 endif()
+if(GRAPHITE_SHADER_COMPILATION_BACKEND STREQUAL "slang")
+  list(APPEND SOURCES source/slang_shader.cpp)
+endif()
+if(GRAPHITE_SHADER_REFLECTION_BACKEND STREQUAL "spirv-reflect")
+  list(APPEND SOURCES source/spirv_shader.cpp)
+endif()
 
 add_library(graphite STATIC ${SOURCES})
 
@@ -57,8 +63,8 @@ if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
       message(STATUS "GRAPHITE - GLFW found")
     endif()
 
-    target_compile_definitions(graphite PRIVATE GRAPH_HAS_PLATFORM_BACKEND
-                                                GRAPH_PLATFORM_BACKEND_GLFW)
+    target_compile_definitions(graphite PUBLIC GRAPH_HAS_PLATFORM_BACKEND
+                                               GRAPH_PLATFORM_BACKEND_GLFW)
     target_link_libraries(graphite PRIVATE glfw)
   endif()
 
@@ -153,6 +159,49 @@ if(GRAPHITE_SHADER_COMPILATION_BACKEND STREQUAL "slang")
 
     target_link_libraries(graphite PRIVATE slang)
   endif()
-  target_compile_definitions(graphite
-                             PUBLIC GRAPH_HAS_SHADER_COMPILATION_BACKEND)
+  target_compile_definitions(
+    graphite PUBLIC GRAPH_HAS_SHADER_COMPILATION_BACKEND
+                    GRAPH_SHADER_COMPILATION_BACKEND_SLANG)
+endif()
+
+if(GRAPHITE_SHADER_REFLECTION_BACKEND STREQUAL "spirv-reflect")
+
+  FetchContent_Declare(
+    spirv-reflect
+    GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect.git
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE)
+
+  set(SPIRV_REFLECT_EXECUTABLE
+      OFF
+      CACHE BOOL "" FORCE)
+  set(SPIRV_REFLECT_STATIC_LIB
+      ON
+      CACHE BOOL "" FORCE)
+  set(SPIRV_REFLECT_SHARED_LIB
+      OFF
+      CACHE BOOL "" FORCE)
+  set(SPIRV_REFLECT_BUILD_TESTS
+      OFF
+      CACHE BOOL "" FORCE)
+  set(SPIRV_REFLECT_ENABLE_ASSERTS
+      OFF
+      CACHE BOOL "" FORCE)
+  set(SPIRV_REFLECT_ENABLE_ASAN
+      OFF
+      CACHE BOOL "" FORCE)
+  set(SPIRV_REFLECT_INSTALL
+      OFF
+      CACHE BOOL "" FORCE)
+
+  FetchContent_MakeAvailable(spirv-reflect)
+  tkit_configure_compile_link_options(spirv-reflect-static NO_EXCEPTIONS
+                                      NO_RTTI)
+
+  target_compile_definitions(
+    graphite PUBLIC GRAPH_HAS_SHADER_REFLECTION_BACKEND
+                    GRAPH_SHADER_REFLECTION_BACKEND_SLANG)
+  target_link_libraries(graphite PRIVATE spirv-reflect-static)
+
 endif()
