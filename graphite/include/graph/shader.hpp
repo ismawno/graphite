@@ -337,36 +337,70 @@ struct VertexAttributeReflectionInfo
     Format Format;
 };
 
-Reflection Reflection_Create(TKit::Span<const Shader> shaders);
+struct DescriptorSetReflectionInfo
+{
+    u32 Set;
+    TKit::TierArray<DescriptorBinding> Bindings{};
+    const DescriptorBinding *FindBinding(const u32 binding) const
+    {
+        for (const DescriptorBinding &b : Bindings)
+            if (b.Binding == binding)
+                return &b;
+        return nullptr;
+    }
+    DescriptorBinding *FindBinding(const u32 binding)
+    {
+        for (DescriptorBinding &b : Bindings)
+            if (b.Binding == binding)
+                return &b;
+        return nullptr;
+    }
+};
+
+Reflection Reflection_Create(TKit::Span<const SpirvData> spirv);
 void Reflection_Destroy(Reflection refl);
 
-u32 Reflection_GetDescriptorSetCount(Reflection refl);
+TKit::Span<DescriptorSetReflectionInfo> Reflection_GetDescriptorSets(Reflection refl);
+inline DescriptorSetReflectionInfo &Reflection_GetDescriptorSet(const Reflection refl, const u32 setIdx = 0)
+{
+    return Reflection_GetDescriptorSets(refl)[setIdx];
+}
+inline DescriptorSetReflectionInfo *Reflection_FindDescriptorSet(const Reflection refl, const u32 set)
+{
+    for (DescriptorSetReflectionInfo &info : Reflection_GetDescriptorSets(refl))
+        if (info.Set == set)
+            return &info;
+    return nullptr;
+}
+inline DescriptorBinding *Reflection_FindBinding(const Reflection refl, const u32 set, const u32 binding)
+{
+    DescriptorSetReflectionInfo *sinfo = Reflection_FindDescriptorSet(refl, set);
+    return sinfo ? sinfo->FindBinding(binding) : nullptr;
+}
 
-TKit::Span<const DescriptorBinding> Reflection_GetBindings(Reflection refl, u32 setIdx = 0);
-const DescriptorBinding &Reflection_GetBinding(const Reflection refl, const u32 setIdx = 0, const u32 bindingIdx = 0)
+TKit::Span<DescriptorBinding> Reflection_GetBindings(Reflection refl, u32 setIdx = 0);
+inline DescriptorBinding &Reflection_GetBinding(const Reflection refl, const u32 setIdx = 0, const u32 bindingIdx = 0)
 {
     return Reflection_GetBindings(refl, setIdx)[bindingIdx];
 }
 
-TKit::Span<const PushConstantRange> Reflection_GetPushConstantRanges(Reflection refl);
-const PushConstantRange &Reflection_GetPushConstantRange(const Reflection refl, const u32 rangeIdx = 0)
+TKit::Span<PushConstantRange> Reflection_GetPushConstantRanges(Reflection refl);
+inline PushConstantRange &Reflection_GetPushConstantRange(const Reflection refl, const u32 rangeIdx = 0)
 {
     return Reflection_GetPushConstantRanges(refl)[rangeIdx];
 }
 
-TKit::Span<const ShaderStageInfo> Reflection_GetShaderStages(Reflection refl);
-const ShaderStageInfo &Reflection_GetShaderStage(const Reflection refl, const u32 shaderIdx = 0)
+TKit::Span<ShaderStageInfo> Reflection_GetShaderStages(Reflection refl);
+inline ShaderStageInfo &Reflection_GetShaderStage(const Reflection refl, const u32 shaderIdx = 0)
 {
     return Reflection_GetShaderStages(refl)[shaderIdx];
 }
 
-TKit::Span<const VertexAttributeReflectionInfo> Reflection_GetVertexAttributes(Reflection refl);
-const VertexAttributeReflectionInfo &Reflection_GetVertexAttribute(const Reflection refl, const u32 attIdx = 0)
+TKit::Span<VertexAttributeReflectionInfo> Reflection_GetVertexAttributes(Reflection refl);
+inline VertexAttributeReflectionInfo &Reflection_GetVertexAttribute(const Reflection refl, const u32 attIdx = 0)
 {
     return Reflection_GetVertexAttributes(refl)[attIdx];
 }
-
-PipelineLayout Reflection_GetPipelineLayout(Reflection refl);
 
 bool Reflection_IsHandleValid(Reflection refl);
 

@@ -86,7 +86,7 @@ static u32 toGlfw(const MouseCursor cursor)
     case MouseCursor_NotAllowed:
         return GLFW_NOT_ALLOWED_CURSOR;
     default:
-        TKIT_FATAL("[ONYX][WINDOW] Failed to find cursors");
+        TKIT_FATAL("[GRAPH][WINDOW] Failed to find cursors");
         return TKIT_U32_MAX;
     }
 }
@@ -780,11 +780,11 @@ Window Window_Create(const WindowSpecs &specs)
     if (specs.Position != i32v2{TKIT_I32_MAX})
     {
         TKIT_ASSERT(specs.Position[0] < TKIT_I32_MAX,
-                    "[ONYX][PLATFORM] If component y of the window position is not "
+                    "[GRAPH][PLATFORM] If component y of the window position is not "
                     "TKIT_I32_MAX, component x must not be either. Passed position is ({}, {})",
                     specs.Position[0], specs.Position[1]);
         TKIT_ASSERT(specs.Position[1] < TKIT_I32_MAX,
-                    "[ONYX][PLATFORM] If component x of the window position is not "
+                    "[GRAPH][PLATFORM] If component x of the window position is not "
                     "TKIT_I32_MAX, component y must not be either. Passed position is ({}, {})",
                     specs.Position[0], specs.Position[1]);
 

@@ -109,6 +109,7 @@ enum HandleType : u8
     Handle_DescriptorSetLayout,
     Handle_Shader,
     Handle_Compilation,
+    Handle_Reflection,
     Handle_PipelineLayout,
     Handle_Pipeline,
     Handle_Count,
@@ -196,6 +197,7 @@ enum MouseCursor : u8
 enum DescriptorType : u8
 {
     Descriptor_StorageBuffer,
+    Descriptor_UniformBuffer,
     Descriptor_Sampler,
     Descriptor_SampledImage,
     Descriptor_CombinedImageSampler,

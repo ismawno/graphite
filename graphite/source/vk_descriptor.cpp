@@ -29,6 +29,7 @@ void Descriptor_Initialize(const u32 maxSets, const TKit::FixedArray<u32, Descri
         VKit::DescriptorPool::Builder(GetDevice())
             .SetMaxSets(maxSets)
             .AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, poolSizes[Descriptor_StorageBuffer])
+            .AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, poolSizes[Descriptor_UniformBuffer])
             .AddPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, poolSizes[Descriptor_Sampler])
             .AddPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, poolSizes[Descriptor_SampledImage])
             .AddPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, poolSizes[Descriptor_CombinedImageSampler])

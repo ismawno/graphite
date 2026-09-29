@@ -591,7 +591,7 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
             index = i;
         }
     }
-    TKIT_ASSERT(index != TKIT_U32_MAX, "[ONYX][SHADERS] Entry point named '{}' was not found", entryPoint);
+    TKIT_ASSERT(index != TKIT_U32_MAX, "[GRAPH][SHADERS] Entry point named '{}' was not found", entryPoint);
     return compilation[index].Spirv;
 }
 
@@ -615,7 +615,7 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
             index = i;
         }
     }
-    TKIT_ASSERT(index != TKIT_U32_MAX, "[ONYX][SHADERS] Entry point named '{}' was not found", entryPoint);
+    TKIT_ASSERT(index != TKIT_U32_MAX, "[GRAPH][SHADERS] Entry point named '{}' was not found", entryPoint);
     return compilation[index].Spirv;
 }
 

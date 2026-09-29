@@ -1027,6 +1027,8 @@ VkDescriptorType ToVulkan(const DescriptorType type)
     {
     case Descriptor_StorageBuffer:
         return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    case Descriptor_UniformBuffer:
+        return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     case Descriptor_Sampler:
         return VK_DESCRIPTOR_TYPE_SAMPLER;
     case Descriptor_SampledImage:

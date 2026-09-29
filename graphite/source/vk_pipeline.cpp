@@ -45,6 +45,9 @@ void Pipeline_Terminate()
 {
     GRAPH_CLEANUP_WITH_WARNING(s_Layouts, "PIPELINE", "pipeline layouts");
     GRAPH_CLEANUP_WITH_WARNING_LAMBDA(s_Pipelines, "PIPELINE", "pipelines", pipeline_Destroy);
+
+    s_Layouts.Destruct();
+    s_Pipelines.Destruct();
 }
 
 PipelineLayout PipelineLayout_Create(const PipelineLayoutSpecs &specs)

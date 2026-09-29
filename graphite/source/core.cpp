@@ -74,6 +74,8 @@ const char *ToString(const HandleType htype)
         return "Handle_Shader";
     case Handle_Compilation:
         return "Handle_Compilation";
+    case Handle_Reflection:
+        return "Handle_Reflection";
     case Handle_PipelineLayout:
         return "Handle_PipelineLayout";
     case Handle_Pipeline:
