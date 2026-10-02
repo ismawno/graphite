@@ -5,27 +5,54 @@
 
 namespace Graph
 {
-using BufferFlags = u16;
-enum BufferFlagBit : BufferFlags
-{
-    BufferFlag_DeviceLocal = 1U << 0,
-    BufferFlag_HostVisible = 1U << 1,
-    BufferFlag_Source = 1U << 2,
-    BufferFlag_Destination = 1U << 3,
-    BufferFlag_Staging = 1U << 4,
-    BufferFlag_Vertex = 1U << 5,
-    BufferFlag_Index = 1U << 6,
-    BufferFlag_Storage = 1U << 7,
-    BufferFlag_Indirect = 1U << 8,
-    BufferFlag_HostMapped = 1U << 9,
-    BufferFlag_HostRandomAccess = 1U << 10,
-};
-
 struct BufferCopy
 {
     usz Size;
     usz SrcOffset = 0;
     usz DstOffset = 0;
+};
+
+#define GRAPH_WHOLE_THING TKIT_U32_MAX
+
+struct ImageSubresourceLayers
+{
+    u32 MipLevel = 0;
+    u32 LayerStart = 0;
+    u32 LayerCount = GRAPH_WHOLE_THING;
+    ImageAspectFlags Aspect = ImageAspectFlag_Auto;
+};
+
+struct ImageSubresourceRange
+{
+    u32 MipStart = 0;
+    u32 MipCount = GRAPH_WHOLE_THING;
+    u32 LayerStart = 0;
+    u32 LayerCount = GRAPH_WHOLE_THING;
+    ImageAspectFlags Aspect = ImageAspectFlag_Auto;
+};
+
+struct BufferImageCopy
+{
+    usz BufferOffset = 0;
+    u32 BufferRowLength = 0;
+    u32 BufferImageHeight = 0;
+    ImageSubresourceLayers Layers{};
+    u32v3 ImageOffset{0};
+    u32v3 ImageExtent{GRAPH_WHOLE_THING};
+};
+
+struct ImageBlit
+{
+    ImageAspectFlags Aspect = ImageAspectFlag_Auto;
+    u32 SrcMip = 0;
+    u32 DstMip = 0;
+    u32 SrcLayerStart = 0;
+    u32 DstLayerStart = 0;
+    u32 LayerCount = 1;
+    u32v3 SrcMin{0};
+    u32v3 SrcMax{GRAPH_WHOLE_THING};
+    u32v3 DstMin{0};
+    u32v3 DstMax{GRAPH_WHOLE_THING};
 };
 
 Buffer Buffer_Create(usz size, BufferFlags flags);
@@ -54,35 +81,6 @@ void Buffer_Flush(Buffer buffer);
 
 void Buffer_SetName(Buffer buffer, const char *name);
 bool Buffer_IsHandleValid(Buffer buffer);
-
-using ImageFlags = u16;
-enum ImageFlagBit : ImageFlags
-{
-    ImageFlag_Color = 1U << 0,
-    ImageFlag_Depth = 1U << 1,
-    ImageFlag_Stencil = 1U << 2,
-    ImageFlag_ColorAttachment = 1U << 3,
-    ImageFlag_DepthAttachment = 1U << 4,
-    ImageFlag_StencilAttachment = 1U << 5,
-    ImageFlag_InputAttachment = 1U << 6,
-    ImageFlag_Sampled = 1U << 7,
-    ImageFlag_Storage = 1U << 8,
-    ImageFlag_ForceHostVisible = 1U << 9,
-    ImageFlag_Source = 1U << 10,
-    ImageFlag_Destination = 1U << 11,
-    ImageFlag_CubeCompatible = 1U << 12,
-};
-
-#define GRAPH_IMAGE_SUBRESOURCE_RANGE_AUTO TKIT_U32_MAX
-
-struct ImageSubresourceRange
-{
-    ImageAspectFlags Aspect = ImageAspectFlag_Auto;
-    u32 MipStart = GRAPH_IMAGE_SUBRESOURCE_RANGE_AUTO;
-    u32 MipCount = GRAPH_IMAGE_SUBRESOURCE_RANGE_AUTO;
-    u32 LayerStart = GRAPH_IMAGE_SUBRESOURCE_RANGE_AUTO;
-    u32 LayerCount = GRAPH_IMAGE_SUBRESOURCE_RANGE_AUTO;
-};
 
 struct ImageViewSpecs
 {

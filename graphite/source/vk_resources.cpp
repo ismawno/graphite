@@ -50,7 +50,7 @@ void Resources_Terminate()
 Buffer Buffer_Create(const usz size, const BufferFlags flags)
 {
     const VKit::DeviceBuffer buff = GRAPH_CHECK_VKIT_RESULT(
-        VKit::DeviceBuffer::Builder(GetDevice(), GetAllocator(), VKit::DeviceBufferFlags(flags)).SetSize(size).Build());
+        VKit::DeviceBuffer::Builder(GetDevice(), GetAllocator(), ToVulkanBufferFlags(flags)).SetSize(size).Build());
 
     return Handle_Create(Handle_Buffer, s_Buffers->Insert(buff));
 }
@@ -118,7 +118,7 @@ Image Image_Create(const u32v3 &size, const ImageSpecs &specs, const ImageFlags 
         formats.Append(ToVulkan(fmt));
 
     VKit::DeviceImage::Builder builder{
-        GetDevice(), GetAllocator(), {size[0], size[1], size[2]}, formats, VKit::DeviceImageFlags(flags)};
+        GetDevice(), GetAllocator(), {size[0], size[1], size[2]}, formats, ToVulkanImageFlags(flags)};
     builder.SetMipLevels(specs.MipLevels)
         .SetArrayLayers(specs.ArrayLayers)
         .SetImageType(ToVulkan(specs.Type))
@@ -167,11 +167,7 @@ ImageView Image_AddView(const Image img, const ImageViewSpecs &specs)
     VkImageViewCreateInfo info{};
     info.image = VK_NULL_HANDLE;
     info.viewType = ToVulkan(specs.Type);
-    info.subresourceRange.aspectMask = ToVulkanImageAspectFlags(specs.Range.Aspect);
-    info.subresourceRange.baseMipLevel = specs.Range.MipStart;
-    info.subresourceRange.levelCount = specs.Range.MipCount;
-    info.subresourceRange.baseArrayLayer = specs.Range.LayerStart;
-    info.subresourceRange.layerCount = specs.Range.LayerCount;
+    info.subresourceRange = ToVulkan(image, specs.Range);
     info.format = ToVulkan(specs.Format);
     const VkImageView view = GRAPH_CHECK_VKIT_RESULT(image.AddImageView(info));
 

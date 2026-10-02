@@ -232,4 +232,10 @@ VKit::PipelineLayout &GetPipelineLayout(const PipelineLayout layout)
     return s_Layouts->At(Handle_GetId(layout));
 }
 
+void BindPipeline(const VkCommandBuffer cmd, const Pipeline pip)
+{
+    GRAPH_CHECK_HANDLE(pip, Handle_Pipeline);
+    pipeline_Visit(s_Pipelines->At(Handle_GetId(pip)), [cmd](const auto &p) { p.Bind(cmd); });
+}
+
 } // namespace Graph

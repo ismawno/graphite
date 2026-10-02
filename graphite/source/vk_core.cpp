@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include "graph/resources.hpp"
 #include "vk_core.hpp"
 #include "vk_error.hpp"
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
@@ -721,7 +722,7 @@ VkImageViewType ToVulkan(const ImageViewType type)
 
 VkImageAspectFlags ToVulkanImageAspectFlags(const ImageAspectFlags aspects)
 {
-    VkImageAspectFlags result = 0;
+    VkImageAspectFlags result = VK_IMAGE_ASPECT_NONE;
     if (aspects & ImageAspectFlag_Color)
         result |= VK_IMAGE_ASPECT_COLOR_BIT;
     if (aspects & ImageAspectFlag_Depth)
@@ -729,6 +730,10 @@ VkImageAspectFlags ToVulkanImageAspectFlags(const ImageAspectFlags aspects)
     if (aspects & ImageAspectFlag_Stencil)
         result |= VK_IMAGE_ASPECT_STENCIL_BIT;
     return result;
+}
+VkImageAspectFlags ToVulkanImageAspectFlags(const VKit::DeviceImage &img, const ImageAspectFlags aspects)
+{
+    return (aspects & ImageAspectFlag_Auto) ? img.InferAspectMask() : ToVulkanImageAspectFlags(aspects);
 }
 
 VkSamplerMipmapMode ToVulkan(const SamplerMode mode)
@@ -1041,5 +1046,241 @@ VkDescriptorType ToVulkan(const DescriptorType type)
         TKIT_FATAL("[GRAPH] Unknown descriptor type: {}", u32(type));
         return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
     }
+}
+VkAttachmentLoadOp ToVulkan(const LoadOp op)
+{
+    switch (op)
+    {
+    case LoadOp_Load:
+        return VK_ATTACHMENT_LOAD_OP_LOAD;
+    case LoadOp_Clear:
+        return VK_ATTACHMENT_LOAD_OP_CLEAR;
+    case LoadOp_DontCare:
+        return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown load operation: {}", u32(op));
+        return VK_ATTACHMENT_LOAD_OP_LOAD;
+    }
+}
+VkAttachmentStoreOp ToVulkan(const StoreOp op)
+{
+    switch (op)
+    {
+    case StoreOp_Store:
+        return VK_ATTACHMENT_STORE_OP_STORE;
+    case StoreOp_DontCare:
+        return VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown store operation: {}", u32(op));
+        return VK_ATTACHMENT_STORE_OP_STORE;
+    }
+}
+
+VkResolveModeFlagBits ToVulkan(const ResolveMode mode)
+{
+    switch (mode)
+    {
+    case Resolve_None:
+        return VK_RESOLVE_MODE_NONE;
+    case Resolve_SampleZero:
+        return VK_RESOLVE_MODE_SAMPLE_ZERO_BIT;
+    case Resolve_Average:
+        return VK_RESOLVE_MODE_AVERAGE_BIT;
+    case Resolve_Min:
+        return VK_RESOLVE_MODE_MIN_BIT;
+    case Resolve_Max:
+        return VK_RESOLVE_MODE_MAX_BIT;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown resolve mode: {}", u32(mode));
+        return VK_RESOLVE_MODE_NONE;
+    }
+}
+VkPipelineStageFlags2KHR ToVulkanPipelineStageFlags(const PipelineStageFlags stages)
+{
+    VkPipelineStageFlags2KHR result = VK_PIPELINE_STAGE_2_NONE_KHR;
+    if (stages & PipelineStageFlag_DrawIndirect)
+        result |= VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT_KHR;
+    if (stages & PipelineStageFlag_VertexInput)
+        result |= VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
+    if (stages & PipelineStageFlag_VertexShader)
+        result |= VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT_KHR;
+    if (stages & PipelineStageFlag_FragmentShader)
+        result |= VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR;
+    if (stages & PipelineStageFlag_EarlyFragmentTests)
+        result |= VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR;
+    if (stages & PipelineStageFlag_LateFragmentTests)
+        result |= VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT_KHR;
+    if (stages & PipelineStageFlag_ColorAttachmentOutput)
+        result |= VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR;
+    if (stages & PipelineStageFlag_ComputeShader)
+        result |= VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
+    if (stages & PipelineStageFlag_Transfer)
+        result |= VK_PIPELINE_STAGE_2_TRANSFER_BIT_KHR;
+    if (stages & PipelineStageFlag_Host)
+        result |= VK_PIPELINE_STAGE_2_HOST_BIT_KHR;
+    if (stages & PipelineStageFlag_AllCommands)
+        result |= VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
+    return result;
+}
+
+VkPipelineBindPoint ToVulkan(const BindPoint point)
+{
+    switch (point)
+    {
+    case BindPoint_Graphics:
+        return VK_PIPELINE_BIND_POINT_GRAPHICS;
+    case BindPoint_Compute:
+        return VK_PIPELINE_BIND_POINT_COMPUTE;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown bind point: {}", u32(point));
+        return VK_PIPELINE_BIND_POINT_GRAPHICS;
+    }
+}
+
+VkIndexType ToVulkan(const IndexType type)
+{
+    switch (type)
+    {
+    case IndexType_Unsigned8:
+        return VK_INDEX_TYPE_UINT8_EXT;
+    case IndexType_Unsigned16:
+        return VK_INDEX_TYPE_UINT16;
+    case IndexType_Unsigned32:
+        return VK_INDEX_TYPE_UINT32;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown index type: {}", u32(type));
+        return VK_INDEX_TYPE_UINT32;
+    }
+}
+
+VkAccessFlags2KHR ToVulkanAccessFlags(const AccessFlags access)
+{
+    VkAccessFlags2KHR result = VK_ACCESS_2_NONE_KHR;
+    if (access & AccessFlag_IndirectCommandRead)
+        result |= VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT_KHR;
+    if (access & AccessFlag_IndexRead)
+        result |= VK_ACCESS_2_INDEX_READ_BIT_KHR;
+    if (access & AccessFlag_VertexAttributeRead)
+        result |= VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR;
+    if (access & AccessFlag_UniformRead)
+        result |= VK_ACCESS_2_UNIFORM_READ_BIT_KHR;
+    if (access & AccessFlag_ShaderRead)
+        result |= VK_ACCESS_2_SHADER_READ_BIT_KHR;
+    if (access & AccessFlag_ShaderWrite)
+        result |= VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
+    if (access & AccessFlag_ColorAttachmentRead)
+        result |= VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT_KHR;
+    if (access & AccessFlag_ColorAttachmentWrite)
+        result |= VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR;
+    if (access & AccessFlag_DepthStencilAttachmentRead)
+        result |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT_KHR;
+    if (access & AccessFlag_DepthStencilAttachmentWrite)
+        result |= VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT_KHR;
+    if (access & AccessFlag_TransferRead)
+        result |= VK_ACCESS_2_TRANSFER_READ_BIT_KHR;
+    if (access & AccessFlag_TransferWrite)
+        result |= VK_ACCESS_2_TRANSFER_WRITE_BIT_KHR;
+    if (access & AccessFlag_HostRead)
+        result |= VK_ACCESS_2_HOST_READ_BIT_KHR;
+    if (access & AccessFlag_HostWrite)
+        result |= VK_ACCESS_2_HOST_WRITE_BIT_KHR;
+    if (access & AccessFlag_MemoryRead)
+        result |= VK_ACCESS_2_MEMORY_READ_BIT_KHR;
+    if (access & AccessFlag_MemoryWrite)
+        result |= VK_ACCESS_2_MEMORY_WRITE_BIT_KHR;
+    return result;
+}
+VKit::DeviceBufferFlags ToVulkanBufferFlags(const BufferFlags flags)
+{
+    VKit::DeviceBufferFlags result = 0;
+    if (flags & BufferFlag_DeviceLocal)
+        result |= VKit::DeviceBufferFlag_DeviceLocal;
+    if (flags & BufferFlag_HostVisible)
+        result |= VKit::DeviceBufferFlag_HostVisible;
+    if (flags & BufferFlag_Source)
+        result |= VKit::DeviceBufferFlag_Source;
+    if (flags & BufferFlag_Destination)
+        result |= VKit::DeviceBufferFlag_Destination;
+    if (flags & BufferFlag_Staging)
+        result |= VKit::DeviceBufferFlag_Staging;
+    if (flags & BufferFlag_Vertex)
+        result |= VKit::DeviceBufferFlag_Vertex;
+    if (flags & BufferFlag_Index)
+        result |= VKit::DeviceBufferFlag_Index;
+    if (flags & BufferFlag_Storage)
+        result |= VKit::DeviceBufferFlag_Storage;
+    if (flags & BufferFlag_Indirect)
+        result |= VKit::DeviceBufferFlag_Indirect;
+    if (flags & BufferFlag_HostMapped)
+        result |= VKit::DeviceBufferFlag_HostMapped;
+    if (flags & BufferFlag_HostRandomAccess)
+        result |= VKit::DeviceBufferFlag_HostRandomAccess;
+    return result;
+}
+
+VKit::DeviceImageFlags ToVulkanImageFlags(const ImageFlags flags)
+{
+    VKit::DeviceImageFlags result = 0;
+    if (flags & ImageFlag_Color)
+        result |= VKit::DeviceImageFlag_Color;
+    if (flags & ImageFlag_Depth)
+        result |= VKit::DeviceImageFlag_Depth;
+    if (flags & ImageFlag_Stencil)
+        result |= VKit::DeviceImageFlag_Stencil;
+    if (flags & ImageFlag_ColorAttachment)
+        result |= VKit::DeviceImageFlag_ColorAttachment;
+    if (flags & ImageFlag_DepthAttachment)
+        result |= VKit::DeviceImageFlag_DepthAttachment;
+    if (flags & ImageFlag_StencilAttachment)
+        result |= VKit::DeviceImageFlag_StencilAttachment;
+    if (flags & ImageFlag_InputAttachment)
+        result |= VKit::DeviceImageFlag_InputAttachment;
+    if (flags & ImageFlag_Sampled)
+        result |= VKit::DeviceImageFlag_Sampled;
+    if (flags & ImageFlag_Storage)
+        result |= VKit::DeviceImageFlag_Storage;
+    if (flags & ImageFlag_ForceHostVisible)
+        result |= VKit::DeviceImageFlag_ForceHostVisible;
+    if (flags & ImageFlag_Source)
+        result |= VKit::DeviceImageFlag_Source;
+    if (flags & ImageFlag_Destination)
+        result |= VKit::DeviceImageFlag_Destination;
+    return result;
+}
+
+VKit::QueueType ToVulkan(const QueueType type)
+{
+    switch (type)
+    {
+    case Queue_Graphics:
+        return VKit::Queue_Graphics;
+    case Queue_Transfer:
+        return VKit::Queue_Transfer;
+    case Queue_Compute:
+        return VKit::Queue_Compute;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown queue type: {}", u32(type));
+        return VKit::Queue_Graphics;
+    }
+}
+
+VkImageSubresourceRange ToVulkan(const VKit::DeviceImage &img, const ImageSubresourceRange &range)
+{
+    VkImageSubresourceRange r{};
+    r.aspectMask = ToVulkanImageAspectFlags(img, range.Aspect);
+    r.baseMipLevel = range.MipStart;
+    r.levelCount = range.MipCount == GRAPH_WHOLE_THING ? img.GetInfo().MipLevels : range.MipCount;
+    r.baseArrayLayer = range.LayerStart;
+    r.layerCount = range.LayerCount == GRAPH_WHOLE_THING ? img.GetInfo().ArrayLayers : range.LayerCount;
+    return r;
+}
+VkImageSubresourceLayers ToVulkan(const VKit::DeviceImage &img, const ImageSubresourceLayers &layers)
+{
+    VkImageSubresourceLayers l{};
+    l.aspectMask = ToVulkanImageAspectFlags(img, layers.Aspect);
+    l.mipLevel = layers.MipLevel;
+    l.baseArrayLayer = layers.LayerStart;
+    l.layerCount = layers.LayerCount == GRAPH_WHOLE_THING ? img.GetInfo().ArrayLayers : layers.LayerCount;
+    return l;
 }
 } // namespace Graph

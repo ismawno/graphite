@@ -523,6 +523,121 @@ enum DynamicStateFlagBit : DynamicStateFlags
     DynamicStateFlag_CullMode = 1U << 2,
 };
 
+enum LoadOp : u8
+{
+    LoadOp_Load,
+    LoadOp_Clear,
+    LoadOp_DontCare,
+};
+
+enum StoreOp : u8
+{
+    StoreOp_Store,
+    StoreOp_DontCare,
+};
+
+enum ResolveMode : u8
+{
+    Resolve_None,
+    Resolve_SampleZero,
+    Resolve_Average,
+    Resolve_Min,
+    Resolve_Max,
+};
+
+enum QueueType : u8
+{
+    Queue_Graphics,
+    Queue_Transfer,
+    Queue_Compute,
+    Queue_Count,
+    Queue_None = Queue_Count
+};
+
+using BufferFlags = u16;
+enum BufferFlagBit : BufferFlags
+{
+    BufferFlag_DeviceLocal = 1U << 0,
+    BufferFlag_HostVisible = 1U << 1,
+    BufferFlag_Source = 1U << 2,
+    BufferFlag_Destination = 1U << 3,
+    BufferFlag_Staging = 1U << 4,
+    BufferFlag_Vertex = 1U << 5,
+    BufferFlag_Index = 1U << 6,
+    BufferFlag_Storage = 1U << 7,
+    BufferFlag_Indirect = 1U << 8,
+    BufferFlag_HostMapped = 1U << 9,
+    BufferFlag_HostRandomAccess = 1U << 10,
+};
+
+using ImageFlags = u16;
+enum ImageFlagBit : ImageFlags
+{
+    ImageFlag_Color = 1U << 0,
+    ImageFlag_Depth = 1U << 1,
+    ImageFlag_Stencil = 1U << 2,
+    ImageFlag_ColorAttachment = 1U << 3,
+    ImageFlag_DepthAttachment = 1U << 4,
+    ImageFlag_StencilAttachment = 1U << 5,
+    ImageFlag_InputAttachment = 1U << 6,
+    ImageFlag_Sampled = 1U << 7,
+    ImageFlag_Storage = 1U << 8,
+    ImageFlag_ForceHostVisible = 1U << 9,
+    ImageFlag_Source = 1U << 10,
+    ImageFlag_Destination = 1U << 11,
+    ImageFlag_CubeCompatible = 1U << 12,
+};
+
+using PipelineStageFlags = u16;
+enum PipelineStageFlagBit : PipelineStageFlags
+{
+    PipelineStageFlag_DrawIndirect = 1U << 0,
+    PipelineStageFlag_VertexInput = 1U << 1,
+    PipelineStageFlag_VertexShader = 1U << 2,
+    PipelineStageFlag_FragmentShader = 1U << 3,
+    PipelineStageFlag_EarlyFragmentTests = 1U << 4,
+    PipelineStageFlag_LateFragmentTests = 1U << 5,
+    PipelineStageFlag_ColorAttachmentOutput = 1U << 6,
+    PipelineStageFlag_ComputeShader = 1U << 7,
+    PipelineStageFlag_Transfer = 1U << 8,
+    PipelineStageFlag_Host = 1U << 9,
+    PipelineStageFlag_AllCommands = 1U << 10,
+};
+
+using AccessFlags = u16;
+enum AccessFlagBit : AccessFlags
+{
+    AccessFlag_IndirectCommandRead = 1U << 0,
+    AccessFlag_IndexRead = 1U << 1,
+    AccessFlag_VertexAttributeRead = 1U << 2,
+    AccessFlag_UniformRead = 1U << 3,
+    AccessFlag_ShaderRead = 1U << 4,
+    AccessFlag_ShaderWrite = 1U << 5,
+    AccessFlag_ColorAttachmentRead = 1U << 6,
+    AccessFlag_ColorAttachmentWrite = 1U << 7,
+    AccessFlag_DepthStencilAttachmentRead = 1U << 8,
+    AccessFlag_DepthStencilAttachmentWrite = 1U << 9,
+    AccessFlag_TransferRead = 1U << 10,
+    AccessFlag_TransferWrite = 1U << 11,
+    AccessFlag_HostRead = 1U << 12,
+    AccessFlag_HostWrite = 1U << 13,
+    AccessFlag_MemoryRead = 1U << 14,
+    AccessFlag_MemoryWrite = 1U << 15,
+};
+
+enum BindPoint : u8
+{
+    BindPoint_Graphics,
+    BindPoint_Compute,
+};
+
+enum IndexType : u8
+{
+    IndexType_Unsigned8,
+    IndexType_Unsigned16,
+    IndexType_Unsigned32,
+};
+
 struct Specs
 {
     const char *ApplicationName = "Graphite app";

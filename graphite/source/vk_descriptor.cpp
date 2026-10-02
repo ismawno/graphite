@@ -165,5 +165,10 @@ VKit::DescriptorSetLayout &GetDescriptorSetLayout(const DescriptorSetLayout layo
     GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
     return s_Layouts->At(Handle_GetId(layout));
 }
+VKit::DescriptorSet &GetDescriptorSet(const DescriptorSet set)
+{
+    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSetLayout);
+    return s_Sets->At(Handle_GetId(set)).Set;
+}
 
 } // namespace Graph

@@ -220,11 +220,12 @@ Reflection Reflection_Create(TKit::Span<const SpirvData> spirv)
         for (u32 i = 0; i < module.push_constant_block_count; ++i)
         {
             const SpvReflectBlockVariable &pc = module.push_constant_blocks[i];
-            PushConstantRange *range = refl.FindRange(pc.offset, pc.size);
+            const u32 size = pc.size - pc.offset;
+            PushConstantRange *range = refl.FindRange(pc.offset, size);
             if (!range)
             {
                 range = &refl.PushRanges.Append();
-                range->Size = pc.size;
+                range->Size = size;
                 range->Offset = pc.offset;
                 range->Stages = fromReflect(module.shader_stage);
             }
@@ -260,6 +261,8 @@ Reflection Reflection_Create(TKit::Span<const SpirvData> spirv)
                 TKit::ForwardCopy(data + offset, spec.default_value, spec.default_value_size);
                 offset += spec.default_value_size;
             }
+            sinfo.Specialization.Data = data;
+            sinfo.Specialization.DataSize = totSize;
         }
 
         if (module.shader_stage == SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
@@ -278,6 +281,43 @@ Reflection Reflection_Create(TKit::Span<const SpirvData> spirv)
     }
 
     return Handle_Create(Handle_Reflection, id);
+}
+
+void Reflection_Destroy(const Reflection refl)
+{
+    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
+    GRAPH_DESTROY_FUNCTION_BODY_LAMBDA(s_Reflections, refl, reflection_Destroy);
+}
+
+TKit::Span<DescriptorSetReflectionInfo> Reflection_GetDescriptorSets(const Reflection refl)
+{
+    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
+    return s_Reflections->At(Handle_GetId(refl)).Sets;
+}
+
+TKit::Span<DescriptorBinding> Reflection_GetBindings(const Reflection refl, const u32 setIdx)
+{
+    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
+    return s_Reflections->At(Handle_GetId(refl)).Sets[setIdx].Bindings;
+}
+TKit::Span<PushConstantRange> Reflection_GetPushConstantRanges(const Reflection refl)
+{
+    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
+    return s_Reflections->At(Handle_GetId(refl)).PushRanges;
+}
+TKit::Span<ShaderStageInfo> Reflection_GetShaderStages(const Reflection refl)
+{
+    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
+    return s_Reflections->At(Handle_GetId(refl)).Stages;
+}
+TKit::Span<VertexAttributeReflectionInfo> Reflection_GetVertexAttributes(const Reflection refl)
+{
+    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
+    return s_Reflections->At(Handle_GetId(refl)).VertexAttributes;
+}
+bool Reflection_IsHandleValid(const Reflection refl)
+{
+    GRAPH_IS_HANDLE_VALID_FUNCTION_BODY(s_Reflections, refl, Handle_Reflection);
 }
 
 } // namespace Graph

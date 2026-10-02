@@ -7,12 +7,15 @@
 #include "vkit/resource/device_buffer.hpp"
 #include "vkit/resource/device_image.hpp"
 #include "vkit/resource/sampler.hpp"
-#include "vkit/state/descriptor_set_layout.hpp"
+#include "vkit/state/descriptor_set.hpp"
 #include "vkit/state/pipeline_layout.hpp"
 #include "vkit/state/shader.hpp"
 
 namespace Graph
 {
+struct ImageSubresourceRange;
+struct ImageSubresourceLayers;
+
 VKit::Instance &GetInstance();
 VKit::PhysicalDevice &GetPhysical();
 VKit::LogicalDevice &GetDevice();
@@ -29,8 +32,10 @@ VKit::DeviceImage &GetImage(Image image);
 VkImageView GetImageView(ImageView view);
 VKit::Sampler &GetSampler(Sampler sampler);
 VKit::DescriptorSetLayout &GetDescriptorSetLayout(DescriptorSetLayout layout);
+VKit::DescriptorSet &GetDescriptorSet(DescriptorSet set);
 VKit::Shader &GetShader(Shader sh);
 VKit::PipelineLayout &GetPipelineLayout(PipelineLayout layout);
+void BindPipeline(VkCommandBuffer cmd, Pipeline pip);
 
 void DestroyDummySurface();
 bool IsDebugUtilsEnabled();
@@ -42,6 +47,7 @@ VkSampleCountFlagBits ToVulkan(SampleCount samples);
 VkImageType ToVulkan(ImageType type);
 VkImageViewType ToVulkan(ImageViewType type);
 VkImageAspectFlags ToVulkanImageAspectFlags(ImageAspectFlags aspects);
+VkImageAspectFlags ToVulkanImageAspectFlags(const VKit::DeviceImage &img, ImageAspectFlags aspects);
 VkSamplerMipmapMode ToVulkan(SamplerMode mode);
 VkFilter ToVulkan(Filter filter);
 VkSamplerAddressMode ToVulkan(Wrap wrap);
@@ -58,5 +64,17 @@ VkStencilOp ToVulkan(StencilOp op);
 VkVertexInputRate ToVulkan(VertexInputRate rate);
 VkShaderStageFlags ToVulkanShaderStageFlags(ShaderStageFlags stages);
 VkDescriptorBindingFlags ToVulkanDescriptorBindingFlags(DescriptorBindingFlags flags);
+VkImageSubresourceRange ToVulkan(const VKit::DeviceImage &img, const ImageSubresourceRange &range);
+VkImageSubresourceLayers ToVulkan(const VKit::DeviceImage &img, const ImageSubresourceLayers &layers);
 VkDescriptorType ToVulkan(DescriptorType type);
+VkAttachmentLoadOp ToVulkan(LoadOp op);
+VkAttachmentStoreOp ToVulkan(StoreOp op);
+VkResolveModeFlagBits ToVulkan(ResolveMode mode);
+VkPipelineStageFlags2KHR ToVulkanPipelineStageFlags(PipelineStageFlags stages);
+VkAccessFlags2KHR ToVulkanAccessFlags(AccessFlags access);
+VkPipelineBindPoint ToVulkan(BindPoint point);
+VkIndexType ToVulkan(IndexType type);
+VKit::DeviceBufferFlags ToVulkanBufferFlags(BufferFlags flags);
+VKit::DeviceImageFlags ToVulkanImageFlags(ImageFlags flags);
+VKit::QueueType ToVulkan(QueueType type);
 } // namespace Graph
