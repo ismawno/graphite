@@ -86,7 +86,7 @@ u64 Queue_GetTimelineSubmissions(const Queue queue)
 void Queue_SetName(const Queue queue, const char *name)
 {
     GRAPH_CHECK_HANDLE(queue, Handle_Queue);
-
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][EXECUTION] To name objects, the validation capability must be enabled");
     GRAPH_CHECK_VKIT_RESULT(s_Queues[Handle_GetId(queue)]->SetName(name));
 }
 bool Queue_IsHandleValid(const Queue queue)

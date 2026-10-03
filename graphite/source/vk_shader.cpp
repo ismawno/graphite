@@ -41,6 +41,8 @@ void Shader_Destroy(const Shader sh)
 
 void Shader_SetName(const Shader sh, const char *name)
 {
+    GRAPH_CHECK_HANDLE(sh, Handle_Shader);
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][SHADERS] To name objects, the validation capability must be enabled");
     GRAPH_CHECK_VKIT_RESULT(s_Shaders->At(Handle_GetId(sh)).SetName(name));
 }
 bool Shader_IsHandleValid(const Shader sh)

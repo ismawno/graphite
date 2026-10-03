@@ -70,6 +70,8 @@ void DescriptorSetLayout_Destroy(const DescriptorSetLayout layout)
 void DescriptorSetLayout_SetName(const DescriptorSetLayout layout, const char *name)
 {
     GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
+    TKIT_ASSERT(IsValidationEnabled(),
+                "[GRAPH][DESCRIPTOR] To name objects, the validation capability must be enabled");
     GRAPH_CHECK_VKIT_RESULT(s_Layouts->At(Handle_GetId(layout)).SetName(name));
 }
 
@@ -153,6 +155,8 @@ void DescriptorSet_EndRecordWrite(const DescriptorSet set)
 void DescriptorSet_SetName(const DescriptorSet set, const char *name)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
+    TKIT_ASSERT(IsValidationEnabled(),
+                "[GRAPH][DESCRIPTOR] To name objects, the validation capability must be enabled");
     GRAPH_CHECK_VKIT_RESULT(s_Sets->At(Handle_GetId(set)).Set.SetName(name));
 }
 bool DescriptorSet_IsHandleValid(const DescriptorSet set)

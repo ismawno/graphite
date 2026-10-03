@@ -71,6 +71,7 @@ void PipelineLayout_Destroy(const PipelineLayout layout)
 void PipelineLayout_SetName(const PipelineLayout layout, const char *name)
 {
     GRAPH_CHECK_HANDLE(layout, Handle_PipelineLayout);
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][PIPELINE] To name objects, the validation capability must be enabled");
     GRAPH_CHECK_VKIT_RESULT(s_Layouts->At(Handle_GetId(layout)).SetName(name));
 }
 
@@ -216,6 +217,7 @@ PipelineType Pipeline_GetType(const Pipeline pip)
 void Pipeline_SetName(const Pipeline pip, const char *name)
 {
     GRAPH_CHECK_HANDLE(pip, Handle_Pipeline);
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][PIPELINE] To name objects, the validation capability must be enabled");
 
     Vulkan_Pipeline &vpip = s_Pipelines->At(Handle_GetId(pip));
     pipeline_Visit(vpip, [name](auto &p) { GRAPH_CHECK_VKIT_RESULT(p.SetName(name)); });

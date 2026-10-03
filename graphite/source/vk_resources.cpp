@@ -103,6 +103,7 @@ void Buffer_Flush(const Buffer buffer)
 void Buffer_SetName(const Buffer buffer, const char *name)
 {
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][RESOURCES] To name objects, the validation capability must be enabled");
     GRAPH_CHECK_VKIT_RESULT(s_Buffers->At(Handle_GetId(buffer)).SetName(name));
 }
 
