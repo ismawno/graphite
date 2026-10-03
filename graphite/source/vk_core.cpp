@@ -102,7 +102,8 @@ static void createInstance()
 
 static void createDevice()
 {
-    TKIT_LOG_INFO("[GRAPH][CORE] Initializing Vulkit");
+    TKIT_LOG_INFO("[GRAPH][CORE] Initializing");
+    TKIT_LOG_INFO("[GRAPH][CORE] Vulkan headers version: {}.{}.{}", VKIT_EXPAND_VERSION(VK_HEADER_VERSION_COMPLETE));
 
     VKit::PhysicalDevice::Selector selector(&s_Instance.Get());
 
