@@ -364,6 +364,10 @@ void Terminate()
     s_Instance.Destruct();
 }
 
+void DeviceWaitIdle()
+{
+    GRAPH_CHECK_VKIT_RESULT(s_Device->WaitIdle());
+}
 void HandleVulkanResult(const VkResult result)
 {
 #ifdef TKIT_ENABLE_ERROR_LOGS

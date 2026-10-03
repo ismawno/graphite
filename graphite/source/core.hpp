@@ -30,6 +30,8 @@
 
 namespace Graph
 {
+void DeviceWaitIdle();
+
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
 void Platform_Initialize(Platform plat, u32 maxWindows);
 void Platform_Terminate();
