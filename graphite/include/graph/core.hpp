@@ -674,6 +674,8 @@ void Initialize(const Specs &specs);
 void Terminate();
 
 const char *ToString(HandleType htype);
+void DeviceWaitIdle();
+bool IsValidationEnabled();
 
 constexpr u32 Handle_GetTypeAsInteger(const Handle handle)
 {

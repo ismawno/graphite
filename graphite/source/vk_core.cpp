@@ -368,6 +368,10 @@ void DeviceWaitIdle()
 {
     GRAPH_CHECK_VKIT_RESULT(s_Device->WaitIdle());
 }
+bool IsValidationEnabled()
+{
+    return s_Specs.EnabledCapabilities & Capability_Validation;
+}
 void HandleVulkanResult(const VkResult result)
 {
 #ifdef TKIT_ENABLE_ERROR_LOGS
