@@ -652,12 +652,16 @@ struct Specs
 #endif
     u32 MaxCommandPools = 8;
     u32 MaxCommandBuffers = 32;
+    u32 MaxDescriptorSets = 128;
     u32 MaxBuffers = 64;
     u32 MaxImages = 256;
     u32 MaxSamplers = 16;
     u32 MaxImageViews = 1024;
     u32 MaxShaders = 16;
     u32 MaxCompilations = 4;
+    u32 MaxReflections = 4;
+    u32 MaxPipelineLayouts = 32;
+    u32 MaxPipelines = 256;
 
     Specs()
     {

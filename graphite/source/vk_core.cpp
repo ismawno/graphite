@@ -318,19 +318,44 @@ void Initialize(const Specs &specs)
     createInstance();
     createDevice();
     createVulkanAllocator();
+
+    Execution_Initialize(specs.MaxCommandPools, specs.MaxCommandBuffers);
+    Descriptor_Initialize(specs.MaxDescriptorSets, specs.DescriptorPoolSizes);
+    Shader_Initialize(specs.MaxShaders);
+#ifdef GRAPH_HAS_SHADER_COMPILATION_BACKEND
+    Compilation_Initialize(specs.MaxCompilations);
+#endif
+#ifdef GRAPH_HAS_SHADER_REFLECTION_BACKEND
+    Reflection_Initialize(specs.MaxReflections);
+#endif
+    Pipeline_Initialize(specs.MaxPipelineLayouts, specs.MaxPipelines);
+    Resources_Initialize(specs.MaxBuffers, specs.MaxImages, specs.MaxSamplers, specs.MaxImageViews);
 }
 
 void Terminate()
 {
-    VKit::DestroyAllocator(s_VulkanAllocator);
-    s_Device->Destroy();
-    s_Instance->Destroy();
+    Resources_Terminate();
+    Pipeline_Terminate();
+#ifdef GRAPH_HAS_SHADER_REFLECTION_BACKEND
+    Reflection_Terminate();
+#endif
+#ifdef GRAPH_HAS_SHADER_COMPILATION_BACKEND
+    Compilation_Terminate();
+#endif
+    Shader_Terminate();
+    Descriptor_Terminate();
+    Execution_Terminate();
 
     Surface_Terminate();
 
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
     Platform_Terminate();
 #endif
+
+    VKit::DestroyAllocator(s_VulkanAllocator);
+
+    s_Device->Destroy();
+    s_Instance->Destroy();
 
     VKit::Terminate();
 
