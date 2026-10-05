@@ -12,24 +12,76 @@ enum CommandPoolFlagBit : u8
     CommandPoolFlag_CreateTransient = 1U << 0,
 };
 
+struct WaitInfo
+{
+    u64 Value = 0;
+    QueueType QueueType = Queue_None;
+    PipelineStageFlags StageFlags = 0;
+};
+
+struct SubmitInfo
+{
+    TKit::Span<const CommandBuffer> Commands{};
+    TKit::Span<const WaitInfo> Waits{};
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+    Swapchain Swapchain = NullHandle;
+    PipelineStageFlags SwapchainWaitStageFlags = PipelineStageFlag_ColorAttachmentOutput;
+    PipelineStageFlags SwapchainSignalStageFlags = PipelineStageFlag_ColorAttachmentOutput;
+#endif
+    u64 SignalValue = 0;
+};
+
 bool BelongToTheSameFamily(QueueType type0, QueueType type1);
 
-Queue Queue_Get(QueueType type);
-QueueType Queue_GetType(Queue queue);
-u64 Queue_GetCompletedTimeline(Queue queue);
-u64 Queue_GetTimelineSubmissions(Queue queue);
+u64 Queue_GetCompletedTimelineValues(QueueType queue);
+u64 Queue_GetSubmittedTimelineValues(QueueType queue);
+u64 Queue_ReserveTimelineValue(QueueType queue);
+u64 Queue_UpdateCompletedTimelineValues(QueueType queue);
 
-void Queue_SetName(Queue queue, const char *name);
-bool Queue_IsHandleValid(Queue queue);
+struct Tracker
+{
+    u64 InFlightValue = 0;
+    QueueType Queue = Queue_None;
+
+    constexpr bool InUse() const
+    {
+        return Queue != Queue_None && Queue_GetCompletedTimelineValues(Queue) < InFlightValue;
+    }
+    constexpr bool Submitted() const
+    {
+        return Queue != Queue_None && Queue_GetSubmittedTimelineValues(Queue) >= InFlightValue;
+    }
+    constexpr bool InFlight() const
+    {
+        return Submitted() && InUse();
+    }
+
+    constexpr operator bool() const
+    {
+        return Queue != Queue_None;
+    }
+};
+
+void Queue_Submit(QueueType queue, TKit::Span<const SubmitInfo> infos);
+void Queue_WaitIdle(QueueType queue);
+bool Queue_WaitForTimelineValue(QueueType queue, u64 value, u64 timeout = TKIT_U64_MAX);
+bool Queue_WaitForTracker(const Tracker &tracker, const u64 timeout = TKIT_U64_MAX)
+{
+    if (tracker.InFlight())
+        return Queue_WaitForTimelineValue(tracker.Queue, tracker.InFlightValue, timeout);
+    return true;
+}
+
+void Queue_SetName(QueueType queue, const char *name);
 
 CommandPool CommandPool_Create(QueueType type, CommandPoolFlags flags = 0);
 void CommandPool_Destroy(CommandPool pool);
 void CommandPool_Reset(CommandPool pool);
 
 CommandBuffer CommandPool_BeginImmediateSubmission(CommandPool pool);
-void CommandPool_EndImmediateSubmission(CommandPool pool, CommandBuffer cmd, Queue queue);
+void CommandPool_EndImmediateSubmission(CommandPool pool, CommandBuffer cmd, QueueType queue);
 
-template <typename F> void CommandPool_ImmediateSubmission(const CommandPool pool, const Queue queue, F &&fun)
+template <typename F> void CommandPool_ImmediateSubmission(const CommandPool pool, const QueueType queue, F &&fun)
 {
     const CommandBuffer cmd = CommandPool_BeginImmediateSubmission(pool);
     std::forward<F>(fun)(cmd);
@@ -40,6 +92,9 @@ CommandBuffer CommandPool_NextCommandBuffer(CommandPool pool);
 
 void CommandPool_SetName(CommandPool pool, const char *name);
 bool CommandPool_IsHandleValid(CommandPool pool);
+
+void CommandBuffer_Begin(CommandBuffer cmd);
+void CommandBuffer_End(CommandBuffer cmd);
 
 bool CommandBuffer_IsHandleValid(CommandBuffer cmd);
 
@@ -207,4 +262,5 @@ inline void Command_CopyBuffer(const CommandBuffer cmd, const Buffer src, const 
 void Command_CopyBufferToImage(CommandBuffer cmd, Buffer src, Image dst, TKit::Span<const BufferImageCopy> regions);
 void Command_BlitImage(CommandBuffer cmd, Image src, Image dst, TKit::Span<const ImageBlit> regions,
                        Filter filter = Filter_Linear);
+
 } // namespace Graph

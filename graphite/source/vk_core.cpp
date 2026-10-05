@@ -3,7 +3,11 @@
 #include "vk_core.hpp"
 #include "vk_error.hpp"
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
-#    include "vk_platform.hpp"
+#    include "graph/platform.hpp"
+#endif
+#ifdef GRAPH_PLATFORM_BACKEND_GLFW
+#    define GLFW_INCLUDE_VULKAN
+#    include "glfw_core.hpp"
 #endif
 #include "vkit/core/core.hpp"
 #include "vkit/device/logical_device.hpp"
@@ -16,6 +20,24 @@ static TKit::Storage<VKit::PhysicalDevice> s_Physical{};
 static TKit::Storage<VKit::LogicalDevice> s_Device{};
 static VmaAllocator s_VulkanAllocator = VK_NULL_HANDLE;
 static Specs s_Specs{};
+
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+Window s_DummyWindow = NullHandle;
+
+static VkSurfaceKHR createDummySurface()
+{
+    TKIT_ASSERT(s_DummyWindow == NullHandle, "[GRAPH][CORE] Can only create a single dummy surface at the same time");
+    s_DummyWindow = Window_Create({.Title = "Eduardo", .Dimensions = 120, .Flags = 0});
+
+    return GetSurface(s_DummyWindow);
+}
+static void destroyDummySurface()
+{
+    TKIT_ASSERT(s_DummyWindow != NullHandle, "[GRAPH][CORE] Can only destroy a dummy surface if one was created");
+
+    Window_Destroy(s_DummyWindow);
+}
+#endif
 
 static const char *toString(const VkDeviceFaultAddressTypeEXT faultType)
 {
@@ -76,7 +98,7 @@ static void createInstance()
     builder.SetHeadless();
 #endif
 
-    *s_Instance = GRAPH_CHECK_VKIT_RESULT(builder.Build());
+    *s_Instance = GRAPH_CHECK_RESULT(builder.Build());
     const VKit::Instance::Info &info = s_Instance->GetInfo();
     TKIT_LOG_INFO("[GRAPH][CORE] Created vulkan instance. API version: {}.{}.{}", VKIT_EXPAND_VERSION(info.ApiVersion));
 
@@ -128,7 +150,7 @@ static void createDevice()
               "chosen automatically. To force a specific option, set such variable with the device name or device ID");
 
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
-    const VkSurfaceKHR dummy = CreateDummySurface();
+    const VkSurfaceKHR dummy = createDummySurface();
     selector.SetSurface(dummy);
 #endif
 
@@ -138,14 +160,12 @@ static void createDevice()
                   VKit::DeviceSelectorFlag_RequireTransferQueue)
         .RequireExtension("VK_KHR_synchronization2")
         .RequireExtension("VK_KHR_copy_commands2")
+        .RequireExtension("VK_KHR_timeline_semaphore")
+        .RequireExtension("VK_KHR_dynamic_rendering")
         .RequireApiVersion(1, 2, 0)
         .RequestApiVersion(1, 4, 0);
 
     const Capabilities caps = s_Specs.EnabledCapabilities;
-    if (caps & Capability_DynamicRendering)
-        selector.RequireExtension("VK_KHR_dynamic_rendering");
-    if (caps & Capability_TimelineSemaphores)
-        selector.RequireExtension("VK_KHR_timeline_semaphore");
     if (caps & Capability_BindlessDescriptors)
         selector.RequireExtension("VK_EXT_descriptor_indexing");
     if (caps & Capability_ExtendedDynamicState)
@@ -157,10 +177,10 @@ static void createDevice()
     if (faultDump)
         selector.RequestExtension("VK_EXT_device_fault");
 
-    *s_Physical = GRAPH_CHECK_VKIT_RESULT(selector.Select());
+    *s_Physical = GRAPH_CHECK_RESULT(selector.Select());
 
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
-    DestroyDummySurface();
+    destroyDummySurface();
 #endif
 
     TKIT_LOG_INFO("[GRAPH][CORE] Selected vulkan device: {}. API version: {}.{}.{}",
@@ -201,15 +221,7 @@ static void createDevice()
         s_Physical->EnableExtensionBoundFeature(&faultFeatures);
     }
 
-    VkPhysicalDeviceShaderDrawParameterFeatures drawParams{};
-    drawParams.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
-
-    VkPhysicalDeviceTimelineSemaphoreFeaturesKHR tsem{};
-    tsem.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR;
-    tsem.timelineSemaphore = VK_TRUE;
-
     VKit::DeviceFeatures features{};
-
     // User-controlled
     if (caps & Capability_IndependentBlend)
         features.Core.independentBlend = VK_TRUE;
@@ -223,8 +235,7 @@ static void createDevice()
     if (caps & Capability_ShaderDrawParameters)
         features.Vulkan11.shaderDrawParameters = VK_TRUE;
 
-    if (caps & Capability_TimelineSemaphores)
-        features.Vulkan12.timelineSemaphore = VK_TRUE;
+    features.Vulkan12.timelineSemaphore = VK_TRUE;
 
     if (caps & Capability_BindlessDescriptors)
     {
@@ -235,16 +246,13 @@ static void createDevice()
         features.Vulkan12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
     }
 
-    // Auto-enabled — sync2
     VkPhysicalDeviceSynchronization2FeaturesKHR sync2{};
     sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
     sync2.synchronization2 = VK_TRUE;
 
-    // User-controlled
     VkPhysicalDeviceDynamicRenderingFeaturesKHR drendering{};
     drendering.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
-    if (caps & Capability_DynamicRendering)
-        drendering.dynamicRendering = VK_TRUE;
+    drendering.dynamicRendering = VK_TRUE;
 
     VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extState{};
     extState.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
@@ -257,16 +265,14 @@ static void createDevice()
     if (apiVersion >= VKIT_API_VERSION_1_3)
     {
         features.Vulkan13.synchronization2 = VK_TRUE;
-        if (caps & Capability_DynamicRendering)
-            features.Vulkan13.dynamicRendering = VK_TRUE;
+        features.Vulkan13.dynamicRendering = VK_TRUE;
 
         TKIT_ASSERT(s_Physical->EnableFeatures(features), "[GRAPH][CORE] Failed to enable requested features");
     }
     else
     {
         s_Physical->EnableExtensionBoundFeature(&sync2);
-        if (caps & Capability_DynamicRendering)
-            s_Physical->EnableExtensionBoundFeature(&drendering);
+        s_Physical->EnableExtensionBoundFeature(&drendering);
 
         TKIT_ASSERT(s_Physical->EnableFeatures(features), "[GRAPH][CORE] Failed to enable requested features");
     }
@@ -283,17 +289,17 @@ static void createDevice()
     devBuild.RequireQueue(VKit::Queue_Present);
 #endif
 
-    *s_Device = GRAPH_CHECK_VKIT_RESULT(devBuild.Build());
+    *s_Device = GRAPH_CHECK_RESULT(devBuild.Build());
     if (IsDebugUtilsEnabled())
     {
-        GRAPH_CHECK_VKIT_RESULT(s_Device->SetName("graph-device"));
+        GRAPH_CHECK_RESULT(s_Device->SetName("graph-device"));
     }
 }
 
 static void createVulkanAllocator()
 {
     TKIT_LOG_INFO("[GRAPH][CORE] Creating vulkan allocator");
-    s_VulkanAllocator = GRAPH_CHECK_VKIT_RESULT(VKit::CreateAllocator(*s_Device));
+    s_VulkanAllocator = GRAPH_CHECK_RESULT(VKit::CreateAllocator(*s_Device));
 }
 
 void Initialize(const Specs &specs)
@@ -308,10 +314,12 @@ void Initialize(const Specs &specs)
     vspecs.Allocators.Stack = specs.Allocators.Stack;
     vspecs.Allocators.Tier = specs.Allocators.Tier;
     vspecs.LoaderPath = specs.LoaderPath;
-    GRAPH_CHECK_VKIT_RESULT(VKit::Initialize(vspecs));
+    GRAPH_CHECK_RESULT(VKit::Initialize(vspecs));
 
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
-    Platform_InitializeVulkanLoader();
+#    if defined(GRAPH_PLATFORM_BACKEND_GLFW) && GRAPH_GLFW_VERSION_COMBINED >= 3400
+    glfwInitVulkanLoader(VKit::Vulkan::vkGetInstanceProcAddr);
+#    endif
     Platform_Initialize(specs.TargetPlatform, specs.MaxSurfaces);
     Surface_Initialize(specs.MaxSurfaces);
 #endif
@@ -367,11 +375,11 @@ void Terminate()
 
 void DeviceWaitIdle()
 {
-    GRAPH_CHECK_VKIT_RESULT(s_Device->WaitIdle());
+    GRAPH_CHECK_RESULT(s_Device->WaitIdle());
 }
 bool IsValidationEnabled()
 {
-    return s_Specs.EnabledCapabilities & Capability_Validation;
+    return IsDebugUtilsEnabled();
 }
 void HandleVulkanResult(const VkResult result)
 {
@@ -390,7 +398,7 @@ void HandleVulkanResult(const VkResult result)
     const auto &device = *s_Device;
     const auto table = s_Device->GetInfo().Table;
 
-    GRAPH_CHECK_VKIT_RESULT(table->GetDeviceFaultInfoEXT(device, &counts, nullptr));
+    GRAPH_CHECK_RESULT(table->GetDeviceFaultInfoEXT(device, &counts, nullptr));
 
     TKit::StackArray<VkDeviceFaultAddressInfoEXT> addresses{};
     TKit::StackArray<VkDeviceFaultVendorInfoEXT> vendors{};
@@ -406,7 +414,7 @@ void HandleVulkanResult(const VkResult result)
     faultInfo.pVendorInfos = vendors.GetData();
     faultInfo.pVendorBinaryData = vendorBinary.GetData();
 
-    GRAPH_CHECK_VKIT_RESULT(table->GetDeviceFaultInfoEXT(device, &counts, &faultInfo));
+    GRAPH_CHECK_RESULT(table->GetDeviceFaultInfoEXT(device, &counts, &faultInfo));
 
     TKIT_LOG_ERROR("[GRAPH][CORE] Device fault description: {}", faultInfo.description);
 
@@ -1186,6 +1194,24 @@ VkIndexType ToVulkan(const IndexType type)
         return VK_INDEX_TYPE_UINT32;
     }
 }
+
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+VkPresentModeKHR ToVulkan(const PresentMode mode)
+{
+    switch (mode)
+    {
+    case PresentMode_Immediate:
+        return VK_PRESENT_MODE_IMMEDIATE_KHR;
+    case PresentMode_Mailbox:
+        return VK_PRESENT_MODE_MAILBOX_KHR;
+    case PresentMode_VSync:
+        return VK_PRESENT_MODE_FIFO_KHR;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown present mode: {}", u32(mode));
+        return VK_PRESENT_MODE_FIFO_KHR;
+    }
+}
+#endif
 
 VkAccessFlags2KHR ToVulkanAccessFlags(const AccessFlags access)
 {

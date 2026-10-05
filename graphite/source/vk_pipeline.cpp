@@ -58,7 +58,7 @@ PipelineLayout PipelineLayout_Create(const PipelineLayoutSpecs &specs)
     for (const PushConstantRange &range : specs.PushRanges)
         builder.AddPushConstantRange(ToVulkanShaderStageFlags(range.Stages), range.Size, range.Offset);
 
-    const VKit::PipelineLayout layout = GRAPH_CHECK_VKIT_RESULT(builder.Build());
+    const VKit::PipelineLayout layout = GRAPH_CHECK_RESULT(builder.Build());
     return Handle_Create(Handle_PipelineLayout, layout);
 }
 
@@ -72,7 +72,7 @@ void PipelineLayout_SetName(const PipelineLayout layout, const char *name)
 {
     GRAPH_CHECK_HANDLE(layout, Handle_PipelineLayout);
     TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][PIPELINE] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_VKIT_RESULT(s_Layouts->At(Handle_GetId(layout)).SetName(name));
+    GRAPH_CHECK_RESULT(s_Layouts->At(Handle_GetId(layout)).SetName(name));
 }
 
 bool PipelineLayout_IsHandleValid(const PipelineLayout layout)
@@ -99,8 +99,12 @@ Pipeline Pipeline_CreateGraphics(const PipelineLayout layout, const GraphicsPipe
     TKit::StackArray<VkSpecializationInfo> specInfos{};
     specInfos.Reserve(specs.ShaderStages.GetSize());
 
+    u32 totEntries = 0;
+    for (const ShaderStageInfo &shInfo : specs.ShaderStages)
+        totEntries += shInfo.Specialization.Entries.GetSize();
+
     TKit::StackArray<VkSpecializationMapEntry> specEntries{};
-    specEntries.Reserve(10 * specs.ShaderStages.GetSize());
+    specEntries.Reserve(totEntries);
     for (const ShaderStageInfo &shInfo : specs.ShaderStages)
     {
         const SpecializationInfo spInfo = shInfo.Specialization;
@@ -175,7 +179,7 @@ Pipeline Pipeline_CreateGraphics(const PipelineLayout layout, const GraphicsPipe
     if (specs.DynamicState & DynamicStateFlag_CullMode)
         builder.AddDynamicState(VK_DYNAMIC_STATE_CULL_MODE_EXT);
 
-    const VKit::GraphicsPipeline pip = GRAPH_CHECK_VKIT_RESULT(builder.Bake().Build());
+    const VKit::GraphicsPipeline pip = GRAPH_CHECK_RESULT(builder.Bake().Build());
     const Id id = s_Pipelines->Insert();
     Vulkan_Pipeline &vpip = s_Pipelines->At(id);
 
@@ -191,7 +195,7 @@ Pipeline Pipeline_CreateCompute(const PipelineLayout layout, const ShaderStageIn
     spc.ComputeShader = GetShader(shaderStage.Shader);
     spc.EntryPoint = shaderStage.EntryPoint;
     spc.Layout = GetPipelineLayout(layout);
-    const VKit::ComputePipeline pip = GRAPH_CHECK_VKIT_RESULT(VKit::ComputePipeline::Create(GetDevice(), spc));
+    const VKit::ComputePipeline pip = GRAPH_CHECK_RESULT(VKit::ComputePipeline::Create(GetDevice(), spc));
 
     const Id id = s_Pipelines->Insert();
     Vulkan_Pipeline &vpip = s_Pipelines->At(id);
@@ -220,7 +224,7 @@ void Pipeline_SetName(const Pipeline pip, const char *name)
     TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][PIPELINE] To name objects, the validation capability must be enabled");
 
     Vulkan_Pipeline &vpip = s_Pipelines->At(Handle_GetId(pip));
-    pipeline_Visit(vpip, [name](auto &p) { GRAPH_CHECK_VKIT_RESULT(p.SetName(name)); });
+    pipeline_Visit(vpip, [name](auto &p) { GRAPH_CHECK_RESULT(p.SetName(name)); });
 }
 
 bool Pipeline_IsHandleValid(const Pipeline pip)

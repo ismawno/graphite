@@ -30,13 +30,9 @@
 
 namespace Graph
 {
-
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
 void Platform_Initialize(Platform plat, u32 maxWindows);
 void Platform_Terminate();
-
-void Surface_Initialize(u32 maxSurfaces);
-void Surface_Terminate();
 #endif
 
 void Execution_Initialize(u32 maxPools, u32 maxCmdBuffers);

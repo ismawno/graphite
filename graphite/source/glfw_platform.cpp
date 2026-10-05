@@ -1,4 +1,9 @@
 #include "pch.hpp"
+#ifdef GRAPH_RENDER_BACKEND_VULKAN
+#    define GLFW_INCLUDE_VULKAN
+#    include "vk_core.hpp"
+#    include "vk_error.hpp"
+#endif
 #include "glfw_core.hpp"
 #include "graph/platform.hpp"
 #include "tkit/utils/storage.hpp"
@@ -12,6 +17,9 @@ struct Glfw_Window
     void *UserData;
     TKit::FixedArray<GLFWcursor *, MouseCursor_Count> Cursors{};
     Graph::Window Handle;
+#ifdef GRAPH_RENDER_BACKEND_VULKAN
+    VkSurfaceKHR Surface = VK_NULL_HANDLE;
+#endif
 
     WindowPosCallback PositionCallback = nullptr;
     WindowSizeCallback SizeCallback = nullptr;
@@ -36,6 +44,22 @@ struct Glfw_Monitor
 
 static TKit::Storage<TKit::ArenaHive<Glfw_Window>> s_Windows{};
 static TKit::Storage<TKit::ArenaArray<Glfw_Monitor>> s_Monitors{};
+
+#ifdef GRAPH_RENDER_BACKEND_VULKAN
+static VkSurfaceKHR createSurface(GLFWwindow *win)
+{
+    VkSurfaceKHR surf;
+    const auto &instance = GetInstance();
+    GRAPH_CHECK_RESULT(glfwCreateWindowSurface(instance, win, instance.GetInfo().AllocationCallbacks, &surf));
+    return surf;
+}
+static void destroySurface(const VkSurfaceKHR surf)
+{
+    const auto &instance = GetInstance();
+    const auto table = GetInstanceTable();
+    table->DestroySurfaceKHR(instance, surf, instance.GetInfo().AllocationCallbacks);
+}
+#endif
 
 #ifdef TKIT_ENABLE_ERROR_LOGS
 static void glfwErrorCallback(const i32 errorCode, const char *description)
@@ -754,6 +778,45 @@ static void glfwScrollCallback(GLFWwindow *w, const f64 xoffset, const f64 yoffs
     FORWARD_CALLBACK(ScrollCallback, data->Handle, xoffset, yoffset);
 }
 
+void Platform_Initialize(const Platform plat, const u32 maxWindows)
+{
+    s_Windows.Construct();
+    s_Monitors.Construct();
+    s_Windows->Reserve(maxWindows);
+
+#ifdef TKIT_ENABLE_ERROR_LOGS
+    glfwSetErrorCallback(glfwErrorCallback);
+#endif
+    glfwInitHint(GLFW_PLATFORM, toGlfw(plat));
+    TKIT_ENSURE_RETURNS(glfwInit(), GLFW_TRUE, "[GRAPH][PLATFORM] GLFW failed to initialize");
+
+    TKIT_LOG_WARNING_IF(!glfwVulkanSupported(), "[GRAPH][PLATFORM] Vulkan is not supported, according to GLFW");
+
+    i32 mcount;
+    GLFWmonitor **monitors = glfwGetMonitors(&mcount);
+    if (monitors)
+    {
+        s_Monitors->Reserve(mcount);
+        for (i32 i = 0; i < mcount; ++i)
+            glfwSetMonitorUserPointer(monitors[i],
+                                      &s_Monitors->Append(monitors[i], nullptr, Handle_Create(Handle_Monitor, i)));
+    }
+}
+void Platform_Terminate()
+{
+    glfwTerminate();
+    s_Windows.Destruct();
+}
+
+void PollEvents()
+{
+    glfwPollEvents();
+}
+void WaitEvents()
+{
+    glfwWaitEvents();
+}
+
 Window Window_Create(const WindowSpecs &specs)
 {
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -772,6 +835,10 @@ Window Window_Create(const WindowSpecs &specs)
 
     win.Window = glfwCreateWindow(i32(specs.Dimensions[0]), i32(specs.Dimensions[1]), specs.Title, nullptr, nullptr);
     TKIT_ASSERT(win.Window, "[GRAPH][WINDOW] Failed to create window");
+
+#ifdef GRAPH_RENDER_BACKEND_VULKAN
+    win.Surface = createSurface(win.Window);
+#endif
 
     win.Cursors[0] = nullptr;
     for (u32 i = 1; i < MouseCursor_Count; ++i)
@@ -815,7 +882,13 @@ void Window_Destroy(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     const Id id = Handle_GetId(win);
-    glfwDestroyWindow(s_Windows->At(id).Window);
+
+    const Glfw_Window &gwin = s_Windows->At(id);
+#ifdef GRAPH_RENDER_BACKEND_VULKAN
+    destroySurface(gwin.Surface);
+#endif
+    glfwDestroyWindow(gwin.Window);
+
     s_Windows->Remove(id);
 }
 
@@ -835,6 +908,16 @@ bool Window_ShouldClose(const Window win)
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     return glfwWindowShouldClose(s_Windows->At(Handle_GetId(win)).Window);
 }
+
+#ifdef GRAPH_RENDER_BACKEND_VULKAN
+void Window_RecreateSurface(const Window win)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    Glfw_Window &gwin = s_Windows->At(Handle_GetId(win));
+    destroySurface(gwin.Surface);
+    gwin.Surface = createSurface(gwin.Window);
+}
+#endif
 
 void Window_Show(const Window win)
 {
@@ -1222,40 +1305,14 @@ ScrollCallback Window_Callback_Scroll(const Window win, const ScrollCallback cal
     return prev;
 }
 
-void Platform_Initialize(const Platform plat, const u32 maxWindows)
-{
-    s_Windows.Construct();
-    s_Monitors.Construct();
-    s_Windows->Reserve(maxWindows);
-
-#ifdef TKIT_ENABLE_ERROR_LOGS
-    glfwSetErrorCallback(glfwErrorCallback);
-#endif
-    glfwInitHint(GLFW_PLATFORM, toGlfw(plat));
-    TKIT_ENSURE_RETURNS(glfwInit(), GLFW_TRUE, "[GRAPH][PLATFORM] GLFW failed to initialize");
-
-    TKIT_LOG_WARNING_IF(!glfwVulkanSupported(), "[GRAPH][PLATFORM] Vulkan is not supported, according to GLFW");
-
-    i32 mcount;
-    GLFWmonitor **monitors = glfwGetMonitors(&mcount);
-    if (monitors)
-    {
-        s_Monitors->Reserve(mcount);
-        for (i32 i = 0; i < mcount; ++i)
-            glfwSetMonitorUserPointer(monitors[i],
-                                      &s_Monitors->Append(monitors[i], nullptr, Handle_Create(Handle_Monitor, i)));
-    }
-}
-void Platform_Terminate()
-{
-    glfwTerminate();
-    s_Windows.Destruct();
-}
-
 GLFWwindow *GetWindow(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-
     return s_Windows->At(Handle_GetId(win)).Window;
+}
+VkSurfaceKHR GetSurface(const Window win)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    return s_Windows->At(Handle_GetId(win)).Surface;
 }
 } // namespace Graph

@@ -7,6 +7,11 @@
 
 namespace Graph
 {
+struct Vulkan_Image
+{
+    VKit::DeviceImage Image{};
+    bool MustDestroy = true;
+};
 struct Vulkan_ImageView
 {
     Image Image;
@@ -14,7 +19,7 @@ struct Vulkan_ImageView
 };
 
 static TKit::Storage<TKit::ArenaHive<VKit::DeviceBuffer>> s_Buffers{};
-static TKit::Storage<TKit::ArenaHive<VKit::DeviceImage>> s_Images{};
+static TKit::Storage<TKit::ArenaHive<Vulkan_Image>> s_Images{};
 static TKit::Storage<TKit::ArenaHive<VKit::Sampler>> s_Samplers{};
 static TKit::Storage<TKit::ArenaHive<Vulkan_ImageView>> s_Views{};
 
@@ -31,10 +36,16 @@ void Resources_Initialize(const u32 maxBuffers, const u32 maxImages, const u32 m
     s_Views->Reserve(maxViews);
 }
 
+static void image_Destroy(Vulkan_Image &img)
+{
+    if (img.MustDestroy)
+        img.Image.Destroy();
+}
+
 void Resources_Terminate()
 {
     GRAPH_CLEANUP_WITH_WARNING(s_Buffers, "RESOURCES", "buffers");
-    GRAPH_CLEANUP_WITH_WARNING(s_Images, "RESOURCES", "images");
+    GRAPH_CLEANUP_WITH_WARNING_LAMBDA(s_Images, "RESOURCES", "images", image_Destroy);
     GRAPH_CLEANUP_WITH_WARNING(s_Samplers, "RESOURCES", "samplers");
 
     TKIT_ASSERT(s_Views->IsEmpty(),
@@ -49,7 +60,7 @@ void Resources_Terminate()
 
 Buffer Buffer_Create(const usz size, const BufferFlags flags)
 {
-    const VKit::DeviceBuffer buff = GRAPH_CHECK_VKIT_RESULT(
+    const VKit::DeviceBuffer buff = GRAPH_CHECK_RESULT(
         VKit::DeviceBuffer::Builder(GetDevice(), GetAllocator(), ToVulkanBufferFlags(flags)).SetSize(size).Build());
 
     return Handle_Create(Handle_Buffer, s_Buffers->Insert(buff));
@@ -75,7 +86,7 @@ void *Buffer_Map(const Buffer buffer)
 {
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
     VKit::DeviceBuffer &buff = s_Buffers->At(Handle_GetId(buffer));
-    GRAPH_CHECK_VKIT_RESULT(buff.Map());
+    GRAPH_CHECK_RESULT(buff.Map());
     return buff.GetData();
 }
 void Buffer_Unmap(const Buffer buffer)
@@ -98,13 +109,13 @@ void Buffer_Write(const Buffer buffer, const void *data, const BufferCopy &copy)
 void Buffer_Flush(const Buffer buffer)
 {
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
-    GRAPH_CHECK_VKIT_RESULT(s_Buffers->At(Handle_GetId(buffer)).Flush());
+    GRAPH_CHECK_RESULT(s_Buffers->At(Handle_GetId(buffer)).Flush());
 }
 void Buffer_SetName(const Buffer buffer, const char *name)
 {
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
     TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][RESOURCES] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_VKIT_RESULT(s_Buffers->At(Handle_GetId(buffer)).SetName(name));
+    GRAPH_CHECK_RESULT(s_Buffers->At(Handle_GetId(buffer)).SetName(name));
 }
 
 bool Buffer_IsHandleValid(const Buffer buffer)
@@ -129,9 +140,9 @@ Image Image_Create(const u32v3 &size, const ImageSpecs &specs, const ImageFlags 
     if (flags & ImageFlag_CubeCompatible)
         builder.SetFlags(VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 
-    const VKit::DeviceImage img = GRAPH_CHECK_VKIT_RESULT(builder.Build());
+    const VKit::DeviceImage img = GRAPH_CHECK_RESULT(builder.Build());
 
-    const Image handle = Handle_Create(Handle_Image, s_Images->Insert(img));
+    const Image handle = Handle_Create(Handle_Image, s_Images->Insert(img, true));
     for (const ImageViewSpecs &vspc : specs.ImageViews)
         Image_AddView(handle, vspc);
 
@@ -146,31 +157,31 @@ void Image_Destroy(const Image img)
         if (s_Views->At(id).Image == img)
             s_Views->Remove(id);
 
-    GRAPH_DESTROY_FUNCTION_BODY(s_Images, img);
+    GRAPH_DESTROY_FUNCTION_BODY_LAMBDA(s_Images, img, image_Destroy);
 }
 void Image_DestroyViews(const Image img)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
-    s_Images->At(Handle_GetId(img)).DestroyImageViews();
+    s_Images->At(Handle_GetId(img)).Image.DestroyImageViews();
 }
 
 usz Image_ComputeSize(const Image img)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
-    return s_Images->At(Handle_GetId(img)).ComputeSize();
+    return s_Images->At(Handle_GetId(img)).Image.ComputeSize();
 }
 
 ImageView Image_AddView(const Image img, const ImageViewSpecs &specs)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
-    VKit::DeviceImage &image = s_Images->At(Handle_GetId(img));
+    VKit::DeviceImage &image = s_Images->At(Handle_GetId(img)).Image;
 
     VkImageViewCreateInfo info{};
     info.image = VK_NULL_HANDLE;
     info.viewType = ToVulkan(specs.Type);
     info.subresourceRange = ToVulkan(image, specs.Range);
     info.format = ToVulkan(specs.Format);
-    const VkImageView view = GRAPH_CHECK_VKIT_RESULT(image.AddImageView(info));
+    const VkImageView view = GRAPH_CHECK_RESULT(image.AddImageView(info));
 
     return Handle_Create(Handle_ImageView, s_Views->Insert(img, view));
 }
@@ -179,7 +190,7 @@ ImageView Image_GetView(const Image img, const u32 idx)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
 
-    VKit::DeviceImage &image = s_Images->At(Handle_GetId(img));
+    VKit::DeviceImage &image = s_Images->At(Handle_GetId(img)).Image;
     const VkImageView view = image.GetView(idx);
     for (const Id id : s_Views->GetValidIds())
         if (s_Views->At(id).View == view)
@@ -192,18 +203,19 @@ ImageView Image_GetView(const Image img, const u32 idx)
 void Image_SetLayout(const Image img, const ImageLayout layout)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
-    s_Images->At(Handle_GetId(img)).SetLayout(ToVulkan(layout));
+    s_Images->At(Handle_GetId(img)).Image.Layout = ToVulkan(layout);
 }
 
 void Image_SetName(const Image img, const char *name)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
-    GRAPH_CHECK_VKIT_RESULT(s_Images->At(Handle_GetId(img)).SetName(name));
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][RESOURCES] To name objects, the validation capability must be enabled");
+    GRAPH_CHECK_RESULT(s_Images->At(Handle_GetId(img)).Image.SetName(name));
 }
 void Image_SetViewName(const Image img, const char *name)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
-    GRAPH_CHECK_VKIT_RESULT(s_Images->At(Handle_GetId(img)).SetViewNames(name));
+    GRAPH_CHECK_RESULT(s_Images->At(Handle_GetId(img)).Image.SetViewNames(name));
 }
 bool Image_IsHandleValid(const Image img)
 {
@@ -213,7 +225,8 @@ bool Image_IsHandleValid(const Image img)
 void ImageView_SetName(const ImageView view, const char *name)
 {
     GRAPH_CHECK_HANDLE(view, Handle_ImageView);
-    GRAPH_CHECK_VKIT_RESULT(
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][RESOURCES] To name objects, the validation capability must be enabled");
+    GRAPH_CHECK_RESULT(
         GetDevice().SetObjectName(s_Views->At(Handle_GetId(view)).View, VK_OBJECT_TYPE_IMAGE_VIEW, name));
 }
 bool ImageView_IsHandleValid(const ImageView view)
@@ -223,7 +236,7 @@ bool ImageView_IsHandleValid(const ImageView view)
 
 Sampler Sampler_Create(const SamplerSpecs &specs, const SamplerFlags flags)
 {
-    const VKit::Sampler smp = GRAPH_CHECK_VKIT_RESULT(
+    const VKit::Sampler smp = GRAPH_CHECK_RESULT(
         VKit::Sampler::Builder(GetDevice())
             .SetMipmapMode(ToVulkan(specs.Mode))
             .SetFilters(ToVulkan(specs.Filters[0]), ToVulkan(specs.Filters[1]))
@@ -249,7 +262,8 @@ void Sampler_Destroy(const Sampler smp)
 void Sampler_SetName(const Sampler smp, const char *name)
 {
     GRAPH_CHECK_HANDLE(smp, Handle_Sampler);
-    GRAPH_CHECK_VKIT_RESULT(s_Samplers->At(Handle_GetId(smp)).SetName(name));
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][RESOURCES] To name objects, the validation capability must be enabled");
+    GRAPH_CHECK_RESULT(s_Samplers->At(Handle_GetId(smp)).SetName(name));
 }
 
 bool Sampler_IsHandleValid(const Sampler smp)
@@ -265,7 +279,7 @@ VKit::DeviceBuffer &GetBuffer(const Buffer buffer)
 VKit::DeviceImage &GetImage(const Image img)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
-    return s_Images->At(Handle_GetId(img));
+    return s_Images->At(Handle_GetId(img)).Image;
 }
 VkImageView GetImageView(const ImageView view)
 {
@@ -276,5 +290,14 @@ VKit::Sampler &GetSampler(const Sampler smp)
 {
     GRAPH_CHECK_HANDLE(smp, Handle_Sampler);
     return s_Samplers->At(Handle_GetId(smp));
+}
+
+Image CreateNonOwnedImage(const VKit::DeviceImage &img)
+{
+    const Id id = s_Images->Insert(img, false);
+    const Image handle = Handle_Create(Handle_Image, id);
+    for (const VkImageView v : s_Images->At(id).Image.GetViews())
+        s_Views->Insert(img, v);
+    return handle;
 }
 } // namespace Graph

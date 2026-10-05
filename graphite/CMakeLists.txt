@@ -16,10 +16,7 @@ if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
     source/vk_execution.cpp
     source/vk_resources.cpp
     source/vk_shader.cpp
-    source/vk_surface.cpp)
-  if(GRAPHITE_PLATFORM_BACKEND STREQUAL "glfw")
-    list(APPEND SOURCES source/vk_glfw_platform.cpp)
-  endif()
+    source/vk_swap_chain.cpp)
 endif()
 
 if(GRAPHITE_SHADER_COMPILATION_BACKEND STREQUAL "slang")
@@ -30,6 +27,10 @@ if(GRAPHITE_SHADER_REFLECTION_BACKEND STREQUAL "spirv-reflect")
 endif()
 
 add_library(graphite STATIC ${SOURCES})
+target_compile_definitions(graphite PUBLIC GRAPH_VERSION=\"v0.1.x\")
+target_include_directories(graphite PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_precompile_headers(graphite PRIVATE
+                          ${CMAKE_CURRENT_SOURCE_DIR}/source/pch.hpp)
 
 if(GRAPHITE_PLATFORM_BACKEND STREQUAL "glfw")
 
@@ -71,8 +72,6 @@ endif()
 
 if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
 
-  target_compile_definitions(graphite PUBLIC GRAPH_VERSION=\"v0.1.x\")
-
   FetchContent_Declare(
     vulkit
     GIT_REPOSITORY https://github.com/ismawno/vulkit.git
@@ -81,15 +80,13 @@ if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
     GIT_PROGRESS TRUE)
   FetchContent_MakeAvailable(vulkit)
 
-  target_include_directories(graphite
-                             PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
   target_link_libraries(
     graphite
     PUBLIC toolkit
     PRIVATE vulkit)
 
-  target_precompile_headers(graphite PRIVATE
-                            ${CMAKE_CURRENT_SOURCE_DIR}/source/pch.hpp)
+  target_compile_definitions(graphite PUBLIC GRAPH_HAS_RENDER_BACKEND
+                                             GRAPH_RENDER_BACKEND_VULKAN)
 
   tkit_default_configure(graphite)
 endif()

@@ -8,6 +8,10 @@
 #include "tkit/container/hive.hpp"
 #include "tkit/math/math.hpp"
 
+#define GRAPH_CHECK_QUEUE(queue)                                                                                       \
+    TKIT_ASSERT((queue) < Queue_Count && s_Queues[queue],                                                              \
+                "[GRAPH][QUEUE] The queue type must be requested at initialization to be used")
+
 namespace Graph
 {
 struct Vulkan_CommandPool
@@ -26,9 +30,6 @@ struct Vulkan_CommandBuffer
 static TKit::Storage<TKit::ArenaHive<Vulkan_CommandPool>> s_CommandPools{};
 static TKit::Storage<TKit::ArenaHive<Vulkan_CommandBuffer>> s_CommandBuffers{};
 static TKit::FixedArray<VKit::Queue *, Queue_Count> s_Queues{};
-#ifdef GRAPH_HAS_PLATFORM_BACKEND
-static VKit::Queue *s_PresentQueue;
-#endif
 
 void Execution_Initialize(const u32 maxPools, const u32 maxCmdBuffers)
 {
@@ -38,13 +39,38 @@ void Execution_Initialize(const u32 maxPools, const u32 maxCmdBuffers)
     s_CommandPools->Reserve(maxPools);
     s_CommandBuffers->Reserve(maxCmdBuffers);
 
-    const auto &queues = GetDevice().GetInfo().QueuesPerType;
-    s_Queues[Queue_Graphics] = queues[VKit::Queue_Graphics].GetFront();
-    s_Queues[Queue_Transfer] = queues[VKit::Queue_Transfer].GetFront();
-    s_Queues[Queue_Compute] = queues[VKit::Queue_Compute].GetFront();
-#ifdef GRAPH_HAS_PLATFORM_BACKEND
-    s_PresentQueue = queues[VKit::Queue_Present].GetFront();
-#endif
+    const auto &device = GetDevice();
+    const auto table = GetDeviceTable();
+
+    const auto &perType = device.GetInfo().QueuesPerType;
+    s_Queues[Queue_Graphics] = perType[VKit::Queue_Graphics].GetFront();
+    s_Queues[Queue_Transfer] = perType[VKit::Queue_Transfer].GetFront();
+    s_Queues[Queue_Compute] = perType[VKit::Queue_Compute].GetFront();
+
+    const auto &queues = device.GetInfo().Queues;
+    u32 i = 0;
+    for (VKit::Queue *q : queues)
+    {
+        VkSemaphoreTypeCreateInfoKHR typeInfo{};
+        typeInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+        typeInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+        typeInfo.initialValue = 0;
+
+        VkSemaphoreCreateInfo info{};
+        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        info.pNext = &typeInfo;
+        VkSemaphore semaphore;
+
+        GRAPH_CHECK_RESULT(table->CreateSemaphore(device, &info, nullptr, &semaphore));
+        q->TakeTimelineSemaphoreOwnership(semaphore);
+        GRAPH_CHECK_RESULT(q->UpdateCompletedTimelineValues());
+        if (IsDebugUtilsEnabled())
+        {
+            const TKit::StackString name =
+                TKit::StackString::Format("graph-timeline-semaphore-queue-index-{}-family-{}", i++, q->GetFamily());
+            GRAPH_CHECK_RESULT(device.SetObjectName(semaphore, VK_OBJECT_TYPE_SEMAPHORE, name.CString()));
+        }
+    }
 }
 
 void Execution_Terminate()
@@ -52,6 +78,7 @@ void Execution_Terminate()
     GRAPH_CLEANUP_WITH_WARNING_ACCESSOR(s_CommandPools, "EXECUTION", "command pools", Pool.Destroy());
 
     s_Queues = {};
+    s_CommandBuffers.Destruct();
     s_CommandPools.Destruct();
 }
 
@@ -61,41 +88,164 @@ bool BelongToTheSameFamily(const QueueType type0, const QueueType type1)
     return indices[ToVulkan(type0)] == indices[ToVulkan(type1)];
 }
 
-Queue Queue_Get(const QueueType type)
+u64 Queue_GetCompletedTimelineValues(const QueueType queue)
 {
-    return Handle_Create(Handle_Queue, type);
+    GRAPH_CHECK_QUEUE(queue);
+    return s_Queues[queue]->GetCompletedTimelineValues();
 }
-QueueType Queue_GetType(const Queue queue)
+u64 Queue_GetSubmittedTimelineValues(const QueueType queue)
 {
-    GRAPH_CHECK_HANDLE(queue, Handle_Queue);
+    GRAPH_CHECK_QUEUE(queue);
+    return s_Queues[queue]->GetSubmittedTimelineValues();
+}
+u64 Queue_ReserveTimelineValue(const QueueType queue)
+{
+    GRAPH_CHECK_QUEUE(queue);
+    return s_Queues[queue]->ReserveTimelineValue();
+}
+u64 Queue_UpdateCompletedTimelineValues(const QueueType queue)
+{
+    GRAPH_CHECK_QUEUE(queue);
+    return GRAPH_CHECK_RESULT(s_Queues[queue]->UpdateCompletedTimelineValues());
+}
+void Queue_SetName(const QueueType queue, const char *name)
+{
+    GRAPH_CHECK_QUEUE(queue);
+    GRAPH_CHECK_RESULT(s_Queues[queue]->SetName(name));
+}
+bool Queue_IsHandleValid(const QueueType queue)
+{
+    return queue < Queue_Count && s_Queues[queue];
+}
 
-    return QueueType(Handle_GetId(queue));
-}
-u64 Queue_GetCompletedTimeline(const Queue queue)
+void Queue_Submit(const QueueType queue, const TKit::Span<const SubmitInfo> infos)
 {
-    GRAPH_CHECK_HANDLE(queue, Handle_Queue);
+    GRAPH_CHECK_QUEUE(queue);
+    VKit::Queue *vkqueue = s_Queues[queue];
 
-    return s_Queues[Handle_GetId(queue)]->GetCompletedTimeline();
-}
-u64 Queue_GetTimelineSubmissions(const Queue queue)
-{
-    GRAPH_CHECK_HANDLE(queue, Handle_Queue);
+    u32 commandCount = 0;
+    u32 wcount = 0;
+    for (const SubmitInfo &info : infos)
+    {
+        commandCount += info.Commands.GetSize();
+        wcount += info.Waits.GetSize();
+    }
 
-    return s_Queues[Handle_GetId(queue)]->GetTimelineSubmissions();
+    TKit::StackArray<VkCommandBufferSubmitInfoKHR> commands{};
+    TKit::StackArray<VkSemaphoreSubmitInfoKHR> waits{};
+    TKit::StackArray<VkSemaphoreSubmitInfoKHR> signals{};
+    TKit::StackArray<VkSubmitInfo2KHR> vkinfos{};
+    commands.Reserve(commandCount);
+    waits.Reserve(wcount + infos.GetSize());
+    signals.Reserve(infos.GetSize() * 2);
+    vkinfos.Reserve(infos.GetSize());
+
+    for (const SubmitInfo &info : infos)
+    {
+        VkSubmitInfo2KHR vkinfo{};
+        vkinfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2_KHR;
+
+        if (!info.Commands.IsEmpty())
+        {
+            vkinfo.pCommandBufferInfos = commands.GetData() + commands.GetSize();
+            vkinfo.commandBufferInfoCount = info.Commands.GetSize();
+            for (const CommandBuffer cmd : info.Commands)
+            {
+                GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
+                VkCommandBufferSubmitInfoKHR cinfo{};
+                cinfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO_KHR;
+                cinfo.commandBuffer = s_CommandBuffers->At(Handle_GetId(cmd)).Buffer;
+                commands.Append(cinfo);
+            }
+        }
+
+        u32 waitCount = 0;
+        const VkSemaphoreSubmitInfoKHR *waitPtr = waits.end();
+        if (!info.Waits.IsEmpty())
+        {
+            waitCount += info.Waits.GetSize();
+            for (const WaitInfo &wait : info.Waits)
+            {
+                GRAPH_CHECK_QUEUE(wait.QueueType);
+                VkSemaphoreSubmitInfoKHR winfo{};
+                winfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR;
+                winfo.semaphore = s_Queues[wait.QueueType]->GetTimelineSempahore();
+                winfo.value = wait.Value;
+                winfo.stageMask = ToVulkanPipelineStageFlags(wait.StageFlags);
+                waits.Append(winfo);
+            }
+        }
+
+        u32 signalCount = 0;
+        const VkSemaphoreSubmitInfoKHR *signalPtr = signals.end();
+        if (info.SignalValue)
+        {
+            TKIT_ASSERT(info.SignalValue > vkqueue->GetSubmittedTimelineValues() &&
+                            info.SignalValue <= vkqueue->GetLastReservedTimelineValue(),
+                        "[GRAPH][QUEUE] SignalValue must be a value reserved with Queue_ReserveTimelineValue() that "
+                        "has not been submitted yet");
+            VkSemaphoreSubmitInfoKHR sinfo{};
+            sinfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR;
+            sinfo.semaphore = vkqueue->GetTimelineSempahore();
+            sinfo.value = info.SignalValue;
+            sinfo.stageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR;
+            signals.Append(sinfo);
+            ++signalCount;
+        }
+
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+        if (info.Swapchain != NullHandle)
+        {
+            TKIT_ASSERT(info.SignalValue != 0, "[GRAPH][EXECUTION] If a swap chain is provided for synchronization, a "
+                                               "non-zero signal value must be provided");
+            const VkSemaphore rsem = GetRenderFinishedSemaphore(info.Swapchain);
+            const VkSemaphore imgav = GetImageAvailableSemaphore(info.Swapchain);
+
+            VkSemaphoreSubmitInfoKHR wait{};
+            wait.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR;
+            wait.semaphore = imgav;
+            wait.stageMask = ToVulkanPipelineStageFlags(info.SwapchainWaitStageFlags);
+            waits.Append(wait);
+
+            VkSemaphoreSubmitInfoKHR signal{};
+            signal.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR;
+            signal.semaphore = rsem;
+            wait.stageMask = ToVulkanPipelineStageFlags(info.SwapchainSignalStageFlags);
+            signals.Append(signal);
+
+            ++waitCount;
+            ++signalCount;
+            SetRenderTimelineTracker(info.Swapchain, {info.SignalValue, queue});
+        }
+#endif
+        vkinfo.pWaitSemaphoreInfos = waitPtr;
+        vkinfo.waitSemaphoreInfoCount = waitCount;
+        vkinfo.pSignalSemaphoreInfos = signalPtr;
+        vkinfo.signalSemaphoreInfoCount = signalCount;
+        vkinfos.Append(vkinfo);
+    }
+    GRAPH_CHECK_RESULT(vkqueue->Submit2(vkinfos));
 }
-void Queue_SetName(const Queue queue, const char *name)
+
+bool Queue_WaitForTimelineValue(const QueueType queue, const u64 value, const u64 timeout)
 {
-    GRAPH_CHECK_HANDLE(queue, Handle_Queue);
-    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][EXECUTION] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_VKIT_RESULT(s_Queues[Handle_GetId(queue)]->SetName(name));
-}
-bool Queue_IsHandleValid(const Queue queue)
-{
-    if (Handle_GetType(queue) != Handle_Queue)
+    GRAPH_CHECK_QUEUE(queue);
+    VKit::Queue *vkqueue = s_Queues[queue];
+    TKIT_ASSERT(value <= vkqueue->GetSubmittedTimelineValues(),
+                "[GRAPH][QUEUE] Cannot wait for a timeline value that has not been submitted");
+
+    const VkSemaphore semaphore = vkqueue->GetTimelineSempahore();
+    VkSemaphoreWaitInfoKHR info{};
+    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO_KHR;
+    info.semaphoreCount = 1;
+    info.pSemaphores = &semaphore;
+    info.pValues = &value;
+
+    if (GetDeviceTable()->WaitSemaphoresKHR(GetDevice(), &info, timeout) != VK_SUCCESS)
         return false;
 
-    const Id id = Handle_GetId(queue);
-    return id < Queue_Count && s_Queues[id];
+    GRAPH_CHECK_RESULT(vkqueue->UpdateCompletedTimelineValues());
+    return true;
 }
 
 CommandPool CommandPool_Create(const QueueType type, const CommandPoolFlags flags)
@@ -108,7 +258,7 @@ CommandPool CommandPool_Create(const QueueType type, const CommandPoolFlags flag
     if (flags & CommandPoolFlag_CreateTransient)
         vkFlags |= VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 
-    pool.Pool = GRAPH_CHECK_VKIT_RESULT(VKit::CommandPool::Create(GetDevice(), family, vkFlags));
+    pool.Pool = GRAPH_CHECK_RESULT(VKit::CommandPool::Create(GetDevice(), family, vkFlags));
     pool.Type = type;
     return Handle_Create(Handle_CommandPool, id);
 }
@@ -127,7 +277,7 @@ void CommandPool_Reset(const CommandPool pool)
 {
     GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
 
-    GRAPH_CHECK_VKIT_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.Reset());
+    GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.Reset());
 }
 static CommandBuffer commandPool_CreateCommand(const CommandPool pool, const VkCommandBuffer vkcmd)
 {
@@ -142,18 +292,17 @@ CommandBuffer CommandPool_BeginImmediateSubmission(const CommandPool pool)
 {
     GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
     return commandPool_CreateCommand(
-        pool, GRAPH_CHECK_VKIT_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.BeginSingleTimeCommands()));
+        pool, GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.BeginSingleTimeCommands()));
 }
-void CommandPool_EndImmediateSubmission(const CommandPool pool, const CommandBuffer cmd, const Queue queue)
+void CommandPool_EndImmediateSubmission(const CommandPool pool, const CommandBuffer cmd, const QueueType queue)
 {
     GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
     GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GRAPH_CHECK_HANDLE(queue, Handle_Queue);
+    GRAPH_CHECK_QUEUE(queue);
 
     const Id id = Handle_GetId(cmd);
-    GRAPH_CHECK_VKIT_RESULT(
-        s_CommandPools->At(Handle_GetId(pool))
-            .Pool.EndSingleTimeCommands(s_CommandBuffers->At(id).Buffer, *s_Queues[Handle_GetId(queue)]));
+    GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool))
+                                .Pool.EndSingleTimeCommands(s_CommandBuffers->At(id).Buffer, *s_Queues[queue]));
 
     s_CommandBuffers->Remove(id);
 }
@@ -169,19 +318,38 @@ CommandBuffer CommandPool_NextCommandBuffer(const CommandPool pool)
         return p.Commands[p.NextCommand++];
 
     p.NextCommand++;
-    return commandPool_CreateCommand(pool, GRAPH_CHECK_VKIT_RESULT(p.Pool.Allocate()));
+    return commandPool_CreateCommand(pool, GRAPH_CHECK_RESULT(p.Pool.Allocate()));
 }
 
 void CommandPool_SetName(const CommandPool pool, const char *name)
 {
     GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
-    GRAPH_CHECK_VKIT_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.SetName(name));
+    TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][EXECUTION] To name objects, the validation capability must be enabled");
+    GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.SetName(name));
 }
 
 bool CommandPool_IsHandleValid(const CommandPool pool)
 {
     GRAPH_IS_HANDLE_VALID_FUNCTION_BODY(s_CommandPools, pool, Handle_CommandPool);
 }
+
+void CommandBuffer_Begin(const CommandBuffer cmd)
+{
+    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
+    VkCommandBufferBeginInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    GRAPH_CHECK_RESULT(
+        GetDeviceTable()->BeginCommandBuffer(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &info));
+}
+
+void CommandBuffer_End(const CommandBuffer cmd)
+{
+    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
+    GRAPH_CHECK_RESULT(GetDeviceTable()->EndCommandBuffer(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer));
+}
+
 bool CommandBuffer_IsHandleValid(const CommandBuffer cmd)
 {
     GRAPH_IS_HANDLE_VALID_FUNCTION_BODY(s_CommandBuffers, cmd, Handle_CommandBuffer);
@@ -350,7 +518,7 @@ void Command_PipelineBarrier(const CommandBuffer cmd, const PipelineBarrierInfo 
     {
         const BarrierMasks m = createBarrierMasks(cmdQueue, b);
         VKit::DeviceImage &image = GetImage(b.Handle);
-        const VkImageLayout layout = b.NewLayout == ImageLayout_Undefined ? image.GetLayout() : ToVulkan(b.NewLayout);
+        const VkImageLayout layout = b.NewLayout == ImageLayout_Undefined ? image.Layout : ToVulkan(b.NewLayout);
         images.Append(image.CreateTransitionLayoutBarrier2(layout, {.SrcFamilyIndex = m.SrcFamily,
                                                                     .DstFamilyIndex = m.DstFamily,
                                                                     .SrcAccess = m.SrcAccess,
@@ -359,7 +527,7 @@ void Command_PipelineBarrier(const CommandBuffer cmd, const PipelineBarrierInfo 
                                                                     .DstStage = m.DstStages,
                                                                     .Range = ToVulkan(image, b.Range)}));
         if (!m.Release)
-            image.SetLayout(layout);
+            image.Layout = layout;
     }
 
     VkDependencyInfoKHR dep{};
@@ -548,7 +716,7 @@ void Command_CopyBufferToImage(const CommandBuffer cmd, const Buffer src, const 
     copyInfo.sType = VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2_KHR;
     copyInfo.srcBuffer = GetBuffer(src);
     copyInfo.dstImage = image;
-    copyInfo.dstImageLayout = image.GetLayout();
+    copyInfo.dstImageLayout = image.Layout;
     copyInfo.regionCount = copies.GetSize();
     copyInfo.pRegions = copies.GetData();
     GetDeviceTable()->CmdCopyBufferToImage2KHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &copyInfo);
@@ -581,9 +749,9 @@ void Command_BlitImage(const CommandBuffer cmd, const Image src, const Image dst
     VkBlitImageInfo2KHR blitInfo{};
     blitInfo.sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2_KHR;
     blitInfo.srcImage = simg;
-    blitInfo.srcImageLayout = simg.GetLayout();
+    blitInfo.srcImageLayout = simg.Layout;
     blitInfo.dstImage = dimg;
-    blitInfo.dstImageLayout = dimg.GetLayout();
+    blitInfo.dstImageLayout = dimg.Layout;
     blitInfo.regionCount = blits.GetSize();
     blitInfo.pRegions = blits.GetData();
     blitInfo.filter = ToVulkan(filter);

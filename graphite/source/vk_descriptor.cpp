@@ -25,7 +25,7 @@ void Descriptor_Initialize(const u32 maxSets, const TKit::FixedArray<u32, Descri
     s_Layouts.Construct();
     s_Sets.Construct();
 
-    *s_DescriptorPool = GRAPH_CHECK_VKIT_RESULT(
+    *s_DescriptorPool = GRAPH_CHECK_RESULT(
         VKit::DescriptorPool::Builder(GetDevice())
             .SetMaxSets(maxSets)
             .AddPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, poolSizes[Descriptor_StorageBuffer])
@@ -37,7 +37,7 @@ void Descriptor_Initialize(const u32 maxSets, const TKit::FixedArray<u32, Descri
             .SetFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             .Build());
 
-    GRAPH_CHECK_VKIT_RESULT(s_DescriptorPool->SetName("graph-descriptor-pool"));
+    GRAPH_CHECK_RESULT(s_DescriptorPool->SetName("graph-descriptor-pool"));
 }
 
 void Descriptor_Terminate()
@@ -57,7 +57,7 @@ DescriptorSetLayout DescriptorSetLayout_Create(TKit::Span<const DescriptorBindin
         builder.AddBinding2(b.Binding, ToVulkan(b.Type), ToVulkanShaderStageFlags(b.ShaderStages), b.DescriptorCount,
                             ToVulkanDescriptorBindingFlags(b.Flags));
 
-    const VKit::DescriptorSetLayout layout = GRAPH_CHECK_VKIT_RESULT(builder.Build());
+    const VKit::DescriptorSetLayout layout = GRAPH_CHECK_RESULT(builder.Build());
     return Handle_Create(Handle_DescriptorSetLayout, s_Layouts->Insert(layout));
 }
 
@@ -72,7 +72,7 @@ void DescriptorSetLayout_SetName(const DescriptorSetLayout layout, const char *n
     GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
     TKIT_ASSERT(IsValidationEnabled(),
                 "[GRAPH][DESCRIPTOR] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_VKIT_RESULT(s_Layouts->At(Handle_GetId(layout)).SetName(name));
+    GRAPH_CHECK_RESULT(s_Layouts->At(Handle_GetId(layout)).SetName(name));
 }
 
 bool DescriptorSetLayout_IsHandleValid(const DescriptorSetLayout layout)
@@ -85,7 +85,7 @@ DescriptorSet DescriptorSet_Create(const DescriptorSetLayout layout)
     GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
 
     const VKit::DescriptorSet set =
-        GRAPH_CHECK_VKIT_RESULT(s_DescriptorPool->Allocate(s_Layouts->At(Handle_GetId(layout))));
+        GRAPH_CHECK_RESULT(s_DescriptorPool->Allocate(s_Layouts->At(Handle_GetId(layout))));
     return Handle_Create(Handle_DescriptorSet, s_Sets->Insert(set, layout));
 }
 
@@ -93,7 +93,7 @@ void DescriptorSet_Destroy(const DescriptorSet set)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
     const VkDescriptorSet handle = s_Sets->At(Handle_GetId(set)).Set;
-    GRAPH_CHECK_VKIT_RESULT(s_DescriptorPool->Deallocate(handle));
+    GRAPH_CHECK_RESULT(s_DescriptorPool->Deallocate(handle));
 }
 
 void DescriptorSet_BeginRecordWrite(const DescriptorSet set, DescriptorSetLayout layout)
@@ -157,7 +157,7 @@ void DescriptorSet_SetName(const DescriptorSet set, const char *name)
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
     TKIT_ASSERT(IsValidationEnabled(),
                 "[GRAPH][DESCRIPTOR] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_VKIT_RESULT(s_Sets->At(Handle_GetId(set)).Set.SetName(name));
+    GRAPH_CHECK_RESULT(s_Sets->At(Handle_GetId(set)).Set.SetName(name));
 }
 bool DescriptorSet_IsHandleValid(const DescriptorSet set)
 {

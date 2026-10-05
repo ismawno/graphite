@@ -2,7 +2,7 @@
 
 #include "vkit/vulkan/vulkan.hpp"
 
-#define GRAPH_CHECK_VKIT_RESULT(expression) Graph::CheckVKitError(expression)
+#define GRAPH_CHECK_RESULT(expression) Graph::CheckVKitError(expression)
 
 namespace Graph
 {

@@ -15,6 +15,7 @@ namespace Graph
 {
 struct ImageSubresourceRange;
 struct ImageSubresourceLayers;
+struct Tracker;
 
 VKit::Instance &GetInstance();
 VKit::PhysicalDevice &GetPhysical();
@@ -23,8 +24,6 @@ VKit::LogicalDevice &GetDevice();
 const VKit::Vulkan::InstanceTable *GetInstanceTable();
 const VKit::Vulkan::DeviceTable *GetDeviceTable();
 
-VkSurfaceKHR GetSurface(Surface surf);
-VkSurfaceKHR CreateDummySurface();
 VmaAllocator GetAllocator();
 
 VKit::DeviceBuffer &GetBuffer(Buffer buffer);
@@ -35,9 +34,19 @@ VKit::DescriptorSetLayout &GetDescriptorSetLayout(DescriptorSetLayout layout);
 VKit::DescriptorSet &GetDescriptorSet(DescriptorSet set);
 VKit::Shader &GetShader(Shader sh);
 VKit::PipelineLayout &GetPipelineLayout(PipelineLayout layout);
+// useful for swap chains, which need to expose handles but destroys its own images. Image_Destroy is still needed to
+// unregister it from resources!!
+Image CreateNonOwnedImage(const VKit::DeviceImage &img);
+
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+VkSurfaceKHR GetSurface(Window win);
+VkSemaphore GetRenderFinishedSemaphore(Swapchain sc);
+VkSemaphore GetImageAvailableSemaphore(Swapchain sc);
+void SetRenderTimelineTracker(Swapchain sc, const Tracker &tracker);
+#endif
+
 void BindPipeline(VkCommandBuffer cmd, Pipeline pip);
 
-void DestroyDummySurface();
 bool IsDebugUtilsEnabled();
 
 VkFormat ToVulkan(Format format);
@@ -74,6 +83,9 @@ VkPipelineStageFlags2KHR ToVulkanPipelineStageFlags(PipelineStageFlags stages);
 VkAccessFlags2KHR ToVulkanAccessFlags(AccessFlags access);
 VkPipelineBindPoint ToVulkan(BindPoint point);
 VkIndexType ToVulkan(IndexType type);
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+VkPresentModeKHR ToVulkan(PresentMode mode);
+#endif
 VKit::DeviceBufferFlags ToVulkanBufferFlags(BufferFlags flags);
 VKit::DeviceImageFlags ToVulkanImageFlags(ImageFlags flags);
 VKit::QueueType ToVulkan(QueueType type);

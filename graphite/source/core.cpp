@@ -1,7 +1,7 @@
 #include "pch.hpp"
 #include "graph/core.hpp"
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
-#    include "graph/surface.hpp"
+#    include "graph/platform.hpp"
 #endif
 #include "graph/execution.hpp"
 #include "graph/resources.hpp"
@@ -18,11 +18,13 @@ bool Handle_IsValid(const Handle handle, const HandleType htype)
     switch (itype)
     {
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
-    case Handle_Surface:
-        return Surface_IsHandleValid(handle);
+    case Handle_Window:
+        return Window_IsHandleValid(handle);
+    case Handle_Monitor:
+        return Monitor_IsHandleValid(handle);
+    case Handle_Swapchain:
+        return Swapchain_IsHandleValid(handle);
 #endif
-    case Handle_Queue:
-        return Queue_IsHandleValid(handle);
     case Handle_CommandPool:
         return CommandPool_IsHandleValid(handle);
     case Handle_CommandBuffer:
@@ -35,12 +37,24 @@ bool Handle_IsValid(const Handle handle, const HandleType htype)
         return ImageView_IsHandleValid(handle);
     case Handle_Sampler:
         return Sampler_IsHandleValid(handle);
+    case Handle_DescriptorSet:
+        return DescriptorSet_IsHandleValid(handle);
+    case Handle_DescriptorSetLayout:
+        return DescriptorSetLayout_IsHandleValid(handle);
     case Handle_Shader:
         return Shader_IsHandleValid(handle);
 #ifdef GRAPH_HAS_SHADER_COMPILATION_BACKEND
     case Handle_Compilation:
         return Compilation_IsHandleValid(handle);
 #endif
+#ifdef GRAPH_HAS_SHADER_REFLECTION_BACKEND
+    case Handle_Reflection:
+        return Reflection_IsHandleValid(handle);
+#endif
+    case Handle_PipelineLayout:
+        return PipelineLayout_IsHandleValid(handle);
+    case Handle_Pipeline:
+        return Pipeline_IsHandleValid(handle);
     default:
         return false;
     }
@@ -56,8 +70,8 @@ const char *ToString(const HandleType htype)
         return "Handle_Monitor";
     case Handle_Surface:
         return "Handle_Surface";
-    case Handle_Queue:
-        return "Handle_Queue";
+    case Handle_Swapchain:
+        return "Handle_Swapchain";
     case Handle_CommandPool:
         return "Handle_CommandPool";
     case Handle_CommandBuffer:
@@ -70,6 +84,10 @@ const char *ToString(const HandleType htype)
         return "Handle_ImageView";
     case Handle_Sampler:
         return "Handle_Sampler";
+    case Handle_DescriptorSetLayout:
+        return "Handle_DescriptorSetLayout";
+    case Handle_DescriptorSet:
+        return "Handle_DescriptorSet";
     case Handle_Shader:
         return "Handle_Shader";
     case Handle_Compilation:

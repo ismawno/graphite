@@ -77,8 +77,7 @@ constexpr Id NullId = GRAPH_NULL_HANDLE_ID;
 
 using Window = Handle;
 using Monitor = Handle;
-using Surface = Handle;
-using Queue = Handle;
+using Swapchain = Handle;
 using CommandPool = Handle;
 using CommandBuffer = Handle;
 using Buffer = Handle;
@@ -97,8 +96,7 @@ enum HandleType : u8
 {
     Handle_Window,
     Handle_Monitor,
-    Handle_Surface,
-    Handle_Queue,
+    Handle_Swapchain,
     Handle_CommandPool,
     Handle_CommandBuffer,
     Handle_Buffer,
@@ -137,12 +135,10 @@ enum CapabilityFlagBit : Capabilities
     Capability_ShaderDrawParameters = 1U << 5,
     Capability_ExtendedDynamicState = 1U << 6,
     Capability_BindlessDescriptors = 1U << 7,
-    Capability_DynamicRendering = 1U << 8,
-    Capability_TimelineSemaphores = 1U << 9,
-    Capability_ImageMultiFormat = 1U << 10,
-    Capability_RequireGraphicsQueue = 1U << 11,
-    Capability_RequireTransferQueue = 1U << 12,
-    Capability_RequireComputeQueue = 1U << 13,
+    Capability_ImageMultiFormat = 1U << 8,
+    Capability_RequireGraphicsQueue = 1U << 9,
+    Capability_RequireTransferQueue = 1U << 10,
+    Capability_RequireComputeQueue = 1U << 11,
     Capability_All = TKit::Limits<Capabilities>::Max(),
 };
 
@@ -638,6 +634,14 @@ enum IndexType : u8
     IndexType_Unsigned32,
 };
 
+enum PresentMode : u8
+{
+    PresentMode_Immediate,
+    PresentMode_Mailbox,
+    PresentMode_VSync,
+    PresentMode_Count
+};
+
 struct Specs
 {
     const char *ApplicationName = "Graphite app";
@@ -648,7 +652,6 @@ struct Specs
     TKit::FixedArray<u32, Descriptor_Count> DescriptorPoolSizes;
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
     Platform TargetPlatform = Platform_Auto;
-    u32 MaxSurfaces = 32;
 #endif
     u32 MaxCommandPools = 8;
     u32 MaxCommandBuffers = 32;

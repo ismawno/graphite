@@ -24,12 +24,12 @@ void Shader_Terminate()
 
 Shader Shader_Create(const SpirvData &data)
 {
-    const VKit::Shader sh = GRAPH_CHECK_VKIT_RESULT(VKit::Shader::Create(GetDevice(), data.Code, data.Size));
+    const VKit::Shader sh = GRAPH_CHECK_RESULT(VKit::Shader::Create(GetDevice(), data.Code, data.Size));
     return Handle_Create(Handle_Shader, s_Shaders->Insert(sh));
 }
 Shader Shader_Create(const TKit::StringView path)
 {
-    const VKit::Shader sh = GRAPH_CHECK_VKIT_RESULT(VKit::Shader::Create(GetDevice(), path));
+    const VKit::Shader sh = GRAPH_CHECK_RESULT(VKit::Shader::Create(GetDevice(), path));
     return Handle_Create(Handle_Shader, s_Shaders->Insert(sh));
 }
 
@@ -43,7 +43,7 @@ void Shader_SetName(const Shader sh, const char *name)
 {
     GRAPH_CHECK_HANDLE(sh, Handle_Shader);
     TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][SHADERS] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_VKIT_RESULT(s_Shaders->At(Handle_GetId(sh)).SetName(name));
+    GRAPH_CHECK_RESULT(s_Shaders->At(Handle_GetId(sh)).SetName(name));
 }
 bool Shader_IsHandleValid(const Shader sh)
 {

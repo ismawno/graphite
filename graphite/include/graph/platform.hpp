@@ -11,7 +11,6 @@
 
 namespace Graph
 {
-
 struct VideoMode
 {
     u32v2 Dimensions;
@@ -28,6 +27,9 @@ struct WindowSpecs
     void *UserData = nullptr;
 };
 
+void PollEvents();
+void WaitEvents();
+
 Window Window_Create(const WindowSpecs &specs);
 void Window_Destroy(Window win);
 
@@ -35,6 +37,9 @@ void *Window_GetUserData(Window win);
 void Window_SetUserData(Window win, void *data);
 bool Window_ShouldClose(Window win);
 
+#ifdef GRAPH_RENDER_BACKEND_VULKAN
+void Window_RecreateSurface(Window win);
+#endif
 void Window_Show(Window win);
 void Window_Hide(Window win);
 void Window_Focus(Window win);
