@@ -214,6 +214,17 @@ SwapchainStatus Swapchain_Present(const Swapchain sc)
     return SwapchainStatus_Success;
 }
 
+void Swapchain_SetName(const Swapchain sc, const char *name)
+{
+    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
+    GRAPH_CHECK_RESULT(s_Swapchains->At(Handle_GetId(sc)).Swapchain.SetName(name));
+}
+
+bool Swapchain_IsHandleValid(const Swapchain sc)
+{
+    GRAPH_IS_HANDLE_VALID_FUNCTION_BODY(s_Swapchains, sc, Handle_Swapchain);
+}
+
 VkSemaphore GetRenderFinishedSemaphore(const Swapchain sc)
 {
     GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);

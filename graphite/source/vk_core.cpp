@@ -320,8 +320,7 @@ void Initialize(const Specs &specs)
 #    if defined(GRAPH_PLATFORM_BACKEND_GLFW) && GRAPH_GLFW_VERSION_COMBINED >= 3400
     glfwInitVulkanLoader(VKit::Vulkan::vkGetInstanceProcAddr);
 #    endif
-    Platform_Initialize(specs.TargetPlatform, specs.MaxSurfaces);
-    Surface_Initialize(specs.MaxSurfaces);
+    Platform_Initialize(specs.TargetPlatform, specs.MaxWindows);
 #endif
 
     createInstance();
@@ -339,10 +338,16 @@ void Initialize(const Specs &specs)
 #endif
     Pipeline_Initialize(specs.MaxPipelineLayouts, specs.MaxPipelines);
     Resources_Initialize(specs.MaxBuffers, specs.MaxImages, specs.MaxSamplers, specs.MaxImageViews);
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+    Swapchain_Initialize(specs.MaxWindows);
+#endif
 }
 
 void Terminate()
 {
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+    Swapchain_Terminate();
+#endif
     Resources_Terminate();
     Pipeline_Terminate();
 #ifdef GRAPH_HAS_SHADER_REFLECTION_BACKEND
@@ -354,8 +359,6 @@ void Terminate()
     Shader_Terminate();
     Descriptor_Terminate();
     Execution_Terminate();
-
-    Surface_Terminate();
 
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
     Platform_Terminate();

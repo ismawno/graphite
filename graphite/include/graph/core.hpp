@@ -652,6 +652,7 @@ struct Specs
     TKit::FixedArray<u32, Descriptor_Count> DescriptorPoolSizes;
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
     Platform TargetPlatform = Platform_Auto;
+    u32 MaxWindows = 32;
 #endif
     u32 MaxCommandPools = 8;
     u32 MaxCommandBuffers = 32;

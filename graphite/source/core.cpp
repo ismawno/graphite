@@ -2,6 +2,7 @@
 #include "graph/core.hpp"
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
 #    include "graph/platform.hpp"
+#    include "graph/swap_chain.hpp"
 #endif
 #include "graph/execution.hpp"
 #include "graph/resources.hpp"
@@ -68,8 +69,6 @@ const char *ToString(const HandleType htype)
         return "Handle_Window";
     case Handle_Monitor:
         return "Handle_Monitor";
-    case Handle_Surface:
-        return "Handle_Surface";
     case Handle_Swapchain:
         return "Handle_Swapchain";
     case Handle_CommandPool:
