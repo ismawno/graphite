@@ -345,6 +345,7 @@ void Initialize(const Specs &specs)
 
 void Terminate()
 {
+    DeviceWaitIdle();
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
     Swapchain_Terminate();
 #endif
