@@ -273,10 +273,14 @@ void CommandPool_Destroy(const CommandPool pool)
 
     GRAPH_DESTROY_FUNCTION_BODY_ACCESSOR(s_CommandPools, pool, Pool.Destroy());
 }
+QueueType CommandPool_GetQueueType(const CommandPool pool)
+{
+    GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
+    return s_CommandPools->At(Handle_GetId(pool)).Type;
+}
 void CommandPool_Reset(const CommandPool pool)
 {
     GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
-
     GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.Reset());
 }
 static CommandBuffer commandPool_CreateCommand(const CommandPool pool, const VkCommandBuffer vkcmd)
@@ -302,7 +306,7 @@ void CommandPool_EndImmediateSubmission(const CommandPool pool, const CommandBuf
 
     const Id id = Handle_GetId(cmd);
     GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool))
-                                .Pool.EndSingleTimeCommands(s_CommandBuffers->At(id).Buffer, *s_Queues[queue]));
+                           .Pool.EndSingleTimeCommands(s_CommandBuffers->At(id).Buffer, *s_Queues[queue]));
 
     s_CommandBuffers->Remove(id);
 }
@@ -340,8 +344,7 @@ void CommandBuffer_Begin(const CommandBuffer cmd)
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    GRAPH_CHECK_RESULT(
-        GetDeviceTable()->BeginCommandBuffer(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &info));
+    GRAPH_CHECK_RESULT(GetDeviceTable()->BeginCommandBuffer(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &info));
 }
 
 void CommandBuffer_End(const CommandBuffer cmd)

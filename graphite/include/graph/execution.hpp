@@ -76,6 +76,8 @@ void Queue_SetName(QueueType queue, const char *name);
 
 CommandPool CommandPool_Create(QueueType type, CommandPoolFlags flags = 0);
 void CommandPool_Destroy(CommandPool pool);
+
+QueueType CommandPool_GetQueueType(CommandPool pool);
 void CommandPool_Reset(CommandPool pool);
 
 CommandBuffer CommandPool_BeginImmediateSubmission(CommandPool pool);
