@@ -116,6 +116,7 @@ ImageView Image_AddView(Image img, const ImageViewSpecs &specs);
 ImageView Image_GetView(Image img, u32 idx = 0);
 
 void Image_SetLayout(Image img, ImageLayout layout);
+ImageLayout Image_GetLayout(Image img);
 
 void Image_SetName(Image img, const char *name);
 void Image_SetViewNames(Image img, const char *name);

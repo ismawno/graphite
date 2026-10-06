@@ -200,12 +200,44 @@ ImageView Image_GetView(const Image img, const u32 idx)
     return NullHandle;
 }
 
+static ImageLayout fromVulkan(const VkImageLayout layout)
+{
+    switch (layout)
+    {
+    case VK_IMAGE_LAYOUT_UNDEFINED:
+        return ImageLayout_Undefined;
+    case VK_IMAGE_LAYOUT_GENERAL:
+        return ImageLayout_General;
+    case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
+        return ImageLayout_ColorAttachment;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+        return ImageLayout_DepthStencilAttachment;
+    case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
+        return ImageLayout_DepthStencilReadOnly;
+    case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
+        return ImageLayout_ShaderReadOnly;
+    case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
+        return ImageLayout_TransferSrc;
+    case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
+        return ImageLayout_TransferDst;
+    case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
+        return ImageLayout_Present;
+    default:
+        TKIT_FATAL("[GRAPH] Unsupported Vulkan image layout: {}", u32(layout));
+        return ImageLayout_Undefined;
+    }
+}
+
 void Image_SetLayout(const Image img, const ImageLayout layout)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
     s_Images->At(Handle_GetId(img)).Image.Layout = ToVulkan(layout);
 }
-
+ImageLayout Image_GetLayout(const Image img)
+{
+    GRAPH_CHECK_HANDLE(img, Handle_Image);
+    return fromVulkan(s_Images->At(Handle_GetId(img)).Image.Layout);
+}
 void Image_SetName(const Image img, const char *name)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
