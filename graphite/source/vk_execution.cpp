@@ -281,7 +281,9 @@ QueueType CommandPool_GetQueueType(const CommandPool pool)
 void CommandPool_Reset(const CommandPool pool)
 {
     GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
-    GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.Reset());
+    Vulkan_CommandPool &p = s_CommandPools->At(Handle_GetId(pool));
+    GRAPH_CHECK_RESULT(p.Pool.Reset());
+    p.NextCommand = 0;
 }
 static CommandBuffer commandPool_CreateCommand(const CommandPool pool, const VkCommandBuffer vkcmd)
 {
