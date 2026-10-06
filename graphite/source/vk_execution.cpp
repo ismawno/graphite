@@ -108,6 +108,13 @@ u64 Queue_UpdateCompletedTimelineValues(const QueueType queue)
     GRAPH_CHECK_QUEUE(queue);
     return GRAPH_CHECK_RESULT(s_Queues[queue]->UpdateCompletedTimelineValues());
 }
+void UpdateCompletedTimelineValuesForAllQueues()
+{
+    for (VKit::Queue *q : GetDevice().GetInfo().Queues)
+    {
+        GRAPH_CHECK_RESULT(q->UpdateCompletedTimelineValues());
+    }
+}
 void Queue_SetName(const QueueType queue, const char *name)
 {
     GRAPH_CHECK_QUEUE(queue);

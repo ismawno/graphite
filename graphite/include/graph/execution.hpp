@@ -37,6 +37,7 @@ u64 Queue_GetCompletedTimelineValues(QueueType queue);
 u64 Queue_GetSubmittedTimelineValues(QueueType queue);
 u64 Queue_ReserveTimelineValue(QueueType queue);
 u64 Queue_UpdateCompletedTimelineValues(QueueType queue);
+void UpdateCompletedTimelineValuesForAllQueues();
 
 struct Tracker
 {
