@@ -1032,6 +1032,15 @@ void Window_SetScreenDimensions(const Window win, const u32v2 &dim)
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     TKIT_ASSERT(dim[0] != 0 && dim[1] != 0,
                 "[GRAPH][WINDOW] Cannot have window dimensions of zero! Passed values: {}, {}", dim[0], dim[1]);
+#if defined(TKIT_OS_APPLE) && !defined(GRAPH_GLFW_OSX_WINDOW_POS_FIX)
+    i32 x;
+    i32 y;
+    i32 w;
+    i32 h;
+    glfwGetWindowPos(m_Window, &x, &y);
+    glfwGetWindowSize(m_Window, &w, &h);
+    glfwSetWindowPos(m_Window, x, y - h + i32(dim[1]));
+#endif
     glfwSetWindowSize(s_Windows->At(Handle_GetId(win)).Window, i32(dim[0]), i32(dim[1]));
 }
 
