@@ -984,7 +984,12 @@ f32 Window_GetAspect(const Window win)
 f32 Window_GetOpacity(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
+#ifdef GRAPH_GLFW_WINDOW_OPACITY
     return glfwGetWindowOpacity(s_Windows->At(Handle_GetId(win)).Window);
+#else
+    TKIT_LOG_ERROR("[GRAPH][PLATFORM] To query opacity, GLFW 3.3 or greater is required");
+    return 0.f;
+#endif
 }
 
 WindowFlags Window_GetFlags(const Window win)
@@ -1080,7 +1085,11 @@ void Window_RemoveFlags(const Window win, const WindowFlags flags)
 void Window_SetOpacity(const Window win, const f32 opacity)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
+#ifdef GRAPH_GLFW_WINDOW_OPACITY
     glfwSetWindowOpacity(s_Windows->At(Handle_GetId(win)).Window, opacity);
+#else
+    TKIT_LOG_ERROR("[GRAPH][PLATFORM] To query opacity, GLFW 3.3 or greater is required");
+#endif
 }
 
 void Window_SetMouseCursor(const Window win, const MouseCursor cursor)
