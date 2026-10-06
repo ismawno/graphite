@@ -816,6 +816,14 @@ void WaitEvents()
 {
     glfwWaitEvents();
 }
+const char *GetClipboard()
+{
+    return glfwGetClipboardString(nullptr);
+}
+void SetClipboard(const char *text)
+{
+    glfwSetClipboardString(nullptr, text);
+}
 
 Window Window_Create(const WindowSpecs &specs)
 {

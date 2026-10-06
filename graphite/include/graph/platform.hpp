@@ -30,6 +30,9 @@ struct WindowSpecs
 void PollEvents();
 void WaitEvents();
 
+const char *GetClipboard();
+void SetClipboard(const char *text);
+
 Window Window_Create(const WindowSpecs &specs);
 void Window_Destroy(Window win);
 

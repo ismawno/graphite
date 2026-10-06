@@ -512,6 +512,7 @@ void Command_PipelineBarrier(const CommandBuffer cmd, const PipelineBarrierInfo 
     }
     for (const BufferMemoryBarrierInfo &b : info.BufferBarriers)
     {
+        GRAPH_CHECK_HANDLE(b.Handle, Handle_Buffer);
         const BarrierMasks m = createBarrierMasks(cmdQueue, b);
         VkBufferMemoryBarrier2KHR vk{};
         vk.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
@@ -528,6 +529,7 @@ void Command_PipelineBarrier(const CommandBuffer cmd, const PipelineBarrierInfo 
     }
     for (const ImageMemoryBarrierInfo &b : info.ImageBarriers)
     {
+        GRAPH_CHECK_HANDLE(b.Handle, Handle_Image);
         const BarrierMasks m = createBarrierMasks(cmdQueue, b);
         VKit::DeviceImage &image = GetImage(b.Handle);
         const VkImageLayout layout = b.NewLayout == ImageLayout_Undefined ? image.Layout : ToVulkan(b.NewLayout);
