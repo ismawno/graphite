@@ -24,7 +24,7 @@ struct PipelineLayoutSpecs
 };
 
 PipelineLayout PipelineLayout_Create(const PipelineLayoutSpecs &specs);
-void PipelineLayout_Destroy();
+void PipelineLayout_Destroy(PipelineLayout layout);
 
 void PipelineLayout_SetName(PipelineLayout layout, const char *name);
 bool PipelineLayout_IsHandleValid(PipelineLayout layout);
