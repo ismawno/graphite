@@ -110,7 +110,7 @@ struct RasterizationState
     f32 DepthBiasSlopeFactor = 0.f;
     f32 LineWidth = 1.f;
     PolygonMode PolygonMode = PolygonMode_Fill;
-    CullMode CullMode = CullMode_Back;
+    CullMode CullMode = CullMode_None;
     FrontFace FrontFace = FrontFace_CounterClockwise;
     bool DepthBiasEnabled = false;
 };
