@@ -307,15 +307,16 @@ CommandBuffer CommandPool_BeginImmediateSubmission(const CommandPool pool)
     return commandPool_CreateCommand(
         pool, GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.BeginSingleTimeCommands()));
 }
-void CommandPool_EndImmediateSubmission(const CommandPool pool, const CommandBuffer cmd, const QueueType queue)
+void CommandPool_EndImmediateSubmission(const CommandPool pool, const CommandBuffer cmd)
 {
     GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
     GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GRAPH_CHECK_QUEUE(queue);
+    const Vulkan_CommandPool &p = s_CommandPools->At(Handle_GetId(pool));
+    GRAPH_CHECK_QUEUE(p.Type);
 
     const Id id = Handle_GetId(cmd);
     GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool))
-                           .Pool.EndSingleTimeCommands(s_CommandBuffers->At(id).Buffer, *s_Queues[queue]));
+                           .Pool.EndSingleTimeCommands(s_CommandBuffers->At(id).Buffer, *s_Queues[p.Type]));
 
     s_CommandBuffers->Remove(id);
 }

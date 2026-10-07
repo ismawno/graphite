@@ -82,13 +82,13 @@ QueueType CommandPool_GetQueueType(CommandPool pool);
 void CommandPool_Reset(CommandPool pool);
 
 CommandBuffer CommandPool_BeginImmediateSubmission(CommandPool pool);
-void CommandPool_EndImmediateSubmission(CommandPool pool, CommandBuffer cmd, QueueType queue);
+void CommandPool_EndImmediateSubmission(CommandPool pool, CommandBuffer cmd);
 
-template <typename F> void CommandPool_ImmediateSubmission(const CommandPool pool, const QueueType queue, F &&fun)
+template <typename F> void CommandPool_ImmediateSubmission(const CommandPool pool, F &&fun)
 {
     const CommandBuffer cmd = CommandPool_BeginImmediateSubmission(pool);
     std::forward<F>(fun)(cmd);
-    CommandPool_EndImmediateSubmission(pool, cmd, queue);
+    CommandPool_EndImmediateSubmission(pool, cmd);
 }
 
 CommandBuffer CommandPool_NextCommandBuffer(CommandPool pool);
