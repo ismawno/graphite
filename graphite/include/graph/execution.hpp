@@ -265,5 +265,11 @@ inline void Command_CopyBuffer(const CommandBuffer cmd, const Buffer src, const 
 void Command_CopyBufferToImage(CommandBuffer cmd, Buffer src, Image dst, TKit::Span<const BufferImageCopy> regions);
 void Command_BlitImage(CommandBuffer cmd, Image src, Image dst, TKit::Span<const ImageBlit> regions,
                        Filter filter = Filter_Linear);
+inline void Command_BlitImage(const CommandBuffer cmd, const Image src, const Image dst,
+                              const Filter filter = Filter_Linear)
+{
+    const ImageBlit blit{};
+    Command_BlitImage(cmd, src, dst, blit, filter);
+}
 
 } // namespace Graph
