@@ -23,15 +23,15 @@ struct DescriptorBinding
 
 struct DescriptorBufferInfo
 {
-    Buffer Handle;
+    Buffer Buffer;
     usz Offset;
     usz Size;
 
-    static constexpr DescriptorBufferInfo Create(const Buffer handle, const usz size, const usz offset = 0)
+    static constexpr DescriptorBufferInfo Create(const Graph::Buffer handle, const usz size, const usz offset = 0)
     {
         return {handle, offset, size};
     }
-    static constexpr DescriptorBufferInfo Create(const Buffer handle)
+    static constexpr DescriptorBufferInfo Create(const Graph::Buffer handle)
     {
         return {handle, 0, Buffer_GetSize(handle)};
     }
@@ -39,7 +39,7 @@ struct DescriptorBufferInfo
 
 struct DescriptorImageInfo
 {
-    ImageView Handle;
+    ImageView View;
     Sampler CombinedSampler;
     ImageLayout Layout;
 

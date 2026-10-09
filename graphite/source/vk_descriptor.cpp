@@ -84,8 +84,7 @@ DescriptorSet DescriptorSet_Create(const DescriptorSetLayout layout)
 {
     GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
 
-    const VKit::DescriptorSet set =
-        GRAPH_CHECK_RESULT(s_DescriptorPool->Allocate(s_Layouts->At(Handle_GetId(layout))));
+    const VKit::DescriptorSet set = GRAPH_CHECK_RESULT(s_DescriptorPool->Allocate(s_Layouts->At(Handle_GetId(layout))));
     return Handle_Create(Handle_DescriptorSet, s_Sets->Insert(set, layout));
 }
 
@@ -115,7 +114,7 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
     TKit::StackArray<VkDescriptorBufferInfo> infos{};
     infos.Reserve(bufferInfo.GetSize());
     for (const DescriptorBufferInfo &info : bufferInfo)
-        infos.Append(GetBuffer(info.Handle), info.Offset, info.Size);
+        infos.Append(GetBuffer(info.Buffer), info.Offset, info.Size);
 
     s_Sets->At(Handle_GetId(set)).Writer->WriteBuffer(binding, infos, elementOffset);
 }
@@ -128,7 +127,7 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
     infos.Reserve(imageInfo.GetSize());
     for (const DescriptorImageInfo &info : imageInfo)
         infos.Append(info.CombinedSampler == NullHandle ? VK_NULL_HANDLE : GetSampler(info.CombinedSampler),
-                     GetImageView(info.Handle), ToVulkan(info.Layout));
+                     GetImageView(info.View), ToVulkan(info.Layout));
 
     s_Sets->At(Handle_GetId(set)).Writer->WriteImage(binding, infos, elementOffset);
 }
