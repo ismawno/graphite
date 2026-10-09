@@ -513,7 +513,7 @@ void Command_PipelineBarrier(const CommandBuffer cmd, const PipelineBarrierInfo 
     }
     for (const BufferMemoryBarrierInfo &b : info.BufferBarriers)
     {
-        GRAPH_CHECK_HANDLE(b.Handle, Handle_Buffer);
+        GRAPH_CHECK_HANDLE(b.Buffer, Handle_Buffer);
         const BarrierMasks m = createBarrierMasks(cmdQueue, b);
         VkBufferMemoryBarrier2KHR vk{};
         vk.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
@@ -523,16 +523,16 @@ void Command_PipelineBarrier(const CommandBuffer cmd, const PipelineBarrierInfo 
         vk.dstAccessMask = m.DstAccess;
         vk.srcQueueFamilyIndex = m.SrcFamily;
         vk.dstQueueFamilyIndex = m.DstFamily;
-        vk.buffer = GetBuffer(b.Handle);
+        vk.buffer = GetBuffer(b.Buffer);
         vk.offset = b.Offset;
         vk.size = b.Size ? b.Size : VK_WHOLE_SIZE;
         buffers.Append(vk);
     }
     for (const ImageMemoryBarrierInfo &b : info.ImageBarriers)
     {
-        GRAPH_CHECK_HANDLE(b.Handle, Handle_Image);
+        GRAPH_CHECK_HANDLE(b.Image, Handle_Image);
         const BarrierMasks m = createBarrierMasks(cmdQueue, b);
-        VKit::DeviceImage &image = GetImage(b.Handle);
+        VKit::DeviceImage &image = GetImage(b.Image);
         const VkImageLayout layout = b.NewLayout == ImageLayout_Undefined ? image.Layout : ToVulkan(b.NewLayout);
         images.Append(image.CreateTransitionLayoutBarrier2(layout, {.SrcFamilyIndex = m.SrcFamily,
                                                                     .DstFamilyIndex = m.DstFamily,

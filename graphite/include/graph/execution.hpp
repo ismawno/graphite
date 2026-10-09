@@ -157,7 +157,7 @@ struct BufferMemoryBarrierInfo
 {
     usz Offset = 0;
     usz Size = 0;
-    Buffer Handle = NullHandle;
+    Buffer Buffer = NullHandle;
     QueueType HandTo = Queue_None;
     QueueType AcceptFrom = Queue_None;
     PipelineStageFlags SrcStages = 0;
@@ -168,7 +168,7 @@ struct BufferMemoryBarrierInfo
 
 struct ImageMemoryBarrierInfo
 {
-    Image Handle = NullHandle;
+    Image Image = NullHandle;
     ImageSubresourceRange Range{};
     ImageLayout NewLayout = ImageLayout_Undefined;
     QueueType HandTo = Queue_None;
