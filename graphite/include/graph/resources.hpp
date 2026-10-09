@@ -112,7 +112,7 @@ void Image_DestroyViews(Image img);
 
 usz Image_ComputeSize(Image img);
 
-ImageView Image_AddView(Image img, const ImageViewSpecs &specs);
+ImageView Image_AddView(Image img, const ImageViewSpecs &specs = {});
 ImageView Image_GetView(Image img, u32 idx = 0);
 
 void Image_SetLayout(Image img, ImageLayout layout);
