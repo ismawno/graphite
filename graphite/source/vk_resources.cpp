@@ -76,10 +76,37 @@ usz Buffer_GetSize(const Buffer buffer)
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
     return s_Buffers->At(Handle_GetId(buffer)).GetInfo().Size;
 }
+static BufferFlags fromVulkanBufferFlags(const VKit::DeviceBufferFlags flags)
+{
+    BufferFlags result = 0;
+    if (flags & VKit::DeviceBufferFlag_DeviceLocal)
+        result |= BufferFlag_DeviceLocal;
+    if (flags & VKit::DeviceBufferFlag_HostVisible)
+        result |= BufferFlag_HostVisible;
+    if (flags & VKit::DeviceBufferFlag_Source)
+        result |= BufferFlag_Source;
+    if (flags & VKit::DeviceBufferFlag_Destination)
+        result |= BufferFlag_Destination;
+    if (flags & VKit::DeviceBufferFlag_Staging)
+        result |= BufferFlag_Staging;
+    if (flags & VKit::DeviceBufferFlag_Vertex)
+        result |= BufferFlag_Vertex;
+    if (flags & VKit::DeviceBufferFlag_Index)
+        result |= BufferFlag_Index;
+    if (flags & VKit::DeviceBufferFlag_Storage)
+        result |= BufferFlag_Storage;
+    if (flags & VKit::DeviceBufferFlag_Indirect)
+        result |= BufferFlag_Indirect;
+    if (flags & VKit::DeviceBufferFlag_HostMapped)
+        result |= BufferFlag_HostMapped;
+    if (flags & VKit::DeviceBufferFlag_HostRandomAccess)
+        result |= BufferFlag_HostRandomAccess;
+    return result;
+}
 BufferFlags Buffer_GetFlags(const Buffer buffer)
 {
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
-    return BufferFlags(s_Buffers->At(Handle_GetId(buffer)).GetInfo().Flags);
+    return fromVulkanBufferFlags(s_Buffers->At(Handle_GetId(buffer)).GetInfo().Flags);
 }
 
 void *Buffer_Map(const Buffer buffer)
