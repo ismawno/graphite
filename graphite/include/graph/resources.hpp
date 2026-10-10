@@ -55,6 +55,8 @@ struct ImageBlit
     u32v3 DstMax{GRAPH_WHOLE_THING};
 };
 
+usz Format_GetBytesPerPixel(Format fmt);
+
 Buffer Buffer_Create(usz size, BufferFlags flags);
 template <typename T> Buffer Buffer_Create(const u32 count, const BufferFlags flags)
 {

@@ -58,6 +58,11 @@ void Resources_Terminate()
     s_Samplers.Destruct();
 }
 
+usz Format_GetBytesPerPixel(const Format fmt)
+{
+    return VKit::DeviceImage::GetBytesPerPixel(ToVulkan(fmt));
+}
+
 Buffer Buffer_Create(const usz size, const BufferFlags flags)
 {
     const VKit::DeviceBuffer buff = GRAPH_CHECK_RESULT(
