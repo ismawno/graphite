@@ -107,7 +107,7 @@ void DescriptorSet_BeginRecordWrite(const DescriptorSet set, DescriptorSetLayout
     vset.Writer.Construct(GetDevice(), &s_Layouts->At(Handle_GetId(layout)));
 }
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
-                               const TKit::Span<const DescriptorBufferInfo> bufferInfo, const u32 elementOffset)
+                               const TKit::Span<const DescriptorBufferInfo> bufferInfo, const u32 dstElement)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
 
@@ -116,10 +116,10 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
     for (const DescriptorBufferInfo &info : bufferInfo)
         infos.Append(GetBuffer(info.Buffer), info.Offset, info.Size);
 
-    s_Sets->At(Handle_GetId(set)).Writer->WriteBuffer(binding, infos, elementOffset);
+    s_Sets->At(Handle_GetId(set)).Writer->WriteBuffer(binding, infos, dstElement);
 }
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
-                               const TKit::Span<const DescriptorImageInfo> imageInfo, const u32 elementOffset)
+                               const TKit::Span<const DescriptorImageInfo> imageInfo, const u32 dstElement)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
 
@@ -129,10 +129,10 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
         infos.Append(info.CombinedSampler == NullHandle ? VK_NULL_HANDLE : GetSampler(info.CombinedSampler),
                      GetImageView(info.View), ToVulkan(info.Layout));
 
-    s_Sets->At(Handle_GetId(set)).Writer->WriteImage(binding, infos, elementOffset);
+    s_Sets->At(Handle_GetId(set)).Writer->WriteImage(binding, infos, dstElement);
 }
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding, const TKit::Span<const Sampler> samplers,
-                               const u32 elementOffset)
+                               const u32 dstElement)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
 
@@ -141,7 +141,7 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding, const
     for (const Sampler smp : samplers)
         infos.Append(GetSampler(smp), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED);
 
-    s_Sets->At(Handle_GetId(set)).Writer->WriteImage(binding, infos, elementOffset);
+    s_Sets->At(Handle_GetId(set)).Writer->WriteImage(binding, infos, dstElement);
 }
 void DescriptorSet_EndRecordWrite(const DescriptorSet set)
 {

@@ -61,35 +61,34 @@ void DescriptorSet_Destroy(DescriptorSet set);
 
 void DescriptorSet_BeginRecordWrite(DescriptorSet set, DescriptorSetLayout layout = NullHandle);
 void DescriptorSet_RecordWrite(DescriptorSet set, u32 binding, TKit::Span<const DescriptorBufferInfo> bufferInfo,
-                               u32 elementOffset = 0);
+                               u32 dstElement = 0);
 void DescriptorSet_RecordWrite(DescriptorSet set, u32 binding, TKit::Span<const DescriptorImageInfo> imageInfo,
-                               u32 elementOffset = 0);
-void DescriptorSet_RecordWrite(DescriptorSet set, u32 binding, TKit::Span<const Sampler> samplers,
-                               u32 elementOffset = 0);
+                               u32 dstElement = 0);
+void DescriptorSet_RecordWrite(DescriptorSet set, u32 binding, TKit::Span<const Sampler> samplers, u32 dstElement = 0);
 void DescriptorSet_EndRecordWrite(DescriptorSet set);
 
 void DescriptorSet_Write(const DescriptorSet set, u32 binding, const TKit::Span<const DescriptorBufferInfo> bufferInfo,
-                         const u32 elementOffset = 0, const DescriptorSetLayout layout = NullHandle)
+                         const u32 dstElement = 0, const DescriptorSetLayout layout = NullHandle)
 {
     DescriptorSet_BeginRecordWrite(set, layout);
-    DescriptorSet_RecordWrite(set, binding, bufferInfo, elementOffset);
+    DescriptorSet_RecordWrite(set, binding, bufferInfo, dstElement);
     DescriptorSet_EndRecordWrite(set);
 }
 
 void DescriptorSet_Write(const DescriptorSet set, const u32 binding,
-                         const TKit::Span<const DescriptorImageInfo> imageInfo, const u32 elementOffset = 0,
+                         const TKit::Span<const DescriptorImageInfo> imageInfo, const u32 dstElement = 0,
                          const DescriptorSetLayout layout = NullHandle)
 {
     DescriptorSet_BeginRecordWrite(set, layout);
-    DescriptorSet_RecordWrite(set, binding, imageInfo, elementOffset);
+    DescriptorSet_RecordWrite(set, binding, imageInfo, dstElement);
     DescriptorSet_EndRecordWrite(set);
 }
 
 void DescriptorSet_Write(const DescriptorSet set, const u32 binding, const TKit::Span<const Sampler> samplers,
-                         const u32 elementOffset = 0, const DescriptorSetLayout layout = NullHandle)
+                         const u32 dstElement = 0, const DescriptorSetLayout layout = NullHandle)
 {
     DescriptorSet_BeginRecordWrite(set, layout);
-    DescriptorSet_RecordWrite(set, binding, samplers, elementOffset);
+    DescriptorSet_RecordWrite(set, binding, samplers, dstElement);
     DescriptorSet_EndRecordWrite(set);
 }
 
