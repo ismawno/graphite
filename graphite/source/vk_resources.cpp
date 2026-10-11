@@ -62,6 +62,27 @@ usz Format_GetBytesPerPixel(const Format fmt)
 {
     return VKit::DeviceImage::GetBytesPerPixel(ToVulkan(fmt));
 }
+bool Format_IsSupported(const Format format, const ImageType type, const ImageFlags flags, const ImageTiling tiling)
+{
+    VkImageUsageFlags usage = 0;
+    if (flags & ImageFlag_Sampled)
+        usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (flags & ImageFlag_Storage)
+        usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+    if (flags & ImageFlag_ColorAttachment)
+        usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (flags & ImageFlag_DepthAttachment)
+        usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    if (flags & ImageFlag_StencilAttachment)
+        usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    if (flags & ImageFlag_InputAttachment)
+        usage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+
+    VkImageFormatProperties props{};
+    const VkResult result = GetInstanceTable()->GetPhysicalDeviceImageFormatProperties(
+        GetPhysical(), ToVulkan(format), ToVulkan(type), ToVulkan(tiling), usage, 0, &props);
+    return result == VK_SUCCESS;
+}
 
 Buffer Buffer_Create(const usz size, const BufferFlags flags)
 {

@@ -762,6 +762,10 @@ VkImageViewType ToVulkan(const ImageViewType type)
         return VK_IMAGE_VIEW_TYPE_2D;
     case ImageViewType_3D:
         return VK_IMAGE_VIEW_TYPE_3D;
+    case ImageViewType_Cube:
+        return VK_IMAGE_VIEW_TYPE_CUBE;
+    case ImageViewType_2DArray:
+        return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
     default:
         TKIT_FATAL("[GRAPH] Unknown image view type: {}", u32(type));
         return VK_IMAGE_VIEW_TYPE_2D;
@@ -824,6 +828,8 @@ VkSamplerAddressMode ToVulkan(const Wrap wrap)
         return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     case Wrap_MirroredRepeat:
         return VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+    case Wrap_ClampToBorder:
+        return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
     default:
         TKIT_FATAL("[GRAPH] Unknown wrap mode: {}", u32(wrap));
         return VK_SAMPLER_ADDRESS_MODE_REPEAT;

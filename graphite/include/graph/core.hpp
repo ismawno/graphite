@@ -366,6 +366,8 @@ enum ImageViewType : u8
     ImageViewType_1D,
     ImageViewType_2D,
     ImageViewType_3D,
+    ImageViewType_Cube,
+    ImageViewType_2DArray,
     ImageViewType_Auto,
 };
 
@@ -395,6 +397,7 @@ enum Wrap : u8
 {
     Wrap_Repeat,
     Wrap_ClampToEdge,
+    Wrap_ClampToBorder,
     Wrap_MirroredRepeat,
 };
 
