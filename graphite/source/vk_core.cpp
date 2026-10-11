@@ -12,6 +12,8 @@
 #include "vkit/core/core.hpp"
 #include "vkit/device/logical_device.hpp"
 #include "tkit/container/stack_array.hpp"
+#include <cstdio>
+#include <cstring>
 
 namespace Graph
 {
@@ -1346,5 +1348,120 @@ VkImageSubresourceLayers ToVulkan(const VKit::DeviceImage &img, const ImageSubre
     l.baseArrayLayer = layers.LayerStart;
     l.layerCount = layers.LayerCount == GRAPH_WHOLE_THING ? img.GetInfo().ArrayLayers : layers.LayerCount;
     return l;
+}
+static DriverId fromVulkan(const VkDriverId id)
+{
+    switch (id)
+    {
+    case VK_DRIVER_ID_AMD_PROPRIETARY:
+        return Driver_AMDProprietary;
+    case VK_DRIVER_ID_AMD_OPEN_SOURCE:
+        return Driver_AMDOpenSource;
+    case VK_DRIVER_ID_MESA_RADV:
+        return Driver_MesaRADV;
+    case VK_DRIVER_ID_NVIDIA_PROPRIETARY:
+        return Driver_NVIDIAProprietary;
+    case VK_DRIVER_ID_MESA_NVK:
+        return Driver_MesaNVK;
+    case VK_DRIVER_ID_INTEL_PROPRIETARY_WINDOWS:
+        return Driver_IntelProprietaryWindows;
+    case VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA:
+        return Driver_IntelOpenSourceMesa;
+    case VK_DRIVER_ID_MOLTENVK:
+        return Driver_MoltenVK;
+    case VK_DRIVER_ID_MESA_HONEYKRISP:
+        return Driver_MesaHoneykrisp;
+    case VK_DRIVER_ID_MESA_KOSMICKRISP:
+        return Driver_MesaKosmicKrisp;
+    case VK_DRIVER_ID_QUALCOMM_PROPRIETARY:
+        return Driver_Qualcomm;
+    case VK_DRIVER_ID_MESA_TURNIP:
+        return Driver_MesaTurnip;
+    case VK_DRIVER_ID_ARM_PROPRIETARY:
+        return Driver_ARM;
+    case VK_DRIVER_ID_MESA_PANVK:
+        return Driver_MesaPanVK;
+    case VK_DRIVER_ID_MESA_V3DV:
+    case VK_DRIVER_ID_BROADCOM_PROPRIETARY:
+        return Driver_MesaV3DV;
+    case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
+    case VK_DRIVER_ID_IMAGINATION_OPEN_SOURCE_MESA:
+        return Driver_Imagination;
+    case VK_DRIVER_ID_GOOGLE_SWIFTSHADER:
+        return Driver_SwiftShader;
+    case VK_DRIVER_ID_MESA_LLVMPIPE:
+        return Driver_MesaLlvmpipe;
+    case VK_DRIVER_ID_GGP_PROPRIETARY:
+    case VK_DRIVER_ID_COREAVI_PROPRIETARY:
+    case VK_DRIVER_ID_JUICE_PROPRIETARY:
+    case VK_DRIVER_ID_VERISILICON_PROPRIETARY:
+    case VK_DRIVER_ID_SAMSUNG_PROPRIETARY:
+    case VK_DRIVER_ID_MESA_VENUS:
+    case VK_DRIVER_ID_MESA_DOZEN:
+    case VK_DRIVER_ID_VULKAN_SC_EMULATION_ON_VULKAN:
+        return Driver_Other;
+    default:
+        return Driver_Unknown;
+    }
+}
+
+static DeviceType fromVulkan(const VkPhysicalDeviceType type)
+{
+    switch (type)
+    {
+    case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+        return Device_Integrated;
+    case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+        return Device_Discrete;
+    case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+        return Device_Virtual;
+    case VK_PHYSICAL_DEVICE_TYPE_CPU:
+        return Device_CPU;
+    default:
+        return Device_Other;
+    }
+}
+
+RenderBackendInfo GetRenderBackendInfo()
+{
+    const VKit::PhysicalDevice &physical = GetPhysical();
+    const auto table = GetInstanceTable();
+
+    // VkPhysicalDeviceDriverProperties is core in 1.2 and VK_KHR_driver_properties before that,
+    // so the same struct works for both as long as the device supports either.
+    VkPhysicalDeviceDriverProperties driver{};
+    driver.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
+
+    VkPhysicalDeviceProperties2KHR props{};
+    props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+    props.pNext = &driver;
+    table->GetPhysicalDeviceProperties2(physical, &props);
+
+    const VkPhysicalDeviceProperties &p = props.properties;
+
+    RenderBackendInfo info{};
+    info.Id = RenderBackend_Vulkan;
+    info.Major = VKIT_API_VERSION_MAJOR(p.apiVersion);
+    info.Minor = VKIT_API_VERSION_MINOR(p.apiVersion);
+    info.Patch = VKIT_API_VERSION_PATCH(p.apiVersion);
+    const i32 n = std::snprintf(info.Version, sizeof(info.Version), "%u.%u.%u", info.Major, info.Minor, info.Patch);
+
+    TKIT_LOG_WARNING_IF(n < 0 || u32(n) >= sizeof(info.Version), "[GRAPH][CORE] Version string was truncated");
+    TKIT_UNUSED(n);
+
+    DeviceInfo &dev = info.Device;
+    std::strncpy(dev.Name, p.deviceName, sizeof(dev.Name) - 1);
+    std::strncpy(dev.DriverName, driver.driverName, sizeof(dev.DriverName) - 1);
+    std::strncpy(dev.DriverInfo, driver.driverInfo, sizeof(dev.DriverInfo) - 1);
+
+    dev.Type = fromVulkan(p.deviceType);
+    dev.Driver = fromVulkan(driver.driverID);
+    dev.VendorId = p.vendorID;
+    dev.DeviceId = p.deviceID;
+    dev.ApiMajor = info.Major;
+    dev.ApiMinor = info.Minor;
+    dev.ApiPatch = info.Patch;
+    dev.DriverVersion = p.driverVersion;
+    return info;
 }
 } // namespace Graph

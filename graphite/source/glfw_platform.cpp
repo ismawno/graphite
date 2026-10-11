@@ -1341,4 +1341,40 @@ VkSurfaceKHR GetSurface(const Window win)
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     return s_Windows->At(Handle_GetId(win)).Surface;
 }
+
+// glfw_platform.cpp (next to toGlfw)
+static Platform fromGlfw(const i32 plat)
+{
+    switch (plat)
+    {
+    case GLFW_PLATFORM_WIN32:
+        return Platform_Win32;
+    case GLFW_PLATFORM_COCOA:
+        return Platform_Cocoa;
+    case GLFW_PLATFORM_WAYLAND:
+        return Platform_Wayland;
+    case GLFW_PLATFORM_X11:
+        return Platform_X11;
+    default: // GLFW_PLATFORM_NULL, or 0 if GLFW isn't initialized
+        return Platform_Any;
+    }
+}
+
+PlatformBackendInfo GetPlatformBackendInfo()
+{
+    PlatformBackendInfo info{};
+    info.Id = PlatformBackend_GLFW; // ASSUMPTION: adjust to your PlatformBackendId entry name
+    info.Platform = fromGlfw(glfwGetPlatform());
+
+    i32 major, minor, rev;
+    glfwGetVersion(&major, &minor, &rev);
+    info.Major = u32(major);
+    info.Minor = u32(minor);
+    info.Patch = u32(rev);
+
+    const i32 n = std::snprintf(info.Version, sizeof(info.Version), "%s", glfwGetVersionString());
+    TKIT_LOG_WARNING_IF(n < 0 || u32(n) >= sizeof(info.Version), "[GRAPH][CORE] Version string was truncated");
+    TKIT_UNUSED(n);
+    return info;
+}
 } // namespace Graph

@@ -642,6 +642,51 @@ enum PresentMode : u8
     PresentMode_Count
 };
 
+enum DriverId : u8
+{
+    Driver_Unknown,
+    Driver_AMDProprietary,
+    Driver_AMDOpenSource,
+    Driver_MesaRADV,
+    Driver_NVIDIAProprietary,
+    Driver_MesaNVK,
+    Driver_IntelProprietaryWindows,
+    Driver_IntelOpenSourceMesa, // ANV
+    Driver_MoltenVK,
+    Driver_MesaHoneykrisp,
+    Driver_MesaKosmicKrisp,
+    Driver_Qualcomm,
+    Driver_MesaTurnip,
+    Driver_ARM,
+    Driver_MesaPanVK,
+    Driver_MesaV3DV,
+    Driver_Imagination,
+    Driver_SwiftShader,
+    Driver_MesaLlvmpipe,
+    Driver_Other,
+    Driver_Count
+};
+
+enum DeviceType : u8
+{
+    Device_Discrete,
+    Device_Integrated,
+    Device_Virtual,
+    Device_CPU,
+    Device_Other
+};
+
+enum RenderBackendId : u8
+{
+    RenderBackend_Vulkan,
+};
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+enum PlatformBackendId : u8
+{
+    PlatformBackend_GLFW,
+};
+#endif
+
 struct Specs
 {
     const char *ApplicationName = "Graphite app";
@@ -713,5 +758,53 @@ constexpr Handle Handle_Create(const HandleType htype, const Id id)
 }
 
 bool Handle_IsValid(Handle handle, HandleType htype = Handle_None);
+
+struct DeviceInfo
+{
+    char Name[256];
+    char DriverName[256];
+    char DriverInfo[256];
+
+    DeviceType Type;
+    DriverId Driver;
+
+    u32 VendorId;
+    u32 DeviceId;
+
+    u32 ApiMajor;
+    u32 ApiMinor;
+    u32 ApiPatch;
+
+    u32 DriverVersion;
+};
+
+struct RenderBackendInfo
+{
+    char Version[64];
+    RenderBackendId Id;
+
+    DeviceInfo Device;
+
+    u32 Major;
+    u32 Minor;
+    u32 Patch;
+};
+
+RenderBackendInfo GetRenderBackendInfo();
+
+#ifdef GRAPH_HAS_PLATFORM_BACKEND
+struct PlatformBackendInfo
+{
+    char Version[64];
+
+    PlatformBackendId Id;
+    Platform Platform;
+
+    u32 Major;
+    u32 Minor;
+    u32 Patch;
+};
+PlatformBackendInfo GetPlatformBackendInfo();
+#endif
 
 } // namespace Graph
