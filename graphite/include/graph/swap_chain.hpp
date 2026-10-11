@@ -36,7 +36,7 @@ inline Image Swapchain_GetCurrentImage(const Swapchain sc)
 
 inline ImageView Swapchain_GetImageView(const Swapchain sc, const u32 imgIdx)
 {
-    return Image_GetView(sc, Swapchain_GetImage(sc, imgIdx));
+    return Image_GetView(Swapchain_GetImage(sc, imgIdx));
 }
 
 enum SwapchainStatus : u8

@@ -126,7 +126,7 @@ void Buffer_Unmap(const Buffer buffer)
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
     s_Buffers->At(Handle_GetId(buffer)).Unmap();
 }
-bool Buffer_IsMap(const Buffer buffer)
+bool Buffer_IsMapped(const Buffer buffer)
 {
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
     return s_Buffers->At(Handle_GetId(buffer)).IsMapped();
@@ -276,7 +276,7 @@ void Image_SetName(const Image img, const char *name)
     TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][RESOURCES] To name objects, the validation capability must be enabled");
     GRAPH_CHECK_RESULT(s_Images->At(Handle_GetId(img)).Image.SetName(name));
 }
-void Image_SetViewName(const Image img, const char *name)
+void Image_SetViewNames(const Image img, const char *name)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
     GRAPH_CHECK_RESULT(s_Images->At(Handle_GetId(img)).Image.SetViewNames(name));

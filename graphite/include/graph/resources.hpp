@@ -74,7 +74,7 @@ void *Buffer_GetData(Buffer buffer);
 bool Buffer_IsMapped(Buffer buffer);
 
 void Buffer_Write(Buffer buffer, const void *data, const BufferCopy &copy);
-void Buffer_Write(const Buffer buffer, const void *data, const usz size)
+inline void Buffer_Write(const Buffer buffer, const void *data, const usz size)
 {
     Buffer_Write(buffer, data, {.Size = size});
 }

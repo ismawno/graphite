@@ -1148,7 +1148,7 @@ bool Window_IsMouseReleased(const Window win, const Mouse button)
 
 Monitor Window_GetMonitor(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Monitor);
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
     GLFWwindow *w = GetWindow(win);
     GLFWmonitor *mon = glfwGetWindowMonitor(w);
     if (!mon)

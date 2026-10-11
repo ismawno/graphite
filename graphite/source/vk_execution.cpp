@@ -217,7 +217,7 @@ void Queue_Submit(const QueueType queue, const TKit::Span<const SubmitInfo> info
             VkSemaphoreSubmitInfoKHR signal{};
             signal.sType = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR;
             signal.semaphore = rsem;
-            wait.stageMask = ToVulkanPipelineStageFlags(info.SwapchainSignalStageFlags);
+            signal.stageMask = ToVulkanPipelineStageFlags(info.SwapchainSignalStageFlags);
             signals.Append(signal);
 
             ++waitCount;

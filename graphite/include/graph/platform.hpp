@@ -73,7 +73,7 @@ bool Window_IsKeyReleased(Window win, Key key);
 bool Window_IsMousePressed(Window win, Mouse button);
 bool Window_IsMouseReleased(Window win, Mouse button);
 
-void Window_SignalShouldClose();
+void Window_SignalShouldClose(Window win);
 Monitor Window_GetMonitor(Window win);
 
 bool Window_IsHandleValid(Window win);

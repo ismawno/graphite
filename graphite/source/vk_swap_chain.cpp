@@ -179,7 +179,10 @@ SwapchainStatus Swapchain_AcquireNextImage(const Swapchain sc, const u64 timeout
     if (res == VK_ERROR_OUT_OF_DATE_KHR)
         return SwapchainStatus_OutOfDate;
     if (res == VK_SUBOPTIMAL_KHR)
+    {
+        vsc.SyncIndex = idx;
         return SwapchainStatus_Suboptimal;
+    }
 
     vsc.SyncIndex = idx;
     GRAPH_CHECK_RESULT(res);

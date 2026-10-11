@@ -91,8 +91,10 @@ DescriptorSet DescriptorSet_Create(const DescriptorSetLayout layout)
 void DescriptorSet_Destroy(const DescriptorSet set)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
-    const VkDescriptorSet handle = s_Sets->At(Handle_GetId(set)).Set;
-    GRAPH_CHECK_RESULT(s_DescriptorPool->Deallocate(handle));
+    GRAPH_DESTROY_FUNCTION_BODY_LAMBDA(s_Sets, set, [](const Vulkan_DescriptorSet &s) {
+        const VkDescriptorSet handle = s.Set;
+        GRAPH_CHECK_RESULT(s_DescriptorPool->Deallocate(handle));
+    });
 }
 
 void DescriptorSet_BeginRecordWrite(const DescriptorSet set, DescriptorSetLayout layout)
@@ -170,7 +172,7 @@ VKit::DescriptorSetLayout &GetDescriptorSetLayout(const DescriptorSetLayout layo
 }
 VKit::DescriptorSet &GetDescriptorSet(const DescriptorSet set)
 {
-    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSetLayout);
+    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
     return s_Sets->At(Handle_GetId(set)).Set;
 }
 

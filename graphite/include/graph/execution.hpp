@@ -207,15 +207,15 @@ void Command_BeginRenderPass(CommandBuffer cmd, const RenderPassInfo &info);
 void Command_EndRenderPass(CommandBuffer cmd);
 
 void Command_PipelineBarrier(CommandBuffer cmd, const PipelineBarrierInfo &info);
-void Command_MemoryBarrier(const CommandBuffer cmd, const TKit::Span<const MemoryBarrierInfo> barriers)
+inline void Command_MemoryBarrier(const CommandBuffer cmd, const TKit::Span<const MemoryBarrierInfo> barriers)
 {
     return Command_PipelineBarrier(cmd, {.MemoryBarriers = barriers});
 }
-void Command_BufferBarrier(const CommandBuffer cmd, const TKit::Span<const BufferMemoryBarrierInfo> barriers)
+inline void Command_BufferBarrier(const CommandBuffer cmd, const TKit::Span<const BufferMemoryBarrierInfo> barriers)
 {
     return Command_PipelineBarrier(cmd, {.BufferBarriers = barriers});
 }
-void Command_ImageBarrier(const CommandBuffer cmd, const TKit::Span<const ImageMemoryBarrierInfo> barriers)
+inline void Command_ImageBarrier(const CommandBuffer cmd, const TKit::Span<const ImageMemoryBarrierInfo> barriers)
 {
     return Command_PipelineBarrier(cmd, {.ImageBarriers = barriers});
 }
@@ -236,7 +236,7 @@ void Command_PushConstants(CommandBuffer cmd, PipelineLayout layout, ShaderStage
 }
 
 void Command_SetViewport(CommandBuffer cmd, const f32v2 &pos, const f32v2 &size, const f32v2 &depth = {0.f, 1.f});
-void Command_SetScissor(CommandBuffer cmd, const Rect &rect);
+void Command_SetScissor(CommandBuffer cmd, const i32v2 &pos, const u32v2 &size);
 void Command_SetCullMode(CommandBuffer cmd, CullMode cullMode);
 void Command_Draw(CommandBuffer cmd, u32 vertexCount, u32 instanceCount = 1, u32 firstVertex = 0,
                   u32 firstInstance = 0);
