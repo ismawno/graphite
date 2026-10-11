@@ -187,7 +187,15 @@ enum MouseCursor : u8
     MouseCursor_CrossHair,
     MouseCursor_IBeam,
     MouseCursor_NotAllowed,
+    MouseCursor_ResizeAll,
     MouseCursor_Count,
+};
+
+enum CursorMode : u8
+{
+    CursorMode_Normal,
+    CursorMode_Hidden,
+    CursorMode_Disabled,
 };
 
 enum DescriptorType : u8

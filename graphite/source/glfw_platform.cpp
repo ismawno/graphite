@@ -109,6 +109,8 @@ static u32 toGlfw(const MouseCursor cursor)
         return GLFW_IBEAM_CURSOR;
     case MouseCursor_NotAllowed:
         return GLFW_NOT_ALLOWED_CURSOR;
+    case MouseCursor_ResizeAll:
+        return GLFW_RESIZE_ALL_CURSOR;
     default:
         TKIT_FATAL("[GRAPH][WINDOW] Failed to find cursors");
         return TKIT_U32_MAX;
@@ -1115,6 +1117,44 @@ void Window_SetMouseCursor(const Window win, const MouseCursor cursor)
     auto &data = s_Windows->At(Handle_GetId(win));
     glfwSetCursor(data.Window, data.Cursors[cursor]);
 }
+void Window_SetCursorPosition(const Window win, const f32v2 &pos)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    glfwSetCursorPos(s_Windows->At(Handle_GetId(win)).Window, f64(pos[0]), f64(pos[1]));
+}
+
+CursorMode Window_GetCursorMode(const Window win)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    switch (glfwGetInputMode(s_Windows->At(Handle_GetId(win)).Window, GLFW_CURSOR))
+    {
+    case GLFW_CURSOR_HIDDEN:
+        return CursorMode_Hidden;
+    case GLFW_CURSOR_DISABLED:
+        return CursorMode_Disabled;
+    default:
+        return CursorMode_Normal;
+    }
+}
+
+void Window_SetCursorMode(const Window win, const CursorMode mode)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    i32 value = GLFW_CURSOR_NORMAL;
+    switch (mode)
+    {
+    case CursorMode_Normal:
+        value = GLFW_CURSOR_NORMAL;
+        break;
+    case CursorMode_Hidden:
+        value = GLFW_CURSOR_HIDDEN;
+        break;
+    case CursorMode_Disabled:
+        value = GLFW_CURSOR_DISABLED;
+        break;
+    }
+    glfwSetInputMode(s_Windows->At(Handle_GetId(win)).Window, GLFW_CURSOR, value);
+}
 
 void Window_SignalShouldClose(const Window win)
 {
@@ -1138,6 +1178,17 @@ bool Window_IsMousePressed(const Window win, const Mouse button)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     return glfwGetMouseButton(s_Windows->At(Handle_GetId(win)).Window, toGlfw(button)) == GLFW_PRESS;
+}
+const char *Key_GetName(const Key key, const i32 scancode)
+{
+    // Querying the name of a key that has none raises a GLFW error that is not worth reporting
+    const GLFWerrorfun perror = glfwSetErrorCallback(nullptr);
+    const char *name = glfwGetKeyName(toGlfw(key), scancode);
+    glfwSetErrorCallback(perror);
+#ifdef GRAPH_GLFW_GETERROR
+    TKIT_UNUSED(glfwGetError(nullptr));
+#endif
+    return name;
 }
 
 bool Window_IsMouseReleased(const Window win, const Mouse button)
@@ -1166,7 +1217,17 @@ Monitor Monitor_GetPrimary()
 {
     return s_Monitors->IsEmpty() ? NullHandle : Handle_Create(Handle_Monitor, 0);
 }
+u32 Monitor_GetCount()
+{
+    return s_Monitors->GetSize();
+}
 
+Monitor Monitor_Get(const u32 index)
+{
+    TKIT_ASSERT(index < s_Monitors->GetSize(), "[GRAPH][PLATFORM] Monitor index {} is out of bounds ({} monitors)",
+                index, s_Monitors->GetSize());
+    return Handle_Create(Handle_Monitor, index);
+}
 void *Monitor_GetUserData(const Monitor monitor)
 {
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
@@ -1201,6 +1262,30 @@ VideoMode Monitor_GetVideoMode(const Monitor monitor)
     vmode.RefreshRate = u32(mode->refreshRate);
 
     return vmode;
+}
+MonitorArea Monitor_GetWorkArea(const Monitor monitor)
+{
+    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
+#ifdef GRAPH_GLFW_MONITOR_WORK_AREA
+    i32 x, y, w, h;
+    glfwGetMonitorWorkarea(s_Monitors->At(Handle_GetId(monitor)).Monitor, &x, &y, &w, &h);
+    return {{x, y}, {u32(w), u32(h)}};
+#else
+    const VideoMode vmode = Monitor_GetVideoMode(monitor);
+    return {Monitor_GetPosition(monitor), vmode.Dimensions};
+#endif
+}
+
+f32v2 Monitor_GetContentScale(const Monitor monitor)
+{
+    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
+#ifdef GRAPH_GLFW_PER_MONITOR_DPI
+    f32 xscale, yscale;
+    glfwGetMonitorContentScale(s_Monitors->At(Handle_GetId(monitor)).Monitor, &xscale, &yscale);
+    return {xscale, yscale};
+#else
+    return {1.f, 1.f};
+#endif
 }
 
 bool Monitor_IsHandleValid(const Monitor monitor)

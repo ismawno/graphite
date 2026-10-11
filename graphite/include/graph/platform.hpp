@@ -66,6 +66,9 @@ void Window_RemoveFlags(Window win, WindowFlags flags);
 void Window_SetOpacity(Window win, f32 opacity);
 
 void Window_SetMouseCursor(Window win, MouseCursor cursor);
+void Window_SetCursorPosition(Window win, const f32v2 &pos);
+CursorMode Window_GetCursorMode(Window win);
+void Window_SetCursorMode(Window win, CursorMode mode);
 
 bool Window_IsKeyPressed(Window win, Key key);
 bool Window_IsKeyReleased(Window win, Key key);
@@ -78,7 +81,19 @@ Monitor Window_GetMonitor(Window win);
 
 bool Window_IsHandleValid(Window win);
 
+struct MonitorArea
+{
+    i32v2 Position;
+    u32v2 Dimensions;
+};
+
 Monitor Monitor_GetPrimary();
+
+u32 Monitor_GetCount();
+Monitor Monitor_Get(u32 index);
+
+MonitorArea Monitor_GetWorkArea(Monitor monitor);
+f32v2 Monitor_GetContentScale(Monitor monitor);
 
 void *Monitor_GetUserData(Monitor monitor);
 void Monitor_SetUserData(Monitor monitor, void *data);
