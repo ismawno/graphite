@@ -1390,7 +1390,7 @@ static DriverId fromVulkan(const VkDriverId id)
     case VK_DRIVER_ID_GOOGLE_SWIFTSHADER:
         return Driver_SwiftShader;
     case VK_DRIVER_ID_MESA_LLVMPIPE:
-        return Driver_MesaLlvmpipe;
+        return Driver_MesaLLVMPipe;
     case VK_DRIVER_ID_GGP_PROPRIETARY:
     case VK_DRIVER_ID_COREAVI_PROPRIETARY:
     case VK_DRIVER_ID_JUICE_PROPRIETARY:

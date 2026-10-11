@@ -662,7 +662,7 @@ enum DriverId : u8
     Driver_MesaV3DV,
     Driver_Imagination,
     Driver_SwiftShader,
-    Driver_MesaLlvmpipe,
+    Driver_MesaLLVMPipe,
     Driver_Other,
     Driver_Count
 };
