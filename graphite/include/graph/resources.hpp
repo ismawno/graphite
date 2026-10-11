@@ -56,7 +56,7 @@ struct ImageBlit
 };
 
 usz Format_GetBytesPerPixel(Format fmt);
-bool Format_IsSupported(Format fmt);
+bool Format_IsSupported(Format fmt, ImageType type, ImageFlags flags, ImageTiling tiling = ImageTiling_Optimal);
 
 Buffer Buffer_Create(usz size, BufferFlags flags);
 template <typename T> Buffer Buffer_Create(const u32 count, const BufferFlags flags)
