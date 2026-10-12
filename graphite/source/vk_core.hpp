@@ -50,11 +50,13 @@ void BindPipeline(VkCommandBuffer cmd, Pipeline pip);
 bool IsDebugUtilsEnabled();
 
 VkFormat ToVulkan(Format format);
+VkFormat ToVulkan(const VKit::DeviceImage &img, Format format);
 VkImageTiling ToVulkan(ImageTiling tiling);
 VkImageLayout ToVulkan(ImageLayout layout);
 VkSampleCountFlagBits ToVulkan(SampleCount samples);
 VkImageType ToVulkan(ImageType type);
 VkImageViewType ToVulkan(ImageViewType type);
+VkImageViewType ToVulkan(const VKit::DeviceImage &img, ImageViewType type);
 VkImageAspectFlags ToVulkanImageAspectFlags(ImageAspectFlags aspects);
 VkImageAspectFlags ToVulkanImageAspectFlags(const VKit::DeviceImage &img, ImageAspectFlags aspects);
 VkSamplerMipmapMode ToVulkan(SamplerMode mode);

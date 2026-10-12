@@ -669,6 +669,10 @@ VkFormat ToVulkan(const Format format)
         return VK_FORMAT_UNDEFINED;
     }
 }
+VkFormat ToVulkan(const VKit::DeviceImage &img, const Format format)
+{
+    return format == Format_Auto ? img.GetInfo().Formats.GetFront() : ToVulkan(format);
+}
 
 VkImageTiling ToVulkan(const ImageTiling tiling)
 {
@@ -771,7 +775,26 @@ VkImageViewType ToVulkan(const ImageViewType type)
         return VK_IMAGE_VIEW_TYPE_2D;
     }
 }
+VkImageViewType ToVulkan(const VKit::DeviceImage &img, const ImageViewType type)
+{
+    if (type != ImageViewType_Auto)
+        return ToVulkan(type);
 
+    const auto &info = img.GetInfo();
+    const bool array = info.ArrayLayers > 1;
+    switch (info.Type)
+    {
+    case VK_IMAGE_TYPE_1D:
+        return array ? VK_IMAGE_VIEW_TYPE_1D_ARRAY : VK_IMAGE_VIEW_TYPE_1D;
+    case VK_IMAGE_TYPE_2D:
+        return array ? VK_IMAGE_VIEW_TYPE_2D_ARRAY : VK_IMAGE_VIEW_TYPE_2D;
+    case VK_IMAGE_TYPE_3D:
+        return VK_IMAGE_VIEW_TYPE_3D;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown image type: {}", u32(info.Type));
+        return VK_IMAGE_VIEW_TYPE_2D;
+    }
+}
 VkImageAspectFlags ToVulkanImageAspectFlags(const ImageAspectFlags aspects)
 {
     VkImageAspectFlags result = VK_IMAGE_ASPECT_NONE;

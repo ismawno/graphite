@@ -237,9 +237,9 @@ ImageView Image_AddView(const Image img, const ImageViewSpecs &specs)
 
     VkImageViewCreateInfo info{};
     info.image = VK_NULL_HANDLE;
-    info.viewType = ToVulkan(specs.Type);
+    info.viewType = ToVulkan(image, specs.Type);
     info.subresourceRange = ToVulkan(image, specs.Range);
-    info.format = ToVulkan(specs.Format);
+    info.format = ToVulkan(image, specs.Format);
     const VkImageView view = GRAPH_CHECK_RESULT(image.AddImageView(info));
 
     return Handle_Create(Handle_ImageView, s_Views->Insert(img, view));
