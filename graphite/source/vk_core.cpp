@@ -1470,4 +1470,8 @@ RenderBackendInfo GetRenderBackendInfo()
     dev.DriverVersion = p.driverVersion;
     return info;
 }
+const Specs &GetSpecs()
+{
+    return s_Specs;
+}
 } // namespace Graph

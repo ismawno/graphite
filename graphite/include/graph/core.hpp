@@ -818,4 +818,6 @@ struct PlatformBackendInfo
 PlatformBackendInfo GetPlatformBackendInfo();
 #endif
 
+const Specs &GetSpecs();
+
 } // namespace Graph
