@@ -44,13 +44,12 @@ static void image_Destroy(Vulkan_Image &img)
 
 void Resources_Terminate()
 {
+    TKIT_ASSERT(!s_Images->IsEmpty() || s_Views->IsEmpty(),
+                "[GRAPH][RESOURCES] Views should have been deleted along with images, but there are {} remaining",
+                s_Views->GetSize());
     GRAPH_CLEANUP_WITH_WARNING(s_Buffers, "RESOURCES", "buffers");
     GRAPH_CLEANUP_WITH_WARNING_LAMBDA(s_Images, "RESOURCES", "images", image_Destroy);
     GRAPH_CLEANUP_WITH_WARNING(s_Samplers, "RESOURCES", "samplers");
-
-    TKIT_ASSERT(s_Views->IsEmpty(),
-                "[GRAPH][RESOURCES] Views should have been deleted along with images, but there are {} remaining",
-                s_Views->GetSize());
 
     s_Views.Destruct();
     s_Buffers.Destruct();
@@ -389,7 +388,7 @@ Image CreateNonOwnedImage(const VKit::DeviceImage &img)
     const Id id = s_Images->Insert(img, false);
     const Image handle = Handle_Create(Handle_Image, id);
     for (const VkImageView v : s_Images->At(id).Image.GetViews())
-        s_Views->Insert(img, v);
+        s_Views->Insert(handle, v);
     return handle;
 }
 } // namespace Graph
