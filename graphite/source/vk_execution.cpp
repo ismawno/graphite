@@ -43,9 +43,12 @@ void Execution_Initialize(const u32 maxPools, const u32 maxCmdBuffers)
     const auto table = GetDeviceTable();
 
     const auto &perType = device.GetInfo().QueuesPerType;
-    s_Queues[Queue_Graphics] = perType[VKit::Queue_Graphics].GetFront();
-    s_Queues[Queue_Transfer] = perType[VKit::Queue_Transfer].GetFront();
-    s_Queues[Queue_Compute] = perType[VKit::Queue_Compute].GetFront();
+    if (!perType[VKit::Queue_Graphics].IsEmpty())
+        s_Queues[Queue_Graphics] = perType[VKit::Queue_Graphics].GetFront();
+    if (!perType[VKit::Queue_Transfer].IsEmpty())
+        s_Queues[Queue_Transfer] = perType[VKit::Queue_Transfer].GetFront();
+    if (!perType[VKit::Queue_Compute].IsEmpty())
+        s_Queues[Queue_Compute] = perType[VKit::Queue_Compute].GetFront();
 
     const auto &queues = device.GetInfo().Queues;
     u32 i = 0;
