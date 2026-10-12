@@ -9,11 +9,20 @@
 
 namespace Graph
 {
+struct WriteData
+{
+    WriteData(const VKit::ProxyDevice &device, const VKit::DescriptorSetLayout *layout) : Writer(device, layout)
+    {
+    }
+    VKit::DescriptorSet::Writer Writer;
+    TKit::StaticArray128<VkDescriptorBufferInfo> BufferInfos{};
+    TKit::StaticArray128<VkDescriptorImageInfo> ImageInfos{};
+};
 struct Vulkan_DescriptorSet
 {
     VKit::DescriptorSet Set{};
     DescriptorSetLayout Layout;
-    TKit::Storage<VKit::DescriptorSet::Writer> Writer{};
+    TKit::Storage<WriteData> SetWriter{};
 };
 static TKit::Storage<VKit::DescriptorPool> s_DescriptorPool{};
 static TKit::Storage<TKit::ArenaHive<VKit::DescriptorSetLayout>> s_Layouts{};
@@ -112,51 +121,57 @@ void DescriptorSet_BeginRecordWrite(const DescriptorSet set, DescriptorSetLayout
         layout = vset.Layout;
 
     GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
-    vset.Writer.Construct(GetDevice(), &s_Layouts->At(Handle_GetId(layout)));
+    vset.SetWriter.Construct(GetDevice(), &s_Layouts->At(Handle_GetId(layout)));
 }
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
                                const TKit::Span<const DescriptorBufferInfo> bufferInfo, const u32 dstElement)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
+    TKIT_ASSERT(!bufferInfo.IsEmpty(), "[GRAPH][DESCRIPTOR] Writes cannot be empty");
 
-    TKit::StackArray<VkDescriptorBufferInfo> infos{};
-    infos.Reserve(bufferInfo.GetSize());
+    WriteData &wd = s_Sets->At(Handle_GetId(set)).SetWriter.Get();
+    const VkDescriptorBufferInfo *ptr = wd.BufferInfos.end();
+
     for (const DescriptorBufferInfo &info : bufferInfo)
-        infos.Append(GetBuffer(info.Buffer), info.Offset, info.Size);
+        wd.BufferInfos.Append(GetBuffer(info.Buffer), info.Offset, info.Size);
 
-    s_Sets->At(Handle_GetId(set)).Writer->WriteBuffer(binding, infos, dstElement);
+    wd.Writer.WriteBuffer(binding, {ptr, bufferInfo.GetSize()}, dstElement);
 }
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
                                const TKit::Span<const DescriptorImageInfo> imageInfo, const u32 dstElement)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
+    TKIT_ASSERT(!imageInfo.IsEmpty(), "[GRAPH][DESCRIPTOR] Writes cannot be empty");
 
-    TKit::StackArray<VkDescriptorImageInfo> infos{};
-    infos.Reserve(imageInfo.GetSize());
+    WriteData &wd = s_Sets->At(Handle_GetId(set)).SetWriter.Get();
+    const VkDescriptorImageInfo *ptr = wd.ImageInfos.end();
+
     for (const DescriptorImageInfo &info : imageInfo)
-        infos.Append(info.CombinedSampler == NullHandle ? VK_NULL_HANDLE : GetSampler(info.CombinedSampler),
-                     GetImageView(info.View), ToVulkan(info.Layout));
+        wd.ImageInfos.Append(info.CombinedSampler == NullHandle ? VK_NULL_HANDLE : GetSampler(info.CombinedSampler),
+                             GetImageView(info.View), ToVulkan(info.Layout));
 
-    s_Sets->At(Handle_GetId(set)).Writer->WriteImage(binding, infos, dstElement);
+    wd.Writer.WriteImage(binding, {ptr, imageInfo.GetSize()}, dstElement);
 }
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding, const TKit::Span<const Sampler> samplers,
                                const u32 dstElement)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
+    TKIT_ASSERT(!samplers.IsEmpty(), "[GRAPH][DESCRIPTOR] Writes cannot be empty");
 
-    TKit::StackArray<VkDescriptorImageInfo> infos{};
-    infos.Reserve(samplers.GetSize());
+    WriteData &wd = s_Sets->At(Handle_GetId(set)).SetWriter.Get();
+    const VkDescriptorImageInfo *ptr = wd.ImageInfos.end();
+
     for (const Sampler smp : samplers)
-        infos.Append(GetSampler(smp), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED);
+        wd.ImageInfos.Append(GetSampler(smp), VK_NULL_HANDLE, VK_IMAGE_LAYOUT_UNDEFINED);
 
-    s_Sets->At(Handle_GetId(set)).Writer->WriteImage(binding, infos, dstElement);
+    wd.Writer.WriteImage(binding, {ptr, samplers.GetSize()}, dstElement);
 }
 void DescriptorSet_EndRecordWrite(const DescriptorSet set)
 {
     GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
     Vulkan_DescriptorSet &vset = s_Sets->At(Handle_GetId(set));
-    vset.Writer->Overwrite(vset.Set);
-    vset.Writer.Destruct();
+    vset.SetWriter->Writer.Overwrite(vset.Set);
+    vset.SetWriter.Destruct();
 }
 
 void DescriptorSet_SetName(const DescriptorSet set, const char *name)
