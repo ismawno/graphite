@@ -1360,57 +1360,28 @@ static DriverId fromVulkan(const VkDriverId id)
     switch (id)
     {
     case VK_DRIVER_ID_AMD_PROPRIETARY:
-        return Driver_AMDProprietary;
     case VK_DRIVER_ID_AMD_OPEN_SOURCE:
-        return Driver_AMDOpenSource;
     case VK_DRIVER_ID_MESA_RADV:
-        return Driver_MesaRADV;
+        return Driver_AMD;
     case VK_DRIVER_ID_NVIDIA_PROPRIETARY:
-        return Driver_NVIDIAProprietary;
-    case VK_DRIVER_ID_MESA_NVK:
-        return Driver_MesaNVK;
+        return Driver_NVIDIA;
     case VK_DRIVER_ID_INTEL_PROPRIETARY_WINDOWS:
-        return Driver_IntelProprietaryWindows;
     case VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA:
-        return Driver_IntelOpenSourceMesa;
-    case VK_DRIVER_ID_MOLTENVK:
-        return Driver_MoltenVK;
-    case VK_DRIVER_ID_MESA_HONEYKRISP:
-        return Driver_MesaHoneykrisp;
-    case VK_DRIVER_ID_MESA_KOSMICKRISP:
-        return Driver_MesaKosmicKrisp;
-    case VK_DRIVER_ID_QUALCOMM_PROPRIETARY:
-        return Driver_Qualcomm;
-    case VK_DRIVER_ID_MESA_TURNIP:
-        return Driver_MesaTurnip;
-    case VK_DRIVER_ID_ARM_PROPRIETARY:
-        return Driver_ARM;
-    case VK_DRIVER_ID_MESA_PANVK:
-        return Driver_MesaPanVK;
-    case VK_DRIVER_ID_MESA_V3DV:
-    case VK_DRIVER_ID_BROADCOM_PROPRIETARY:
-        return Driver_MesaV3DV;
-    case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
-    case VK_DRIVER_ID_IMAGINATION_OPEN_SOURCE_MESA:
-        return Driver_Imagination;
+        return Driver_Intel;
     case VK_DRIVER_ID_GOOGLE_SWIFTSHADER:
-        return Driver_SwiftShader;
     case VK_DRIVER_ID_MESA_LLVMPIPE:
-        return Driver_MesaLLVMPipe;
+        return Driver_Software;
+    case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
+    case VK_DRIVER_ID_QUALCOMM_PROPRIETARY:
+    case VK_DRIVER_ID_ARM_PROPRIETARY:
+    case VK_DRIVER_ID_BROADCOM_PROPRIETARY:
+    case VK_DRIVER_ID_MOLTENVK:
     case VK_DRIVER_ID_GGP_PROPRIETARY:
-    case VK_DRIVER_ID_COREAVI_PROPRIETARY:
-    case VK_DRIVER_ID_JUICE_PROPRIETARY:
-    case VK_DRIVER_ID_VERISILICON_PROPRIETARY:
-    case VK_DRIVER_ID_SAMSUNG_PROPRIETARY:
-    case VK_DRIVER_ID_MESA_VENUS:
-    case VK_DRIVER_ID_MESA_DOZEN:
-    case VK_DRIVER_ID_VULKAN_SC_EMULATION_ON_VULKAN:
         return Driver_Other;
     default:
         return Driver_Unknown;
     }
 }
-
 static DeviceType fromVulkan(const VkPhysicalDeviceType type)
 {
     switch (type)

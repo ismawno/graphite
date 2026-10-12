@@ -656,28 +656,12 @@ enum PresentMode : u8
 enum DriverId : u8
 {
     Driver_Unknown,
-    Driver_AMDProprietary,
-    Driver_AMDOpenSource,
-    Driver_MesaRADV,
-    Driver_NVIDIAProprietary,
-    Driver_MesaNVK,
-    Driver_IntelProprietaryWindows,
-    Driver_IntelOpenSourceMesa, // ANV
-    Driver_MoltenVK,
-    Driver_MesaHoneykrisp,
-    Driver_MesaKosmicKrisp,
-    Driver_Qualcomm,
-    Driver_MesaTurnip,
-    Driver_ARM,
-    Driver_MesaPanVK,
-    Driver_MesaV3DV,
-    Driver_Imagination,
-    Driver_SwiftShader,
-    Driver_MesaLLVMPipe,
-    Driver_Other,
-    Driver_Count
+    Driver_AMD,
+    Driver_NVIDIA,
+    Driver_Intel,
+    Driver_Software,
+    Driver_Other
 };
-
 enum DeviceType : u8
 {
     Device_Discrete,
