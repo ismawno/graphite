@@ -170,12 +170,11 @@ Pipeline Pipeline_CreateGraphics(const PipelineLayout layout, const GraphicsPipe
         .SetStencilWriteMask(d.Back.WriteMask, VKit::StencilOperationFlag_Back)
         .SetStencilReference(d.Back.Reference, VKit::StencilOperationFlag_Back)
         .SetDepthCompareOperation(ToVulkan(d.DepthCompareOp))
-        .SetDepthBounds(d.MinDepthBounds, d.MaxDepthBounds);
+        .SetDepthBounds(d.MinDepthBounds, d.MaxDepthBounds)
+        .AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT)
+        .AddDynamicState(VK_DYNAMIC_STATE_SCISSOR)
+        .SetViewportCount(1);
 
-    if (specs.DynamicState & DynamicStateFlag_Viewport)
-        builder.AddDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
-    if (specs.DynamicState & DynamicStateFlag_Scissor)
-        builder.AddDynamicState(VK_DYNAMIC_STATE_SCISSOR);
     if (specs.DynamicState & DynamicStateFlag_CullMode)
         builder.AddDynamicState(VK_DYNAMIC_STATE_CULL_MODE_EXT);
 

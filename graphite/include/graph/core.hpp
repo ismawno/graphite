@@ -525,8 +525,6 @@ enum DescriptorBindingFlagBit : DescriptorBindingFlags
 using DynamicStateFlags = u8;
 enum DynamicStateFlagBit : DynamicStateFlags
 {
-    DynamicStateFlag_Viewport = 1U << 0,
-    DynamicStateFlag_Scissor = 1U << 1,
     DynamicStateFlag_CullMode = 1U << 2,
 };
 
