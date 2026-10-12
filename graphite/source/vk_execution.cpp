@@ -335,7 +335,7 @@ CommandBuffer CommandPool_NextCommandBuffer(const CommandPool pool)
         return p.Commands[p.NextCommand++];
 
     p.NextCommand++;
-    return commandPool_CreateCommand(pool, GRAPH_CHECK_RESULT(p.Pool.Allocate()));
+    return p.Commands.Append(commandPool_CreateCommand(pool, GRAPH_CHECK_RESULT(p.Pool.Allocate())));
 }
 
 void CommandPool_SetName(const CommandPool pool, const char *name)
