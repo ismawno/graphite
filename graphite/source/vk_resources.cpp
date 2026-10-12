@@ -184,6 +184,7 @@ bool Buffer_IsHandleValid(const Buffer buffer)
 Image Image_Create(const u32v3 &size, const ImageSpecs &specs, const ImageFlags flags)
 {
     TKit::StackArray<VkFormat> formats{};
+    formats.Reserve(specs.Formats.GetSize());
     for (const Format fmt : specs.Formats)
         formats.Append(ToVulkan(fmt));
 
