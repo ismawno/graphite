@@ -224,6 +224,8 @@ static void createDevice()
     }
 
     VKit::DeviceFeatures features{};
+    features.Core.shaderStorageImageReadWithoutFormat = VK_TRUE;
+    features.Core.shaderStorageImageWriteWithoutFormat = VK_TRUE;
     // User-controlled
     if (caps & Capability_IndependentBlend)
         features.Core.independentBlend = VK_TRUE;
