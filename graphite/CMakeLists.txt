@@ -13,7 +13,9 @@ if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
     APPEND
     SOURCES
     source/vk_core.cpp
+    source/vk_descriptor.cpp
     source/vk_execution.cpp
+    source/vk_pipeline.cpp
     source/vk_resources.cpp
     source/vk_shader.cpp
     source/vk_swap_chain.cpp)
