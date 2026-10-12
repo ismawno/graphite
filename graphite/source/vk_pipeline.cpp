@@ -59,7 +59,7 @@ PipelineLayout PipelineLayout_Create(const PipelineLayoutSpecs &specs)
         builder.AddPushConstantRange(ToVulkanShaderStageFlags(range.Stages), range.Size, range.Offset);
 
     const VKit::PipelineLayout layout = GRAPH_CHECK_RESULT(builder.Build());
-    return Handle_Create(Handle_PipelineLayout, layout);
+    return Handle_Create(Handle_PipelineLayout, s_Layouts->Insert(layout));
 }
 
 void PipelineLayout_Destroy(const PipelineLayout layout)
