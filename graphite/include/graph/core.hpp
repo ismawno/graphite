@@ -525,7 +525,7 @@ enum DescriptorBindingFlagBit : DescriptorBindingFlags
 using DynamicStateFlags = u8;
 enum DynamicStateFlagBit : DynamicStateFlags
 {
-    DynamicStateFlag_CullMode = 1U << 2,
+    DynamicStateFlag_CullMode = 1U << 0,
 };
 
 enum LoadOp : u8
