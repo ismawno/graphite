@@ -16,7 +16,7 @@ struct SpirvData
 
 Shader Shader_Create(const SpirvData &data);
 Shader Shader_Create(TKit::StringView path);
-Shader Shader_Create(const u32 *code, usz size)
+inline Shader Shader_Create(const u32 *code, usz size)
 {
     return Shader_Create({code, size});
 }

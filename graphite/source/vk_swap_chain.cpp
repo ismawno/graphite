@@ -151,6 +151,11 @@ u32v2 Swapchain_GetExtent(const Swapchain sc)
     const VkExtent2D &ext = s_Swapchains->At(Handle_GetId(sc)).Swapchain.GetInfo().Extent;
     return {ext.width, ext.height};
 }
+u32 Swapchain_GetCurrentIndex(const Swapchain sc)
+{
+    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
+    return s_Swapchains->At(Handle_GetId(sc)).ImageIndex;
+}
 Image Swapchain_GetImage(const Swapchain sc, const u32 imgIdx)
 {
     GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);

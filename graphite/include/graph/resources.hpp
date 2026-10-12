@@ -105,7 +105,7 @@ struct ImageSpecs
 };
 
 Image Image_Create(const u32v3 &size, const ImageSpecs &specs, ImageFlags flags);
-Image Image_Create(const u32v2 &size, const ImageSpecs &specs, const ImageFlags flags)
+inline Image Image_Create(const u32v2 &size, const ImageSpecs &specs, const ImageFlags flags)
 {
     return Image_Create(u32v3{size, 1}, specs, flags);
 }

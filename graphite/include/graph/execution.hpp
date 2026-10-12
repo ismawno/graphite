@@ -66,7 +66,7 @@ struct Tracker
 void Queue_Submit(QueueType queue, TKit::Span<const SubmitInfo> infos);
 void Queue_WaitIdle(QueueType queue);
 bool Queue_WaitForTimelineValue(QueueType queue, u64 value, u64 timeout = TKIT_U64_MAX);
-bool Queue_WaitForTracker(const Tracker &tracker, const u64 timeout = TKIT_U64_MAX)
+inline bool Queue_WaitForTracker(const Tracker &tracker, const u64 timeout = TKIT_U64_MAX)
 {
     if (tracker.InFlight())
         return Queue_WaitForTimelineValue(tracker.Queue, tracker.InFlightValue, timeout);

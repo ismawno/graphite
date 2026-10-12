@@ -147,6 +147,11 @@ void Buffer_Unmap(const Buffer buffer)
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
     s_Buffers->At(Handle_GetId(buffer)).Unmap();
 }
+void *Buffer_GetData(const Buffer buffer)
+{
+    GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
+    return s_Buffers->At(Handle_GetId(buffer)).GetData();
+}
 bool Buffer_IsMapped(const Buffer buffer)
 {
     GRAPH_CHECK_HANDLE(buffer, Handle_Buffer);
