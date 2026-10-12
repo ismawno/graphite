@@ -260,7 +260,7 @@ bool Queue_WaitForTimelineValue(const QueueType queue, const u64 value, const u6
 
 CommandPool CommandPool_Create(const QueueType type, const CommandPoolFlags flags)
 {
-    const u32 family = GetPhysical().GetInfo().FamilyIndices[type];
+    const u32 family = GetPhysical().GetInfo().FamilyIndices[ToVulkan(type)];
     const Id id = s_CommandPools->Insert();
     Vulkan_CommandPool &pool = s_CommandPools->At(id);
 
