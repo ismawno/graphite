@@ -236,6 +236,7 @@ ImageView Image_AddView(const Image img, const ImageViewSpecs &specs)
     VKit::DeviceImage &image = s_Images->At(Handle_GetId(img)).Image;
 
     VkImageViewCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     info.image = image;
     info.viewType = ToVulkan(image, specs.Type);
     info.subresourceRange = ToVulkan(image, specs.Range);
