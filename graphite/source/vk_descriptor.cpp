@@ -37,7 +37,10 @@ void Descriptor_Initialize(const u32 maxSets, const TKit::FixedArray<u32, Descri
             .SetFlags(VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT)
             .Build());
 
-    GRAPH_CHECK_RESULT(s_DescriptorPool->SetName("graph-descriptor-pool"));
+    if (IsDebugUtilsEnabled())
+    {
+        GRAPH_CHECK_RESULT(s_DescriptorPool->SetName("graph-descriptor-pool"));
+    }
 }
 
 void Descriptor_Terminate()
