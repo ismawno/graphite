@@ -25,6 +25,9 @@ void Descriptor_Initialize(const u32 maxSets, const TKit::FixedArray<u32, Descri
     s_Layouts.Construct();
     s_Sets.Construct();
 
+    s_Layouts->Reserve(maxSets);
+    s_Sets->Reserve(maxSets);
+
     *s_DescriptorPool = GRAPH_CHECK_RESULT(
         VKit::DescriptorPool::Builder(GetDevice())
             .SetMaxSets(maxSets)
