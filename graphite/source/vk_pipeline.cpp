@@ -83,9 +83,9 @@ bool PipelineLayout_IsHandleValid(const PipelineLayout layout)
 Pipeline Pipeline_CreateGraphics(const PipelineLayout layout, const GraphicsPipelineSpecs &specs)
 {
     TKit::StackArray<VkFormat> formats{};
-    formats.Reserve(specs.ColorAttachmentFormats.GetSize());
-    for (const Format fmt : specs.ColorAttachmentFormats)
-        formats.Append(ToVulkan(fmt));
+    formats.Reserve(specs.ColorAttachments.GetSize());
+    for (const ColorAttachment &att : specs.ColorAttachments)
+        formats.Append(ToVulkan(att.Format));
 
     VkPipelineRenderingCreateInfoKHR rinfo{};
     rinfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR;

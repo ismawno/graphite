@@ -221,6 +221,10 @@ void Image_DestroyViews(const Image img)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
     s_Images->At(Handle_GetId(img)).Image.DestroyImageViews();
+    const TKit::StackArray<Id> ids = s_Views->GetValidIds();
+    for (const Id id : ids)
+        if (s_Views->At(id).Image == img)
+            s_Views->Remove(id);
 }
 
 usz Image_ComputeSize(const Image img)
@@ -331,7 +335,7 @@ Sampler Sampler_Create(const SamplerSpecs &specs, const SamplerFlags flags)
         VKit::Sampler::Builder(GetDevice())
             .SetMipmapMode(ToVulkan(specs.Mode))
             .SetFilters(ToVulkan(specs.Filters[0]), ToVulkan(specs.Filters[1]))
-            .SetAddressModes(ToVulkan(specs.Wraps[0]), ToVulkan(specs.Wraps[0]), ToVulkan(specs.Wraps[0]))
+            .SetAddressModes(ToVulkan(specs.Wraps[0]), ToVulkan(specs.Wraps[1]), ToVulkan(specs.Wraps[2]))
             .SetLodRange(specs.LodRange[0], specs.LodRange[1])
             .SetAnisotropy(specs.MaxAnisotropy)
             .SetCompareOp(ToVulkan(specs.Compare))

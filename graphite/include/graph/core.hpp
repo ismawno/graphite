@@ -54,17 +54,14 @@
         GRAPH_CHECK_HANDLE_IS_VALID(hndl, htype)
 
 #else
+#    define GRAPH_CHECK_HANDLE(...)
+#    define GRAPH_CHECK_HANDLE_IS_VALID(...)
 #    define GRAPH_CHECK_HANDLE_HAS_VALID_TYPE(...)
-#    define GRAPH_CHECK_HANDLE_HAS_VALID_RESOURCE_POOL_TYPE(...)
 #    define GRAPH_CHECK_HANDLE_HAS_TYPE(...)
-#    define GRAPH_CHECK_HANDLE_HAS_RESOURCE_POOL_TYPE(...)
+#    define GRAPH_CHECK_ID_IS_NOT_NULL(...)
 #    define GRAPH_CHECK_RESOURCE_IS_NOT_NULL(...)
-#    define GRAPH_CHECK_RESOURCE_POOL_IS_NOT_NULL(...)
-#    define GRAPH_CHECK_RESOURCE_POOL_ID_IS_NOT_NULL(...)
 #    define GRAPH_CHECK_RESOURCE_IS_VALID(...)
 #    define GRAPH_CHECK_RESOURCE_IS_VALID_WITH_DIM(...)
-#    define GRAPH_CHECK_RESOURCE_POOL_IS_VALID(...)
-#    define GRAPH_CHECK_RESOURCE_POOL_IS_VALID_WITH_DIM(...)
 #endif
 
 namespace Graph
@@ -127,18 +124,19 @@ struct Allocation
 using Capabilities = u16;
 enum CapabilityFlagBit : Capabilities
 {
-    Capability_Validation = 1U << 0,
-    Capability_DebugPrintf = 1U << 1,
-    Capability_FaultDump = 1U << 2,
-    Capability_IndependentBlend = 1U << 3,
-    Capability_MultiDrawIndirect = 1U << 4,
-    Capability_ShaderDrawParameters = 1U << 5,
-    Capability_ExtendedDynamicState = 1U << 6,
-    Capability_BindlessDescriptors = 1U << 7,
-    Capability_ImageMultiFormat = 1U << 8,
-    Capability_RequireGraphicsQueue = 1U << 9,
-    Capability_RequireTransferQueue = 1U << 10,
-    Capability_RequireComputeQueue = 1U << 11,
+    Capability_DebugUtils = 1U << 0,
+    Capability_DebugAssistedGpu = 1U << 1,
+    Capability_DebugPrintf = 1U << 2,
+    Capability_FaultDump = 1U << 3,
+    Capability_IndependentBlend = 1U << 4,
+    Capability_MultiDrawIndirect = 1U << 5,
+    Capability_ShaderDrawParameters = 1U << 6,
+    Capability_ExtendedDynamicState = 1U << 7,
+    Capability_BindlessDescriptors = 1U << 8,
+    Capability_ImageMultiFormat = 1U << 9,
+    Capability_RequireGraphicsQueue = 1U << 10,
+    Capability_RequireTransferQueue = 1U << 11,
+    Capability_RequireComputeQueue = 1U << 12,
     Capability_All = TKit::Limits<Capabilities>::Max(),
 };
 
@@ -654,12 +652,26 @@ enum PresentMode : u8
 enum DriverId : u8
 {
     Driver_Unknown,
-    Driver_AMD,
+
     Driver_NVIDIA,
+    Driver_AMD,
     Driver_Intel,
-    Driver_Software,
+    Driver_Qualcomm,
+    Driver_ARM,
+    Driver_Imagination,
+    Driver_Apple,
+
+    Driver_MesaRADV,
+    Driver_MesaANV,
+    Driver_MesaNVK,
+    Driver_MesaTurnip,
+    Driver_MesaLLVMPipe,
+    Driver_MesaOther,
+
+    Driver_SwiftShader,
     Driver_Other
 };
+
 enum DeviceType : u8
 {
     Device_Discrete,

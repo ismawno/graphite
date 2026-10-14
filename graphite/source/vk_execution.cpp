@@ -123,10 +123,6 @@ void Queue_SetName(const QueueType queue, const char *name)
     GRAPH_CHECK_QUEUE(queue);
     GRAPH_CHECK_RESULT(s_Queues[queue]->SetName(name));
 }
-bool Queue_IsHandleValid(const QueueType queue)
-{
-    return queue < Queue_Count && s_Queues[queue];
-}
 
 void Queue_Submit(const QueueType queue, const TKit::Span<const SubmitInfo> infos)
 {

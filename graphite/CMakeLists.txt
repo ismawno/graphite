@@ -8,6 +8,14 @@ if(GRAPHITE_PLATFORM_BACKEND STREQUAL "glfw")
   list(APPEND SOURCES source/glfw_platform.cpp)
 endif()
 
+FetchContent_Declare(
+  toolkit
+  GIT_REPOSITORY https://github.com/ismawno/toolkit.git
+  GIT_TAG main
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE)
+FetchContent_MakeAvailable(toolkit)
+
 if(GRAPHITE_GRAPHICS_BACKEND STREQUAL "vulkan")
   list(
     APPEND
@@ -173,7 +181,7 @@ if(GRAPHITE_SHADER_REFLECTION_BACKEND STREQUAL "spirv-reflect")
   FetchContent_Declare(
     spirv-reflect
     GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Reflect.git
-    GIT_TAG main
+    GIT_TAG vulkan-sdk-1.4.363.0
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE)
 
@@ -205,7 +213,7 @@ if(GRAPHITE_SHADER_REFLECTION_BACKEND STREQUAL "spirv-reflect")
 
   target_compile_definitions(
     graphite PUBLIC GRAPH_HAS_SHADER_REFLECTION_BACKEND
-                    GRAPH_SHADER_REFLECTION_BACKEND_SLANG)
+                    GRAPH_SHADER_REFLECTION_BACKEND_SPIRV_REFLECT)
   target_link_libraries(graphite PRIVATE spirv-reflect-static)
 
 endif()

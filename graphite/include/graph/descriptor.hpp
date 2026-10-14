@@ -31,7 +31,7 @@ struct DescriptorBufferInfo
     {
         return {handle, offset, size};
     }
-    static constexpr DescriptorBufferInfo Create(const Graph::Buffer handle)
+    static DescriptorBufferInfo Create(const Graph::Buffer handle)
     {
         return {handle, 0, Buffer_GetSize(handle)};
     }

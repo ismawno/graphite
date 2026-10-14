@@ -140,12 +140,12 @@ enum Mouse : u8
     Mouse_Button6,
     Mouse_Button7,
     Mouse_Button8,
-    Mouse_ButtonLast,
-    Mouse_ButtonLeft,
-    Mouse_ButtonRight,
-    Mouse_ButtonMiddle,
     Mouse_None,
-    Mouse_Count
+    Mouse_Count,
+    Mouse_ButtonLast = Mouse_Button8,
+    Mouse_ButtonLeft = Mouse_Button1,
+    Mouse_ButtonRight = Mouse_Button2,
+    Mouse_ButtonMiddle = Mouse_Button3,
 };
 
 const char *ToString(Key key);

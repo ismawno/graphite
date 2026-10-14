@@ -81,6 +81,7 @@ Swapchain Swapchain_Create(const SwapchainSpecs &specs)
     VKit::Swapchain::Builder builder{&device, GetSurface(specs.Window)};
     builder.RequestSurfaceFormat({ToVulkan(specs.SurfaceFormat), VK_COLORSPACE_SRGB_NONLINEAR_KHR})
         .RequestPresentMode(ToVulkan(specs.PresentMode))
+        .AllowPresentMode(VK_PRESENT_MODE_FIFO_KHR)
         .RequestImageCount(specs.PreferredImageCount)
         .RequestExtent({extent[0], extent[1]})
         .AddFlags(VKit::SwapchainBuilderFlag_Clipped | VKit::SwapchainBuilderFlag_CreateImageViews)

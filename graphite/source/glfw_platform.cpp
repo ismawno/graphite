@@ -39,11 +39,11 @@ struct Glfw_Monitor
 {
     GLFWmonitor *Monitor;
     void *UserData;
-    Graph::Monitor Handle;
+    Graph::Monitor Handle = Graph::NullHandle;
 };
 
-static TKit::Storage<TKit::ArenaHive<Glfw_Window>> s_Windows{};
-static TKit::Storage<TKit::ArenaArray<Glfw_Monitor>> s_Monitors{};
+static TKit::Storage<TKit::ArenaHive<Glfw_Window *>> s_Windows{};
+static TKit::Storage<TKit::ArenaHive<Glfw_Monitor *>> s_Monitors{};
 
 #ifdef GRAPH_RENDER_BACKEND_VULKAN
 static VkSurfaceKHR createSurface(GLFWwindow *win)
@@ -388,16 +388,7 @@ static i32 toGlfw(const Mouse mouse)
         return GLFW_MOUSE_BUTTON_7;
     case Mouse_Button8:
         return GLFW_MOUSE_BUTTON_8;
-    case Mouse_ButtonLast:
-        return GLFW_MOUSE_BUTTON_LAST;
-    case Mouse_ButtonLeft:
-        return GLFW_MOUSE_BUTTON_LEFT;
-    case Mouse_ButtonRight:
-        return GLFW_MOUSE_BUTTON_RIGHT;
-    case Mouse_ButtonMiddle:
-        return GLFW_MOUSE_BUTTON_MIDDLE;
     case Mouse_None:
-        return GLFW_MOUSE_BUTTON_LAST + 1;
     case Mouse_Count:
         return GLFW_MOUSE_BUTTON_LAST + 1;
     }
@@ -720,64 +711,90 @@ static KeyModFlags toKeyMods(const i32 mods)
     if (data->name)                                                                                                    \
     data->name(__VA_ARGS__)
 
-static void glfwWindowPosCallback(GLFWwindow *w, const i32 x, const i32 y)
+static void callback_WindowPos(GLFWwindow *w, const i32 x, const i32 y)
 {
     FORWARD_CALLBACK(PositionCallback, data->Handle, x, y);
 }
 
-static void glfwWindowSizeCallback(GLFWwindow *w, const i32 width, const i32 height)
+static void callback_WindowSize(GLFWwindow *w, const i32 width, const i32 height)
 {
     FORWARD_CALLBACK(SizeCallback, data->Handle, u32(width), u32(height));
 }
 
-static void glfwFramebufferSizeCallback(GLFWwindow *w, const i32 width, const i32 height)
+static void callback_FramebufferSize(GLFWwindow *w, const i32 width, const i32 height)
 {
     FORWARD_CALLBACK(FramebufferSizeCallback, data->Handle, u32(width), u32(height));
 }
 
-static void glfwWindowFocusCallback(GLFWwindow *w, const i32 focused)
+static void callback_WindowFocus(GLFWwindow *w, const i32 focused)
 {
     FORWARD_CALLBACK(FocusCallback, data->Handle, focused == GLFW_TRUE);
 }
 
-static void glfwWindowCloseCallback(GLFWwindow *w)
+static void callback_WindowClose(GLFWwindow *w)
 {
     FORWARD_CALLBACK(CloseCallback, data->Handle);
 }
 
-static void glfwWindowIconifyCallback(GLFWwindow *w, const i32 iconified)
+static void callback_WindowIconify(GLFWwindow *w, const i32 iconified)
 {
     FORWARD_CALLBACK(IconifyCallback, data->Handle, iconified == GLFW_TRUE);
 }
 
-static void glfwKeyCallback(GLFWwindow *w, const i32 key, const i32 scancode, const i32 action, const i32 mods)
+static void callback_Key(GLFWwindow *w, const i32 key, const i32 scancode, const i32 action, const i32 mods)
 {
     FORWARD_CALLBACK(KeyCallback, data->Handle, toKey(key), scancode, toInputAction(action), toKeyMods(mods));
 }
 
-static void glfwCharCallback(GLFWwindow *w, const u32 codepoint)
+static void callback_Char(GLFWwindow *w, const u32 codepoint)
 {
     FORWARD_CALLBACK(CharCallback, data->Handle, codepoint);
 }
 
-static void glfwCursorPosCallback(GLFWwindow *w, const f64 x, const f64 y)
+static void callback_CursorPos(GLFWwindow *w, const f64 x, const f64 y)
 {
     FORWARD_CALLBACK(CursorPosCallback, data->Handle, x, y);
 }
 
-static void glfwCursorEnterCallback(GLFWwindow *w, const i32 entered)
+static void callback_CursorEnter(GLFWwindow *w, const i32 entered)
 {
     FORWARD_CALLBACK(CursorEnterCallback, data->Handle, entered == GLFW_TRUE);
 }
 
-static void glfwMouseButtonCallback(GLFWwindow *w, const i32 button, const i32 action, const i32 mods)
+static void callback_MouseButton(GLFWwindow *w, const i32 button, const i32 action, const i32 mods)
 {
     FORWARD_CALLBACK(MouseButtonCallback, data->Handle, toMouse(button), toInputAction(action), toKeyMods(mods));
 }
 
-static void glfwScrollCallback(GLFWwindow *w, const f64 xoffset, const f64 yoffset)
+static void callback_Scroll(GLFWwindow *w, const f64 xoffset, const f64 yoffset)
 {
     FORWARD_CALLBACK(ScrollCallback, data->Handle, xoffset, yoffset);
+}
+
+static Monitor monitor_Add(GLFWmonitor *m)
+{
+    TKit::TierAllocator *tier = TKit::GetTier();
+    Glfw_Monitor *mon = tier->Create<Glfw_Monitor>(m, nullptr);
+
+    glfwSetMonitorUserPointer(m, mon);
+    mon->Handle = Handle_Create(Handle_Monitor, s_Monitors->Insert(mon));
+    return mon->Handle;
+}
+
+static void monitor_Remove(GLFWmonitor *m)
+{
+    TKit::TierAllocator *tier = TKit::GetTier();
+    const Glfw_Monitor *mon = scast<const Glfw_Monitor *>(glfwGetMonitorUserPointer(m));
+    s_Monitors->Remove(mon->Handle);
+    tier->Destroy(mon);
+}
+
+static void callback_Monitor(GLFWmonitor *m, const i32 event)
+{
+    if (event == GLFW_CONNECTED)
+        monitor_Add(m);
+    else if (event == GLFW_DISCONNECTED)
+        monitor_Remove(m);
 }
 
 void Platform_Initialize(const Platform plat, const u32 maxWindows)
@@ -800,14 +817,19 @@ void Platform_Initialize(const Platform plat, const u32 maxWindows)
     {
         s_Monitors->Reserve(mcount);
         for (i32 i = 0; i < mcount; ++i)
-            glfwSetMonitorUserPointer(monitors[i],
-                                      &s_Monitors->Append(monitors[i], nullptr, Handle_Create(Handle_Monitor, i)));
+            monitor_Add(monitors[i]);
     }
+    glfwSetMonitorCallback(callback_Monitor);
 }
 void Platform_Terminate()
 {
+    TKit::TierAllocator *tier = TKit::GetTier();
+    for (const Glfw_Monitor *m : *s_Monitors)
+        tier->Destroy(m);
+
     glfwTerminate();
     s_Windows.Destruct();
+    s_Monitors.Destruct();
 }
 
 void PollEvents()
@@ -840,19 +862,21 @@ Window Window_Create(const WindowSpecs &specs)
     glfwWindowHint(GLFW_FOCUS_ON_SHOW, specs.Flags & WindowFlag_FocusOnShow);
 #endif
 
-    const Id id = s_Windows->Insert();
-    Glfw_Window &win = s_Windows->At(id);
+    TKit::TierAllocator *tier = TKit::GetTier();
 
-    win.Window = glfwCreateWindow(i32(specs.Dimensions[0]), i32(specs.Dimensions[1]), specs.Title, nullptr, nullptr);
-    TKIT_ASSERT(win.Window, "[GRAPH][WINDOW] Failed to create window");
+    const Id id = s_Windows->Insert(tier->Create<Glfw_Window>());
+    Glfw_Window *win = s_Windows->At(id);
+
+    win->Window = glfwCreateWindow(i32(specs.Dimensions[0]), i32(specs.Dimensions[1]), specs.Title, nullptr, nullptr);
+    TKIT_ASSERT(win->Window, "[GRAPH][WINDOW] Failed to create window");
 
 #ifdef GRAPH_RENDER_BACKEND_VULKAN
-    win.Surface = createSurface(win.Window);
+    win->Surface = createSurface(win->Window);
 #endif
 
-    win.Cursors[0] = nullptr;
+    win->Cursors[0] = nullptr;
     for (u32 i = 1; i < MouseCursor_Count; ++i)
-        win.Cursors[i] = glfwCreateStandardCursor(toGlfw(MouseCursor(i)));
+        win->Cursors[i] = glfwCreateStandardCursor(toGlfw(MouseCursor(i)));
 
     if (specs.Position != i32v2{TKIT_I32_MAX})
     {
@@ -865,27 +889,27 @@ Window Window_Create(const WindowSpecs &specs)
                     "TKIT_I32_MAX, component y must not be either. Passed position is ({}, {})",
                     specs.Position[0], specs.Position[1]);
 
-        glfwSetWindowPos(win.Window, specs.Position[0], specs.Position[1]);
+        glfwSetWindowPos(win->Window, specs.Position[0], specs.Position[1]);
     }
 
-    win.UserData = specs.UserData;
-    win.Handle = Handle_Create(Handle_Window, id);
-    glfwSetWindowUserPointer(win.Window, &win);
+    win->UserData = specs.UserData;
+    win->Handle = Handle_Create(Handle_Window, id);
+    glfwSetWindowUserPointer(win->Window, win);
 
-    glfwSetWindowPosCallback(win.Window, glfwWindowPosCallback);
-    glfwSetWindowSizeCallback(win.Window, glfwWindowSizeCallback);
-    glfwSetFramebufferSizeCallback(win.Window, glfwFramebufferSizeCallback);
-    glfwSetWindowFocusCallback(win.Window, glfwWindowFocusCallback);
-    glfwSetWindowCloseCallback(win.Window, glfwWindowCloseCallback);
-    glfwSetWindowIconifyCallback(win.Window, glfwWindowIconifyCallback);
-    glfwSetKeyCallback(win.Window, glfwKeyCallback);
-    glfwSetCharCallback(win.Window, glfwCharCallback);
-    glfwSetCursorPosCallback(win.Window, glfwCursorPosCallback);
-    glfwSetCursorEnterCallback(win.Window, glfwCursorEnterCallback);
-    glfwSetMouseButtonCallback(win.Window, glfwMouseButtonCallback);
-    glfwSetScrollCallback(win.Window, glfwScrollCallback);
+    glfwSetWindowPosCallback(win->Window, callback_WindowPos);
+    glfwSetWindowSizeCallback(win->Window, callback_WindowSize);
+    glfwSetFramebufferSizeCallback(win->Window, callback_FramebufferSize);
+    glfwSetWindowFocusCallback(win->Window, callback_WindowFocus);
+    glfwSetWindowCloseCallback(win->Window, callback_WindowClose);
+    glfwSetWindowIconifyCallback(win->Window, callback_WindowIconify);
+    glfwSetKeyCallback(win->Window, callback_Key);
+    glfwSetCharCallback(win->Window, callback_Char);
+    glfwSetCursorPosCallback(win->Window, callback_CursorPos);
+    glfwSetCursorEnterCallback(win->Window, callback_CursorEnter);
+    glfwSetMouseButtonCallback(win->Window, callback_MouseButton);
+    glfwSetScrollCallback(win->Window, callback_Scroll);
 
-    return win.Handle;
+    return win->Handle;
 }
 
 void Window_Destroy(const Window win)
@@ -893,71 +917,75 @@ void Window_Destroy(const Window win)
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     const Id id = Handle_GetId(win);
 
-    const Glfw_Window &gwin = s_Windows->At(id);
+    const Glfw_Window *gwin = s_Windows->At(id);
+    for (u32 i = 1; i < gwin->Cursors.GetSize(); ++i)
+        glfwDestroyCursor(gwin->Cursors[i]);
 #ifdef GRAPH_RENDER_BACKEND_VULKAN
-    destroySurface(gwin.Surface);
+    destroySurface(gwin->Surface);
 #endif
-    glfwDestroyWindow(gwin.Window);
+    glfwDestroyWindow(gwin->Window);
 
     s_Windows->Remove(id);
+    TKit::TierAllocator *tier = TKit::GetTier();
+    tier->Destroy(gwin);
 }
 
 void *Window_GetUserData(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return scast<const Glfw_Window *>(glfwGetWindowUserPointer(s_Windows->At(Handle_GetId(win)).Window))->UserData;
+    return scast<const Glfw_Window *>(glfwGetWindowUserPointer(s_Windows->At(Handle_GetId(win))->Window))->UserData;
 }
 void Window_SetUserData(const Window win, void *data)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    scast<Glfw_Window *>(glfwGetWindowUserPointer(s_Windows->At(Handle_GetId(win)).Window))->UserData = data;
+    scast<Glfw_Window *>(glfwGetWindowUserPointer(s_Windows->At(Handle_GetId(win))->Window))->UserData = data;
 }
 
 bool Window_ShouldClose(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwWindowShouldClose(s_Windows->At(Handle_GetId(win)).Window);
+    return glfwWindowShouldClose(s_Windows->At(Handle_GetId(win))->Window);
 }
 
 #ifdef GRAPH_RENDER_BACKEND_VULKAN
 void Window_RecreateSurface(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    Glfw_Window &gwin = s_Windows->At(Handle_GetId(win));
-    destroySurface(gwin.Surface);
-    gwin.Surface = createSurface(gwin.Window);
+    Glfw_Window *gwin = s_Windows->At(Handle_GetId(win));
+    destroySurface(gwin->Surface);
+    gwin->Surface = createSurface(gwin->Window);
 }
 #endif
 
 void Window_Show(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwShowWindow(s_Windows->At(Handle_GetId(win)).Window);
+    glfwShowWindow(s_Windows->At(Handle_GetId(win))->Window);
 }
 
 void Window_Hide(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwHideWindow(s_Windows->At(Handle_GetId(win)).Window);
+    glfwHideWindow(s_Windows->At(Handle_GetId(win))->Window);
 }
 
 void Window_Focus(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwFocusWindow(s_Windows->At(Handle_GetId(win)).Window);
+    glfwFocusWindow(s_Windows->At(Handle_GetId(win))->Window);
 }
 
 const char *Window_GetTitle(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetWindowTitle(s_Windows->At(Handle_GetId(win)).Window);
+    return glfwGetWindowTitle(s_Windows->At(Handle_GetId(win))->Window);
 }
 
 i32v2 Window_GetPosition(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 x, y;
-    glfwGetWindowPos(s_Windows->At(Handle_GetId(win)).Window, &x, &y);
+    glfwGetWindowPos(s_Windows->At(Handle_GetId(win))->Window, &x, &y);
     return i32v2{x, y};
 }
 
@@ -965,7 +993,7 @@ u32v2 Window_GetScreenDimensions(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 w, h;
-    glfwGetWindowSize(s_Windows->At(Handle_GetId(win)).Window, &w, &h);
+    glfwGetWindowSize(s_Windows->At(Handle_GetId(win))->Window, &w, &h);
     return u32v2{u32(w), u32(h)};
 }
 
@@ -973,7 +1001,7 @@ u32v2 Window_GetPixelDimensions(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 w, h;
-    glfwGetFramebufferSize(s_Windows->At(Handle_GetId(win)).Window, &w, &h);
+    glfwGetFramebufferSize(s_Windows->At(Handle_GetId(win))->Window, &w, &h);
     return u32v2{u32(w), u32(h)};
 }
 
@@ -981,7 +1009,7 @@ f32v2 Window_GetCursorPosition(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     f64 x, y;
-    glfwGetCursorPos(s_Windows->At(Handle_GetId(win)).Window, &x, &y);
+    glfwGetCursorPos(s_Windows->At(Handle_GetId(win))->Window, &x, &y);
     return f32v2{f32(x), f32(y)};
 }
 
@@ -995,7 +1023,7 @@ f32 Window_GetOpacity(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
 #ifdef GRAPH_GLFW_WINDOW_OPACITY
-    return glfwGetWindowOpacity(s_Windows->At(Handle_GetId(win)).Window);
+    return glfwGetWindowOpacity(s_Windows->At(Handle_GetId(win))->Window);
 #else
     TKIT_LOG_ERROR("[GRAPH][PLATFORM] To query opacity, GLFW 3.3 or greater is required");
     return 0.f;
@@ -1005,7 +1033,7 @@ f32 Window_GetOpacity(const Window win)
 WindowFlags Window_GetFlags(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GLFWwindow *handle = s_Windows->At(Handle_GetId(win)).Window;
+    GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
 
     WindowFlags flags = 0;
     if (glfwGetWindowAttrib(handle, GLFW_RESIZABLE))
@@ -1028,13 +1056,13 @@ WindowFlags Window_GetFlags(const Window win)
 void Window_SetTitle(const Window win, const char *title)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowTitle(s_Windows->At(Handle_GetId(win)).Window, title);
+    glfwSetWindowTitle(s_Windows->At(Handle_GetId(win))->Window, title);
 }
 
 void Window_SetPosition(const Window win, const i32v2 &pos)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowPos(s_Windows->At(Handle_GetId(win)).Window, pos[0], pos[1]);
+    glfwSetWindowPos(s_Windows->At(Handle_GetId(win))->Window, pos[0], pos[1]);
 }
 
 void Window_SetScreenDimensions(const Window win, const u32v2 &dim)
@@ -1042,28 +1070,29 @@ void Window_SetScreenDimensions(const Window win, const u32v2 &dim)
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     TKIT_ASSERT(dim[0] != 0 && dim[1] != 0,
                 "[GRAPH][WINDOW] Cannot have window dimensions of zero! Passed values: {}, {}", dim[0], dim[1]);
+    GLFWwindow *gwin = s_Windows->At(Handle_GetId(win))->Window;
 #if defined(TKIT_OS_APPLE) && !defined(GRAPH_GLFW_OSX_WINDOW_POS_FIX)
     i32 x;
     i32 y;
     i32 w;
     i32 h;
-    glfwGetWindowPos(m_Window, &x, &y);
-    glfwGetWindowSize(m_Window, &w, &h);
-    glfwSetWindowPos(m_Window, x, y - h + i32(dim[1]));
+    glfwGetWindowPos(gwin, &x, &y);
+    glfwGetWindowSize(gwin, &w, &h);
+    glfwSetWindowPos(gwin, x, y - h + i32(dim[1]));
 #endif
-    glfwSetWindowSize(s_Windows->At(Handle_GetId(win)).Window, i32(dim[0]), i32(dim[1]));
+    glfwSetWindowSize(gwin, i32(dim[0]), i32(dim[1]));
 }
 
 void Window_SetAspect(const Window win, const u32 numer, const u32 denom)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowAspectRatio(s_Windows->At(Handle_GetId(win)).Window, i32(numer), i32(denom));
+    glfwSetWindowAspectRatio(s_Windows->At(Handle_GetId(win))->Window, i32(numer), i32(denom));
 }
 
 void Window_SetFlags(const Window win, const WindowFlags flags)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GLFWwindow *handle = s_Windows->At(Handle_GetId(win)).Window;
+    GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
 
     glfwSetWindowAttrib(handle, GLFW_RESIZABLE, bool(flags & WindowFlag_Resizable));
     glfwSetWindowAttrib(handle, GLFW_DECORATED, bool(flags & WindowFlag_Decorated));
@@ -1074,7 +1103,7 @@ void Window_SetFlags(const Window win, const WindowFlags flags)
 void Window_AddFlags(const Window win, const WindowFlags flags)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GLFWwindow *handle = s_Windows->At(Handle_GetId(win)).Window;
+    GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
 
     if (flags & WindowFlag_Resizable)
         glfwSetWindowAttrib(handle, GLFW_RESIZABLE, GLFW_TRUE);
@@ -1089,7 +1118,7 @@ void Window_AddFlags(const Window win, const WindowFlags flags)
 void Window_RemoveFlags(const Window win, const WindowFlags flags)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GLFWwindow *handle = s_Windows->At(Handle_GetId(win)).Window;
+    GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
 
     if (flags & WindowFlag_Resizable)
         glfwSetWindowAttrib(handle, GLFW_RESIZABLE, GLFW_FALSE);
@@ -1105,7 +1134,7 @@ void Window_SetOpacity(const Window win, const f32 opacity)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
 #ifdef GRAPH_GLFW_WINDOW_OPACITY
-    glfwSetWindowOpacity(s_Windows->At(Handle_GetId(win)).Window, opacity);
+    glfwSetWindowOpacity(s_Windows->At(Handle_GetId(win))->Window, opacity);
 #else
     TKIT_LOG_ERROR("[GRAPH][PLATFORM] To query opacity, GLFW 3.3 or greater is required");
 #endif
@@ -1114,19 +1143,19 @@ void Window_SetOpacity(const Window win, const f32 opacity)
 void Window_SetMouseCursor(const Window win, const MouseCursor cursor)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    glfwSetCursor(data.Window, data.Cursors[cursor]);
+    Glfw_Window *data = s_Windows->At(Handle_GetId(win));
+    glfwSetCursor(data->Window, data->Cursors[cursor]);
 }
 void Window_SetCursorPosition(const Window win, const f32v2 &pos)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetCursorPos(s_Windows->At(Handle_GetId(win)).Window, f64(pos[0]), f64(pos[1]));
+    glfwSetCursorPos(s_Windows->At(Handle_GetId(win))->Window, f64(pos[0]), f64(pos[1]));
 }
 
 CursorMode Window_GetCursorMode(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    switch (glfwGetInputMode(s_Windows->At(Handle_GetId(win)).Window, GLFW_CURSOR))
+    switch (glfwGetInputMode(s_Windows->At(Handle_GetId(win))->Window, GLFW_CURSOR))
     {
     case GLFW_CURSOR_HIDDEN:
         return CursorMode_Hidden;
@@ -1153,31 +1182,31 @@ void Window_SetCursorMode(const Window win, const CursorMode mode)
         value = GLFW_CURSOR_DISABLED;
         break;
     }
-    glfwSetInputMode(s_Windows->At(Handle_GetId(win)).Window, GLFW_CURSOR, value);
+    glfwSetInputMode(s_Windows->At(Handle_GetId(win))->Window, GLFW_CURSOR, value);
 }
 
 void Window_SignalShouldClose(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowShouldClose(s_Windows->At(Handle_GetId(win)).Window, GLFW_TRUE);
+    glfwSetWindowShouldClose(s_Windows->At(Handle_GetId(win))->Window, GLFW_TRUE);
 }
 
 bool Window_IsKeyPressed(const Window win, const Key key)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetKey(s_Windows->At(Handle_GetId(win)).Window, toGlfw(key)) == GLFW_PRESS;
+    return glfwGetKey(s_Windows->At(Handle_GetId(win))->Window, toGlfw(key)) == GLFW_PRESS;
 }
 
 bool Window_IsKeyReleased(const Window win, const Key key)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetKey(s_Windows->At(Handle_GetId(win)).Window, toGlfw(key)) == GLFW_RELEASE;
+    return glfwGetKey(s_Windows->At(Handle_GetId(win))->Window, toGlfw(key)) == GLFW_RELEASE;
 }
 
 bool Window_IsMousePressed(const Window win, const Mouse button)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetMouseButton(s_Windows->At(Handle_GetId(win)).Window, toGlfw(button)) == GLFW_PRESS;
+    return glfwGetMouseButton(s_Windows->At(Handle_GetId(win))->Window, toGlfw(button)) == GLFW_PRESS;
 }
 const char *Key_GetName(const Key key, const i32 scancode)
 {
@@ -1194,7 +1223,7 @@ const char *Key_GetName(const Key key, const i32 scancode)
 bool Window_IsMouseReleased(const Window win, const Mouse button)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetMouseButton(s_Windows->At(Handle_GetId(win)).Window, toGlfw(button)) == GLFW_RELEASE;
+    return glfwGetMouseButton(s_Windows->At(Handle_GetId(win))->Window, toGlfw(button)) == GLFW_RELEASE;
 }
 
 Monitor Window_GetMonitor(const Window win)
@@ -1231,19 +1260,19 @@ Monitor Monitor_Get(const u32 index)
 void *Monitor_GetUserData(const Monitor monitor)
 {
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    return scast<const Glfw_Monitor *>(glfwGetMonitorUserPointer(s_Monitors->At(Handle_GetId(monitor)).Monitor))
+    return scast<const Glfw_Monitor *>(glfwGetMonitorUserPointer(s_Monitors->At(Handle_GetId(monitor))->Monitor))
         ->UserData;
 }
 void Monitor_SetUserData(const Monitor monitor, void *data)
 {
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    scast<Glfw_Monitor *>(glfwGetMonitorUserPointer(s_Monitors->At(Handle_GetId(monitor)).Monitor))->UserData = data;
+    scast<Glfw_Monitor *>(glfwGetMonitorUserPointer(s_Monitors->At(Handle_GetId(monitor))->Monitor))->UserData = data;
 }
 
 i32v2 Monitor_GetPosition(const Monitor monitor)
 {
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor)).Monitor;
+    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
     i32 x, y;
     glfwGetMonitorPos(mon, &x, &y);
     return {x, y};
@@ -1252,7 +1281,7 @@ i32v2 Monitor_GetPosition(const Monitor monitor)
 VideoMode Monitor_GetVideoMode(const Monitor monitor)
 {
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor)).Monitor;
+    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
     const GLFWvidmode *mode = glfwGetVideoMode(mon);
     TKIT_ASSERT(mode, "[GRAPH][PLATFORM] Failed to get video mode");
 
@@ -1268,7 +1297,7 @@ MonitorArea Monitor_GetWorkArea(const Monitor monitor)
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
 #ifdef GRAPH_GLFW_MONITOR_WORK_AREA
     i32 x, y, w, h;
-    glfwGetMonitorWorkarea(s_Monitors->At(Handle_GetId(monitor)).Monitor, &x, &y, &w, &h);
+    glfwGetMonitorWorkarea(s_Monitors->At(Handle_GetId(monitor))->Monitor, &x, &y, &w, &h);
     return {{x, y}, {u32(w), u32(h)}};
 #else
     const VideoMode vmode = Monitor_GetVideoMode(monitor);
@@ -1281,7 +1310,7 @@ f32v2 Monitor_GetContentScale(const Monitor monitor)
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
 #ifdef GRAPH_GLFW_PER_MONITOR_DPI
     f32 xscale, yscale;
-    glfwGetMonitorContentScale(s_Monitors->At(Handle_GetId(monitor)).Monitor, &xscale, &yscale);
+    glfwGetMonitorContentScale(s_Monitors->At(Handle_GetId(monitor))->Monitor, &xscale, &yscale);
     return {xscale, yscale};
 #else
     return {1.f, 1.f};
@@ -1296,138 +1325,85 @@ bool Monitor_IsHandleValid(const Monitor monitor)
     return Handle_GetId(monitor) < s_Monitors->GetSize();
 }
 
+#define SET_CALLBACK(tname, vname, fname)                                                                              \
+    GRAPH_CHECK_HANDLE(win, Handle_Window);                                                                            \
+    Glfw_Window *data = s_Windows->At(Handle_GetId(win));                                                              \
+    tname prev = data->vname;                                                                                          \
+    data->vname = callback;                                                                                            \
+    glfwSet##fname##Callback(data->Window, callback ? callback_##fname : nullptr);                                     \
+    return prev
+
 WindowPosCallback Window_Callback_Position(const Window win, const WindowPosCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    WindowPosCallback prev = data.PositionCallback;
-    data.PositionCallback = callback;
-    glfwSetWindowPosCallback(data.Window, callback ? glfwWindowPosCallback : nullptr);
-    return prev;
+    SET_CALLBACK(WindowPosCallback, PositionCallback, WindowPos);
 }
 
 WindowSizeCallback Window_Callback_Size(const Window win, const WindowSizeCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    WindowSizeCallback prev = data.SizeCallback;
-    data.SizeCallback = callback;
-    glfwSetWindowSizeCallback(data.Window, callback ? glfwWindowSizeCallback : nullptr);
-    return prev;
+    SET_CALLBACK(WindowSizeCallback, SizeCallback, WindowSize);
 }
 
 FramebufferSizeCallback Window_Callback_FramebufferSize(const Window win, const FramebufferSizeCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    FramebufferSizeCallback prev = data.FramebufferSizeCallback;
-    data.FramebufferSizeCallback = callback;
-    glfwSetFramebufferSizeCallback(data.Window, callback ? glfwFramebufferSizeCallback : nullptr);
-    return prev;
+    SET_CALLBACK(FramebufferSizeCallback, FramebufferSizeCallback, FramebufferSize);
 }
 
 WindowFocusCallback Window_Callback_Focus(const Window win, const WindowFocusCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    WindowFocusCallback prev = data.FocusCallback;
-    data.FocusCallback = callback;
-    glfwSetWindowFocusCallback(data.Window, callback ? glfwWindowFocusCallback : nullptr);
-    return prev;
+    SET_CALLBACK(WindowFocusCallback, FocusCallback, WindowFocus);
 }
 
 WindowCloseCallback Window_Callback_Close(const Window win, const WindowCloseCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    WindowCloseCallback prev = data.CloseCallback;
-    data.CloseCallback = callback;
-    glfwSetWindowCloseCallback(data.Window, callback ? glfwWindowCloseCallback : nullptr);
-    return prev;
+    SET_CALLBACK(WindowCloseCallback, CloseCallback, WindowClose);
 }
 
 WindowIconifyCallback Window_Callback_Iconify(const Window win, const WindowIconifyCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    WindowIconifyCallback prev = data.IconifyCallback;
-    data.IconifyCallback = callback;
-    glfwSetWindowIconifyCallback(data.Window, callback ? glfwWindowIconifyCallback : nullptr);
-    return prev;
+    SET_CALLBACK(WindowIconifyCallback, IconifyCallback, WindowIconify);
 }
 
 KeyCallback Window_Callback_Key(const Window win, const KeyCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    KeyCallback prev = data.KeyCallback;
-    data.KeyCallback = callback;
-    glfwSetKeyCallback(data.Window, callback ? glfwKeyCallback : nullptr);
-    return prev;
+    SET_CALLBACK(KeyCallback, KeyCallback, Key);
 }
 
 CharCallback Window_Callback_Char(const Window win, const CharCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    CharCallback prev = data.CharCallback;
-    data.CharCallback = callback;
-    glfwSetCharCallback(data.Window, callback ? glfwCharCallback : nullptr);
-    return prev;
+    SET_CALLBACK(CharCallback, CharCallback, Char);
 }
 
 CursorPosCallback Window_Callback_CursorPos(const Window win, const CursorPosCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    CursorPosCallback prev = data.CursorPosCallback;
-    data.CursorPosCallback = callback;
-    glfwSetCursorPosCallback(data.Window, callback ? glfwCursorPosCallback : nullptr);
-    return prev;
+    SET_CALLBACK(CursorPosCallback, CursorPosCallback, CursorPos);
 }
 
 CursorEnterCallback Window_Callback_CursorEnter(const Window win, const CursorEnterCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    CursorEnterCallback prev = data.CursorEnterCallback;
-    data.CursorEnterCallback = callback;
-    glfwSetCursorEnterCallback(data.Window, callback ? glfwCursorEnterCallback : nullptr);
-    return prev;
+    SET_CALLBACK(CursorEnterCallback, CursorEnterCallback, CursorEnter);
 }
 
 MouseButtonCallback Window_Callback_MouseButton(const Window win, const MouseButtonCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    MouseButtonCallback prev = data.MouseButtonCallback;
-    data.MouseButtonCallback = callback;
-    glfwSetMouseButtonCallback(data.Window, callback ? glfwMouseButtonCallback : nullptr);
-    return prev;
+    SET_CALLBACK(MouseButtonCallback, MouseButtonCallback, MouseButton);
 }
 
 ScrollCallback Window_Callback_Scroll(const Window win, const ScrollCallback callback)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    auto &data = s_Windows->At(Handle_GetId(win));
-    ScrollCallback prev = data.ScrollCallback;
-    data.ScrollCallback = callback;
-    glfwSetScrollCallback(data.Window, callback ? glfwScrollCallback : nullptr);
-    return prev;
+    SET_CALLBACK(ScrollCallback, ScrollCallback, Scroll);
 }
 
 GLFWwindow *GetWindow(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return s_Windows->At(Handle_GetId(win)).Window;
+    return s_Windows->At(Handle_GetId(win))->Window;
 }
 VkSurfaceKHR GetSurface(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return s_Windows->At(Handle_GetId(win)).Surface;
+    return s_Windows->At(Handle_GetId(win))->Surface;
 }
 
-// glfw_platform.cpp (next to toGlfw)
 static Platform fromGlfw(const i32 plat)
 {
     switch (plat)
@@ -1448,7 +1424,7 @@ static Platform fromGlfw(const i32 plat)
 PlatformBackendInfo GetPlatformBackendInfo()
 {
     PlatformBackendInfo info{};
-    info.Id = PlatformBackend_GLFW; // ASSUMPTION: adjust to your PlatformBackendId entry name
+    info.Id = PlatformBackend_GLFW;
     info.Platform = fromGlfw(glfwGetPlatform());
 
     i32 major, minor, rev;

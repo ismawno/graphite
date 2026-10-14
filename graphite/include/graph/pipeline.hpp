@@ -49,6 +49,7 @@ struct ColorAttachment
     BlendFactor DstAlpha = BlendFactor_OneMinusSrcAlpha;
     BlendOp AlphaOp = BlendOp_Add;
     ColorWriteMask WriteMask = ColorWrite_All;
+    Format Format = Format_Undefined;
     bool BlendEnabled = false;
 };
 
@@ -130,7 +131,6 @@ struct GraphicsPipelineSpecs
     TKit::Span<const VertexBinding> VertexBindings{};
     TKit::Span<const VertexAttribute> VertexAttributes{};
     TKit::Span<const ColorAttachment> ColorAttachments{};
-    TKit::Span<const Format> ColorAttachmentFormats{};
 
     Topology Topology = Topology_TriangleList;
     RasterizationState Rasterization{};

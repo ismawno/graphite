@@ -354,6 +354,18 @@ static slang::CompilerOptionName toSlang(const ShaderArgumentName arg)
     return SO::CountOf;
 }
 
+static slang::CompilerOptionValueKind toSlang(const ShaderArgumentType t)
+{
+    switch (t)
+    {
+    case ShaderArgument_Integer:
+        return slang::CompilerOptionValueKind::Int;
+    case ShaderArgument_String:
+        return slang::CompilerOptionValueKind::String;
+    }
+    return slang::CompilerOptionValueKind::Int;
+}
+
 static TKit::TierString fromSlang(slang::IBlob *diagnostics)
 {
     if (!diagnostics)
@@ -401,6 +413,7 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
     for (const ShaderArgument &sa : specs.Arguments)
     {
         slang::CompilerOptionEntry entry{};
+        entry.value.kind = toSlang(sa.Value.Type);
         entry.name = toSlang(sa.Name);
         entry.value.intValue0 = sa.Value.Value0;
         entry.value.intValue1 = sa.Value.Value1;
@@ -499,8 +512,8 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
             "[GRAPH][SHADERS] Created composite component type for module '{}' with the following diagnostics: {}",
             munit.Name, fromSlang(diagnostics));
 
-        slang::IComponentType *linkedProgram;
-        result = program->link(&linkedProgram, diagnostics.writeRef());
+        ComPtr<slang::IComponentType> linkedProgram;
+        result = program->link(linkedProgram.writeRef(), diagnostics.writeRef());
         if (SLANG_FAILED(result))
         {
             compilation_Destroy(compilation);
@@ -578,7 +591,7 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
     u32 index = TKIT_U32_MAX;
     for (u32 i = 0; i < compilation.GetSize(); ++i)
     {
-        const CompiledSpirv &spr = compilation[index];
+        const CompiledSpirv &spr = compilation[i];
         bool match = strcmp(entryPoint, spr.EntryPoint.Name) == 0;
         match &= !module || strcmp(module, spr.Module) == 0;
         match &= stage == spr.EntryPoint.Stage;
@@ -621,7 +634,6 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
 
 bool Compilation_IsHandleValid(const Compilation comp)
 {
-    GRAPH_CHECK_HANDLE(comp, Handle_Compilation);
     GRAPH_IS_HANDLE_VALID_FUNCTION_BODY(s_Compilations, comp, Handle_Compilation);
 }
 

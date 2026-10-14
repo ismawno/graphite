@@ -24,7 +24,7 @@ static VmaAllocator s_VulkanAllocator = VK_NULL_HANDLE;
 static Specs s_Specs{};
 
 #ifdef GRAPH_HAS_PLATFORM_BACKEND
-Window s_DummyWindow = NullHandle;
+static Window s_DummyWindow = NullHandle;
 
 static VkSurfaceKHR createDummySurface()
 {
@@ -38,6 +38,7 @@ static void destroyDummySurface()
     TKIT_ASSERT(s_DummyWindow != NullHandle, "[GRAPH][CORE] Can only destroy a dummy surface if one was created");
 
     Window_Destroy(s_DummyWindow);
+    s_DummyWindow = NullHandle;
 }
 #endif
 
@@ -75,7 +76,7 @@ static void createInstance()
         .RequestExtension("VK_KHR_portability_enumeration");
 
     const Capabilities caps = s_Specs.EnabledCapabilities;
-    if (caps & Capability_Validation)
+    if (caps & Capability_DebugUtils)
     {
         TKIT_LOG_INFO("[GRAPH][CORE] Validation layers (VK_LAYER_KHRONOS_validation) have been requested");
         TKIT_LOG_INFO("[GRAPH][CORE] Debug utils extension (VK_EXT_debug_utils) has been requested");
@@ -85,10 +86,14 @@ static void createInstance()
         builder.RequestLayer("VK_LAYER_KHRONOS_validation")
             .RequestExtension("VK_EXT_debug_utils")
             .RequestExtension("VK_EXT_validation_features")
-            .SetValidationFeature(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT)
-            .SetValidationFeature(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT)
             .SetValidationFeature(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT)
             .SetValidationFeature(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
+    }
+    if (caps & Capability_DebugAssistedGpu)
+    {
+        TKIT_LOG_INFO("[GRAPH][CORE] GPU assisted debug feature has been requested");
+        builder.SetValidationFeature(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT)
+            .SetValidationFeature(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
     }
     if (caps & Capability_DebugPrintf)
     {
@@ -116,11 +121,11 @@ static void createInstance()
         TKIT_LOG_INFO("[GRAPH][CORE]     {}", ext);
 #endif
 
-    TKIT_LOG_ERROR_IF((caps & Capability_Validation) && !s_Instance->IsLayerEnabled("VK_LAYER_KHRONOS_validation"),
+    TKIT_LOG_ERROR_IF((caps & Capability_DebugUtils) && !s_Instance->IsLayerEnabled("VK_LAYER_KHRONOS_validation"),
                       "[GRAPH][CORE] Validation layers (VK_LAYER_KHRONOS_validation) could not be enabled");
-    TKIT_LOG_ERROR_IF((caps & Capability_Validation) && !s_Instance->IsExtensionEnabled("VK_EXT_debug_utils"),
+    TKIT_LOG_ERROR_IF((caps & Capability_DebugUtils) && !s_Instance->IsExtensionEnabled("VK_EXT_debug_utils"),
                       "[GRAPH][CORE] Debug utils extension (VK_EXT_debug_utils) could not be enabled");
-    TKIT_LOG_ERROR_IF((caps & Capability_Validation) && !s_Instance->IsExtensionEnabled("VK_EXT_validation_features"),
+    TKIT_LOG_ERROR_IF((caps & Capability_DebugUtils) && !s_Instance->IsExtensionEnabled("VK_EXT_validation_features"),
                       "[GRAPH][CORE] Validation features extension (VK_EXT_validation_features) could not be enabled");
 }
 
@@ -271,14 +276,16 @@ static void createDevice()
         features.Vulkan13.synchronization2 = VK_TRUE;
         features.Vulkan13.dynamicRendering = VK_TRUE;
 
-        TKIT_ASSERT(s_Physical->EnableFeatures(features), "[GRAPH][CORE] Failed to enable requested features");
+        TKIT_ENSURE_RETURNS(s_Physical->EnableFeatures(features), true,
+                            "[GRAPH][CORE] Failed to enable requested features");
     }
     else
     {
         s_Physical->EnableExtensionBoundFeature(&sync2);
         s_Physical->EnableExtensionBoundFeature(&drendering);
 
-        TKIT_ASSERT(s_Physical->EnableFeatures(features), "[GRAPH][CORE] Failed to enable requested features");
+        TKIT_ENSURE_RETURNS(s_Physical->EnableFeatures(features), true,
+                            "[GRAPH][CORE] Failed to enable requested features");
     }
 
     VKit::LogicalDevice::Builder devBuild{&s_Instance.Get(), &s_Physical.Get()};
@@ -389,7 +396,7 @@ bool IsValidationEnabled()
 {
     return IsDebugUtilsEnabled();
 }
-void HandleVulkanResult(const VkResult result)
+void HandleVulkanResult([[maybe_unused]] const VkResult result)
 {
 #ifdef TKIT_ENABLE_ERROR_LOGS
     if (result != VK_ERROR_DEVICE_LOST)
@@ -461,14 +468,14 @@ void HandleVulkanResult(const VkResult result)
 
     const VkDeviceFaultVendorBinaryHeaderVersionOneEXT *header =
         reinterpret_cast<const VkDeviceFaultVendorBinaryHeaderVersionOneEXT *>(vendorBinary.GetData());
-#endif
 
     TKIT_LOG_ERROR("[GRAPH][CORE] Vendor binary ({:L} bytes)", vendorBinary.GetSize());
     TKIT_LOG_ERROR("[GRAPH][CORE]    vendor={:#010x}", header->vendorID);
     TKIT_LOG_ERROR("[GRAPH][CORE]    device={:#010x}", header->deviceID);
 
     namespace fs = std::filesystem;
-    const auto path = s_Specs.DumpPath ? fs::path(s_Specs.DumpPath) : fs::temp_directory_path();
+    const auto path =
+        s_Specs.DumpPath ? fs::path(s_Specs.DumpPath) : (fs::temp_directory_path() / "graph-device-fault.bin");
     std::ofstream f{path, std::ios::binary};
     if (!f)
     {
@@ -478,6 +485,7 @@ void HandleVulkanResult(const VkResult result)
     f.write(reinterpret_cast<const char *>(vendorBinary.GetData()), std::streamsize(vendorBinary.GetSize()));
 
     TKIT_LOG_ERROR("[GRAPH][CORE] Wrote crash dump to '{}'", path.string());
+#endif
 }
 
 VKit::Instance &GetInstance()
@@ -1384,27 +1392,70 @@ static DriverId fromVulkan(const VkDriverId id)
 {
     switch (id)
     {
-    case VK_DRIVER_ID_AMD_PROPRIETARY:
-    case VK_DRIVER_ID_AMD_OPEN_SOURCE:
-    case VK_DRIVER_ID_MESA_RADV:
-        return Driver_AMD;
     case VK_DRIVER_ID_NVIDIA_PROPRIETARY:
         return Driver_NVIDIA;
+    case VK_DRIVER_ID_AMD_PROPRIETARY:
+    case VK_DRIVER_ID_AMD_OPEN_SOURCE:
+        return Driver_AMD;
     case VK_DRIVER_ID_INTEL_PROPRIETARY_WINDOWS:
-    case VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA:
         return Driver_Intel;
-    case VK_DRIVER_ID_GOOGLE_SWIFTSHADER:
-    case VK_DRIVER_ID_MESA_LLVMPIPE:
-        return Driver_Software;
-    case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
     case VK_DRIVER_ID_QUALCOMM_PROPRIETARY:
+        return Driver_Qualcomm;
     case VK_DRIVER_ID_ARM_PROPRIETARY:
-    case VK_DRIVER_ID_BROADCOM_PROPRIETARY:
+        return Driver_ARM;
+    case VK_DRIVER_ID_IMAGINATION_PROPRIETARY:
+        return Driver_Imagination;
+    case VK_DRIVER_ID_MESA_RADV:
+        return Driver_MesaRADV;
+    case VK_DRIVER_ID_INTEL_OPEN_SOURCE_MESA:
+        return Driver_MesaANV;
+    case VK_DRIVER_ID_GOOGLE_SWIFTSHADER:
+        return Driver_SwiftShader;
+#if VK_HEADER_VERSION >= 141
+    case VK_DRIVER_ID_MESA_LLVMPIPE:
+        return Driver_MesaLLVMPipe;
+#endif
+#if VK_HEADER_VERSION >= 148
     case VK_DRIVER_ID_MOLTENVK:
-    case VK_DRIVER_ID_GGP_PROPRIETARY:
-        return Driver_Other;
+        return Driver_Apple;
+#endif
+#if VK_HEADER_VERSION >= 193
+    case VK_DRIVER_ID_MESA_TURNIP:
+        return Driver_MesaTurnip;
+    case VK_DRIVER_ID_MESA_V3DV:
+    case VK_DRIVER_ID_MESA_PANVK:
+        return Driver_MesaOther;
+#endif
+#if VK_HEADER_VERSION >= 204
+    case VK_DRIVER_ID_MESA_VENUS:
+        return Driver_MesaOther;
+#endif
+#if VK_HEADER_VERSION >= 219
+    case VK_DRIVER_ID_MESA_DOZEN:
+        return Driver_MesaOther;
+#endif
+#if VK_HEADER_VERSION >= 235
+    case VK_DRIVER_ID_MESA_NVK:
+        return Driver_MesaNVK;
+#endif
+#if VK_HEADER_VERSION >= 239
+    case VK_DRIVER_ID_IMAGINATION_OPEN_SOURCE_MESA:
+        return Driver_MesaOther;
+#endif
+#if VK_HEADER_VERSION >= 287
+    case VK_DRIVER_ID_MESA_HONEYKRISP:
+        return Driver_MesaOther;
+#endif
+#if VK_HEADER_VERSION >= 330
+    case VK_DRIVER_ID_MESA_KOSMICKRISP:
+        return Driver_Apple; // Mesa's Vulkan-on-Metal; or Driver_MesaOther
+#endif
+#if VK_HEADER_VERSION >= 352
+    case VK_DRIVER_ID_MESA_GFXSTREAM:
+        return Driver_MesaOther;
+#endif
     default:
-        return Driver_Unknown;
+        return u32(id) == 0 ? Driver_Unknown : Driver_Other;
     }
 }
 static DeviceType fromVulkan(const VkPhysicalDeviceType type)

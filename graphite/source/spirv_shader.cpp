@@ -173,7 +173,7 @@ Reflection Reflection_Create(TKit::Span<const SpirvData> spirv)
     for (const SpirvData &spv : spirv)
     {
         SpvReflectShaderModule &module = refl.Modules.Append();
-        TKIT_ASSERT_RETURNS(spvReflectCreateShaderModule(spv.Size, spv.Code, &module), SPV_REFLECT_RESULT_SUCCESS);
+        TKIT_ENSURE_RETURNS(spvReflectCreateShaderModule(spv.Size, spv.Code, &module), SPV_REFLECT_RESULT_SUCCESS);
         const u32 setCount = module.descriptor_set_count;
         for (u32 i = 0; i < setCount; ++i)
         {
@@ -270,10 +270,11 @@ Reflection Reflection_Create(TKit::Span<const SpirvData> spirv)
             const SpvReflectEntryPoint &ep = module.entry_points[0];
             for (u32 i = 0; i < ep.input_variable_count; ++i)
             {
-                VertexAttributeReflectionInfo &info = refl.VertexAttributes.Append();
                 const SpvReflectInterfaceVariable *var = ep.input_variables[i];
                 if (var->built_in != -1)
                     continue;
+
+                VertexAttributeReflectionInfo &info = refl.VertexAttributes.Append();
                 info.Format = fromReflect(var->format);
                 info.Location = var->location;
             }
