@@ -233,6 +233,19 @@ usz Image_ComputeSize(const Image img)
     return s_Images->At(Handle_GetId(img)).Image.ComputeSize();
 }
 
+u32v2 Image_GetDimensions(const Image img)
+{
+    GRAPH_CHECK_HANDLE(img, Handle_Image);
+    const VKit::DeviceImage::Info &info = s_Images->At(Handle_GetId(img)).Image.GetInfo();
+    return {info.Width, info.Height};
+}
+u32 Image_GetDepth(const Image img)
+{
+    GRAPH_CHECK_HANDLE(img, Handle_Image);
+    const VKit::DeviceImage::Info &info = s_Images->At(Handle_GetId(img)).Image.GetInfo();
+    return info.Depth;
+}
+
 ImageView Image_AddView(const Image img, const ImageViewSpecs &specs)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);

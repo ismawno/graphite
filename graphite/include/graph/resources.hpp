@@ -115,6 +115,17 @@ void Image_DestroyViews(Image img);
 
 usz Image_ComputeSize(Image img);
 
+u32v2 Image_GetDimensions(Image img);
+inline u32 Image_GetWidth(const Image img)
+{
+    return Image_GetDimensions(img)[0];
+}
+inline u32 Image_GetHeight(const Image img)
+{
+    return Image_GetDimensions(img)[1];
+}
+u32 Image_GetDepth(Image img);
+
 ImageView Image_AddView(Image img, const ImageViewSpecs &specs = {});
 ImageView Image_GetView(Image img, u32 idx = 0);
 
