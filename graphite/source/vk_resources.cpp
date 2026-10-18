@@ -292,6 +292,8 @@ static ImageLayout fromVulkan(const VkImageLayout layout)
         return ImageLayout_DepthStencilReadOnly;
     case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
         return ImageLayout_ShaderReadOnly;
+    case VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL:
+        return ImageLayout_ReadOnly;
     case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:
         return ImageLayout_TransferSrc;
     case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:

@@ -712,6 +712,8 @@ VkImageLayout ToVulkan(const ImageLayout layout)
         return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
     case ImageLayout_ShaderReadOnly:
         return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    case ImageLayout_ReadOnly:
+        return VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
     case ImageLayout_TransferSrc:
         return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
     case ImageLayout_TransferDst:

@@ -347,6 +347,7 @@ enum ImageLayout : u8
     ImageLayout_DepthStencilAttachment,
     ImageLayout_DepthStencilReadOnly,
     ImageLayout_ShaderReadOnly,
+    ImageLayout_ReadOnly,
     ImageLayout_TransferSrc,
     ImageLayout_TransferDst,
     ImageLayout_Present,
