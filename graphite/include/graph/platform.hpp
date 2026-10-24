@@ -23,7 +23,7 @@ struct WindowSpecs
     const char *Title = "Graphite window";
     i32v2 Position{TKIT_I32_MAX}; // i32 max means let it be decided automatically
     u32v2 Dimensions{800, 600};
-    WindowFlags Flags = WindowFlag_Resizable | WindowFlag_Visible | WindowFlag_Decorated | WindowFlag_Focused;
+    WindowFlags Flags = 0;
     void *UserData = nullptr;
 };
 

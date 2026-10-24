@@ -856,15 +856,18 @@ void SetClipboard(const char *text)
 
 Window Window_Create(const WindowSpecs &specs)
 {
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, specs.Flags & WindowFlag_Resizable);
-    glfwWindowHint(GLFW_VISIBLE, specs.Flags & WindowFlag_Visible);
-    glfwWindowHint(GLFW_DECORATED, specs.Flags & WindowFlag_Decorated);
-    glfwWindowHint(GLFW_FOCUSED, specs.Flags & WindowFlag_Focused);
-    glfwWindowHint(GLFW_FLOATING, specs.Flags & WindowFlag_Floating);
+    if (specs.Flags & WindowFlag_NoClientApi)
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, bool(specs.Flags & WindowFlag_ScaleToMonitor));
+    glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, bool(specs.Flags & WindowFlag_ScaleFramebuffer));
+    glfwWindowHint(GLFW_RESIZABLE, !(specs.Flags & WindowFlag_NoResize));
+    glfwWindowHint(GLFW_VISIBLE, !(specs.Flags & WindowFlag_Invisible));
+    glfwWindowHint(GLFW_DECORATED, !(specs.Flags & WindowFlag_NoDecoration));
+    glfwWindowHint(GLFW_FOCUSED, !(specs.Flags & WindowFlag_NotFocused));
+    glfwWindowHint(GLFW_FLOATING, bool(specs.Flags & WindowFlag_Floating));
     // glfwWindowHint(GLFW_ICONIFIED, specs.Flags & WindowFlag_Iconified);
 #ifdef GRAPH_GLFW_FOCUS_ON_SHOW
-    glfwWindowHint(GLFW_FOCUS_ON_SHOW, specs.Flags & WindowFlag_FocusOnShow);
+    glfwWindowHint(GLFW_FOCUS_ON_SHOW, bool(specs.Flags & WindowFlag_FocusOnShow));
 #endif
 
     TKit::TierAllocator *tier = TKit::GetTier();
@@ -1049,14 +1052,14 @@ WindowFlags Window_GetFlags(const Window win)
     GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
 
     WindowFlags flags = 0;
-    if (glfwGetWindowAttrib(handle, GLFW_RESIZABLE))
-        flags |= WindowFlag_Resizable;
-    if (glfwGetWindowAttrib(handle, GLFW_VISIBLE))
-        flags |= WindowFlag_Visible;
-    if (glfwGetWindowAttrib(handle, GLFW_DECORATED))
-        flags |= WindowFlag_Decorated;
-    if (glfwGetWindowAttrib(handle, GLFW_FOCUSED))
-        flags |= WindowFlag_Focused;
+    if (glfwGetWindowAttrib(handle, GLFW_RESIZABLE) == 0)
+        flags |= WindowFlag_NoResize;
+    if (glfwGetWindowAttrib(handle, GLFW_VISIBLE) == 0)
+        flags |= WindowFlag_Invisible;
+    if (glfwGetWindowAttrib(handle, GLFW_DECORATED) == 0)
+        flags |= WindowFlag_NoDecoration;
+    if (glfwGetWindowAttrib(handle, GLFW_FOCUSED) == 0)
+        flags |= WindowFlag_NotFocused;
     if (glfwGetWindowAttrib(handle, GLFW_FLOATING))
         flags |= WindowFlag_Floating;
     if (glfwGetWindowAttrib(handle, GLFW_ICONIFIED))
@@ -1107,8 +1110,8 @@ void Window_SetFlags(const Window win, const WindowFlags flags)
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
 
-    glfwSetWindowAttrib(handle, GLFW_RESIZABLE, bool(flags & WindowFlag_Resizable));
-    glfwSetWindowAttrib(handle, GLFW_DECORATED, bool(flags & WindowFlag_Decorated));
+    glfwSetWindowAttrib(handle, GLFW_RESIZABLE, !(flags & WindowFlag_NoResize));
+    glfwSetWindowAttrib(handle, GLFW_DECORATED, !(flags & WindowFlag_NoDecoration));
     glfwSetWindowAttrib(handle, GLFW_FLOATING, bool(flags & WindowFlag_Floating));
     glfwSetWindowAttrib(handle, GLFW_FOCUS_ON_SHOW, bool(flags & WindowFlag_FocusOnShow));
 }
@@ -1118,9 +1121,9 @@ void Window_AddFlags(const Window win, const WindowFlags flags)
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
 
-    if (flags & WindowFlag_Resizable)
+    if (!(flags & WindowFlag_NoResize))
         glfwSetWindowAttrib(handle, GLFW_RESIZABLE, GLFW_TRUE);
-    if (flags & WindowFlag_Decorated)
+    if (!(flags & WindowFlag_NoDecoration))
         glfwSetWindowAttrib(handle, GLFW_DECORATED, GLFW_TRUE);
     if (flags & WindowFlag_Floating)
         glfwSetWindowAttrib(handle, GLFW_FLOATING, GLFW_TRUE);
@@ -1133,9 +1136,9 @@ void Window_RemoveFlags(const Window win, const WindowFlags flags)
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
 
-    if (flags & WindowFlag_Resizable)
+    if (!(flags & WindowFlag_NoResize))
         glfwSetWindowAttrib(handle, GLFW_RESIZABLE, GLFW_FALSE);
-    if (flags & WindowFlag_Decorated)
+    if ((flags & WindowFlag_NoDecoration))
         glfwSetWindowAttrib(handle, GLFW_DECORATED, GLFW_FALSE);
     if (flags & WindowFlag_Floating)
         glfwSetWindowAttrib(handle, GLFW_FLOATING, GLFW_FALSE);

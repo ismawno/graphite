@@ -160,17 +160,19 @@ enum Platform : u8
 };
 #endif
 
-using WindowFlags = u8;
+using WindowFlags = u16;
 enum WindowFlagBit : WindowFlags
 {
-    WindowFlag_Resizable = 1U << 0,
-    WindowFlag_Visible = 1U << 1,
-    WindowFlag_Decorated = 1U << 2,
-    WindowFlag_Focused = 1U << 3,
+    WindowFlag_NoResize = 1U << 0,
+    WindowFlag_Invisible = 1U << 1,
+    WindowFlag_NoDecoration = 1U << 2,
+    WindowFlag_NotFocused = 1U << 3,
     WindowFlag_Floating = 1U << 4,
     WindowFlag_FocusOnShow = 1U << 5,
     WindowFlag_Iconified = 1U << 6,
     WindowFlag_NoClientApi = 1U << 7,
+    WindowFlag_ScaleToMonitor = 1U << 8,
+    WindowFlag_ScaleFramebuffer = 1U << 9,
 };
 
 enum MouseCursor : u8
