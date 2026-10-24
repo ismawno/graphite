@@ -51,7 +51,7 @@ const char *Window_GetTitle(Window win);
 i32v2 Window_GetPosition(Window win);
 u32v2 Window_GetScreenDimensions(Window win);
 u32v2 Window_GetPixelDimensions(Window win);
-f32v2 Window_GetCursorPosition(Window win);
+f32v2 Window_GetCursorScreenPosition(Window win);
 f32v2 Window_GetContentScale(Window win);
 f32 Window_GetAspect(Window win);
 f32 Window_GetOpacity(Window win);
@@ -67,7 +67,7 @@ void Window_RemoveFlags(Window win, WindowFlags flags);
 void Window_SetOpacity(Window win, f32 opacity);
 
 void Window_SetMouseCursor(Window win, MouseCursor cursor);
-void Window_SetCursorPosition(Window win, const f32v2 &pos);
+void Window_SetCursorScreenPosition(Window win, const f32v2 &pos);
 CursorMode Window_GetCursorMode(Window win);
 void Window_SetCursorMode(Window win, CursorMode mode);
 

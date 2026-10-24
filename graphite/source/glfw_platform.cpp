@@ -1013,7 +1013,7 @@ u32v2 Window_GetPixelDimensions(const Window win)
     return u32v2{u32(w), u32(h)};
 }
 
-f32v2 Window_GetCursorPosition(const Window win)
+f32v2 Window_GetCursorScreenPosition(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     f64 x, y;
@@ -1162,7 +1162,7 @@ void Window_SetMouseCursor(const Window win, const MouseCursor cursor)
     Glfw_Window *data = s_Windows->At(Handle_GetId(win));
     glfwSetCursor(data->Window, data->Cursors[cursor]);
 }
-void Window_SetCursorPosition(const Window win, const f32v2 &pos)
+void Window_SetCursorScreenPosition(const Window win, const f32v2 &pos)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     glfwSetCursorPos(s_Windows->At(Handle_GetId(win))->Window, f64(pos[0]), f64(pos[1]));
