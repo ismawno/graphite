@@ -149,5 +149,6 @@ enum Mouse : u8
 };
 
 const char *ToString(Key key);
+const char *ToString(Mouse button);
 const char *Key_GetName(Key key, i32 scancode);
 } // namespace Graph
