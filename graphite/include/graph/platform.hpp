@@ -52,6 +52,7 @@ i32v2 Window_GetPosition(Window win);
 u32v2 Window_GetScreenDimensions(Window win);
 u32v2 Window_GetPixelDimensions(Window win);
 f32v2 Window_GetCursorPosition(Window win);
+f32v2 Window_GetContentScale(Window win);
 f32 Window_GetAspect(Window win);
 f32 Window_GetOpacity(Window win);
 WindowFlags Window_GetFlags(Window win);
@@ -119,34 +120,36 @@ enum KeyModFlagBit : u8
     KeyModFlag_Super = 1U << 3,
 };
 
-using WindowPosCallback = void (*)(Window win, i32 x, i32 y);
-using WindowSizeCallback = void (*)(Window win, u32 width, u32 height);
-using FramebufferSizeCallback = void (*)(Window win, u32 width, u32 height);
+using WindowPosCallback = void (*)(Window win, i32v2 pos);
+using WindowSizeCallback = void (*)(Window win, u32v2 size);
+using WindowFramebufferSizeCallback = void (*)(Window win, u32v2 size);
 using WindowFocusCallback = void (*)(Window win, bool focused);
 using WindowCloseCallback = void (*)(Window win);
 using WindowIconifyCallback = void (*)(Window win, bool iconified);
 
-using KeyCallback = void (*)(Window win, Key key, i32 scancode, InputAction action, KeyModFlags mods);
-using CharCallback = void (*)(Window win, u32 codepoint);
+using WindowKeyCallback = void (*)(Window win, Key key, i32 scancode, InputAction action, KeyModFlags mods);
+using WindowCharCallback = void (*)(Window win, u32 codepoint);
 
-using CursorPosCallback = void (*)(Window win, f64 x, f64 y);
-using CursorEnterCallback = void (*)(Window win, bool entered);
-using MouseButtonCallback = void (*)(Window win, Mouse button, InputAction action, KeyModFlags mods);
-using ScrollCallback = void (*)(Window win, f64 xoffset, f64 yoffset);
+using WindowCursorPosCallback = void (*)(Window win, f32v2 pos);
+using WindowCursorEnterCallback = void (*)(Window win, bool entered);
+using WindowMouseButtonCallback = void (*)(Window win, Mouse button, InputAction action, KeyModFlags mods);
+using WindowScrollCallback = void (*)(Window win, f32v2 offset);
+using WindowContentScaleCallback = void (*)(Window win, f32v2 scale);
 
 WindowPosCallback Window_Callback_Position(Window win, WindowPosCallback callback);
 WindowSizeCallback Window_Callback_Size(Window win, WindowSizeCallback callback);
-FramebufferSizeCallback Window_Callback_FramebufferSize(Window win, FramebufferSizeCallback callback);
+WindowFramebufferSizeCallback Window_Callback_FramebufferSize(Window win, WindowFramebufferSizeCallback callback);
 WindowFocusCallback Window_Callback_Focus(Window win, WindowFocusCallback callback);
 WindowCloseCallback Window_Callback_Close(Window win, WindowCloseCallback callback);
 WindowIconifyCallback Window_Callback_Iconify(Window win, WindowIconifyCallback callback);
 
-KeyCallback Window_Callback_Key(Window win, KeyCallback callback);
-CharCallback Window_Callback_Char(Window win, CharCallback callback);
+WindowKeyCallback Window_Callback_Key(Window win, WindowKeyCallback callback);
+WindowCharCallback Window_Callback_Char(Window win, WindowCharCallback callback);
 
-CursorPosCallback Window_Callback_CursorPos(Window win, CursorPosCallback callback);
-CursorEnterCallback Window_Callback_CursorEnter(Window win, CursorEnterCallback callback);
-MouseButtonCallback Window_Callback_MouseButton(Window win, MouseButtonCallback callback);
-ScrollCallback Window_Callback_Scroll(Window win, ScrollCallback callback);
+WindowCursorPosCallback Window_Callback_CursorPos(Window win, WindowCursorPosCallback callback);
+WindowCursorEnterCallback Window_Callback_CursorEnter(Window win, WindowCursorEnterCallback callback);
+WindowMouseButtonCallback Window_Callback_MouseButton(Window win, WindowMouseButtonCallback callback);
+WindowScrollCallback Window_Callback_Scroll(Window win, WindowScrollCallback callback);
+WindowContentScaleCallback Window_Callback_ContentScale(Window win, WindowContentScaleCallback callback);
 
 } // namespace Graph

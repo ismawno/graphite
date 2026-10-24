@@ -23,16 +23,17 @@ struct Glfw_Window
 
     WindowPosCallback PositionCallback = nullptr;
     WindowSizeCallback SizeCallback = nullptr;
-    FramebufferSizeCallback FramebufferSizeCallback = nullptr;
+    WindowFramebufferSizeCallback FramebufferSizeCallback = nullptr;
     WindowFocusCallback FocusCallback = nullptr;
     WindowCloseCallback CloseCallback = nullptr;
     WindowIconifyCallback IconifyCallback = nullptr;
-    KeyCallback KeyCallback = nullptr;
-    CharCallback CharCallback = nullptr;
-    CursorPosCallback CursorPosCallback = nullptr;
-    CursorEnterCallback CursorEnterCallback = nullptr;
-    MouseButtonCallback MouseButtonCallback = nullptr;
-    ScrollCallback ScrollCallback = nullptr;
+    WindowKeyCallback KeyCallback = nullptr;
+    WindowCharCallback CharCallback = nullptr;
+    WindowCursorPosCallback CursorPosCallback = nullptr;
+    WindowCursorEnterCallback CursorEnterCallback = nullptr;
+    WindowMouseButtonCallback MouseButtonCallback = nullptr;
+    WindowScrollCallback ScrollCallback = nullptr;
+    WindowContentScaleCallback ContentScaleCallback = nullptr;
 };
 
 struct Glfw_Monitor
@@ -713,17 +714,17 @@ static KeyModFlags toKeyMods(const i32 mods)
 
 static void callback_WindowPos(GLFWwindow *w, const i32 x, const i32 y)
 {
-    FORWARD_CALLBACK(PositionCallback, data->Handle, x, y);
+    FORWARD_CALLBACK(PositionCallback, data->Handle, i32v2{x, y});
 }
 
 static void callback_WindowSize(GLFWwindow *w, const i32 width, const i32 height)
 {
-    FORWARD_CALLBACK(SizeCallback, data->Handle, u32(width), u32(height));
+    FORWARD_CALLBACK(SizeCallback, data->Handle, u32v2{width, height});
 }
 
 static void callback_FramebufferSize(GLFWwindow *w, const i32 width, const i32 height)
 {
-    FORWARD_CALLBACK(FramebufferSizeCallback, data->Handle, u32(width), u32(height));
+    FORWARD_CALLBACK(FramebufferSizeCallback, data->Handle, u32v2{width, height});
 }
 
 static void callback_WindowFocus(GLFWwindow *w, const i32 focused)
@@ -753,7 +754,7 @@ static void callback_Char(GLFWwindow *w, const u32 codepoint)
 
 static void callback_CursorPos(GLFWwindow *w, const f64 x, const f64 y)
 {
-    FORWARD_CALLBACK(CursorPosCallback, data->Handle, x, y);
+    FORWARD_CALLBACK(CursorPosCallback, data->Handle, f32v2{x, y});
 }
 
 static void callback_CursorEnter(GLFWwindow *w, const i32 entered)
@@ -768,7 +769,11 @@ static void callback_MouseButton(GLFWwindow *w, const i32 button, const i32 acti
 
 static void callback_Scroll(GLFWwindow *w, const f64 xoffset, const f64 yoffset)
 {
-    FORWARD_CALLBACK(ScrollCallback, data->Handle, xoffset, yoffset);
+    FORWARD_CALLBACK(ScrollCallback, data->Handle, f32v2{xoffset, yoffset});
+}
+static void callback_WindowContentScale(GLFWwindow *w, const f32 width, const f32 height)
+{
+    FORWARD_CALLBACK(ContentScaleCallback, data->Handle, f32v2{width, height});
 }
 
 static Monitor monitor_Add(GLFWmonitor *m)
@@ -1011,6 +1016,14 @@ f32v2 Window_GetCursorPosition(const Window win)
     f64 x, y;
     glfwGetCursorPos(s_Windows->At(Handle_GetId(win))->Window, &x, &y);
     return f32v2{f32(x), f32(y)};
+}
+
+f32v2 Window_GetContentScale(const Window win)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    f32v2 sc;
+    glfwGetWindowContentScale(s_Windows->At(Handle_GetId(win))->Window, &sc[0], &sc[1]);
+    return sc;
 }
 
 f32 Window_GetAspect(const Window win)
@@ -1343,9 +1356,10 @@ WindowSizeCallback Window_Callback_Size(const Window win, const WindowSizeCallba
     SET_CALLBACK(WindowSizeCallback, SizeCallback, WindowSize);
 }
 
-FramebufferSizeCallback Window_Callback_FramebufferSize(const Window win, const FramebufferSizeCallback callback)
+WindowFramebufferSizeCallback Window_Callback_FramebufferSize(const Window win,
+                                                              const WindowFramebufferSizeCallback callback)
 {
-    SET_CALLBACK(FramebufferSizeCallback, FramebufferSizeCallback, FramebufferSize);
+    SET_CALLBACK(WindowFramebufferSizeCallback, FramebufferSizeCallback, FramebufferSize);
 }
 
 WindowFocusCallback Window_Callback_Focus(const Window win, const WindowFocusCallback callback)
@@ -1363,34 +1377,39 @@ WindowIconifyCallback Window_Callback_Iconify(const Window win, const WindowIcon
     SET_CALLBACK(WindowIconifyCallback, IconifyCallback, WindowIconify);
 }
 
-KeyCallback Window_Callback_Key(const Window win, const KeyCallback callback)
+WindowKeyCallback Window_Callback_Key(const Window win, const WindowKeyCallback callback)
 {
-    SET_CALLBACK(KeyCallback, KeyCallback, Key);
+    SET_CALLBACK(WindowKeyCallback, KeyCallback, Key);
 }
 
-CharCallback Window_Callback_Char(const Window win, const CharCallback callback)
+WindowCharCallback Window_Callback_Char(const Window win, const WindowCharCallback callback)
 {
-    SET_CALLBACK(CharCallback, CharCallback, Char);
+    SET_CALLBACK(WindowCharCallback, CharCallback, Char);
 }
 
-CursorPosCallback Window_Callback_CursorPos(const Window win, const CursorPosCallback callback)
+WindowCursorPosCallback Window_Callback_CursorPos(const Window win, const WindowCursorPosCallback callback)
 {
-    SET_CALLBACK(CursorPosCallback, CursorPosCallback, CursorPos);
+    SET_CALLBACK(WindowCursorPosCallback, CursorPosCallback, CursorPos);
 }
 
-CursorEnterCallback Window_Callback_CursorEnter(const Window win, const CursorEnterCallback callback)
+WindowCursorEnterCallback Window_Callback_CursorEnter(const Window win, const WindowCursorEnterCallback callback)
 {
-    SET_CALLBACK(CursorEnterCallback, CursorEnterCallback, CursorEnter);
+    SET_CALLBACK(WindowCursorEnterCallback, CursorEnterCallback, CursorEnter);
 }
 
-MouseButtonCallback Window_Callback_MouseButton(const Window win, const MouseButtonCallback callback)
+WindowMouseButtonCallback Window_Callback_MouseButton(const Window win, const WindowMouseButtonCallback callback)
 {
-    SET_CALLBACK(MouseButtonCallback, MouseButtonCallback, MouseButton);
+    SET_CALLBACK(WindowMouseButtonCallback, MouseButtonCallback, MouseButton);
 }
 
-ScrollCallback Window_Callback_Scroll(const Window win, const ScrollCallback callback)
+WindowScrollCallback Window_Callback_Scroll(const Window win, const WindowScrollCallback callback)
 {
-    SET_CALLBACK(ScrollCallback, ScrollCallback, Scroll);
+    SET_CALLBACK(WindowScrollCallback, ScrollCallback, Scroll);
+}
+
+WindowContentScaleCallback Window_Callback_ContentScale(const Window win, const WindowContentScaleCallback callback)
+{
+    SET_CALLBACK(WindowContentScaleCallback, ContentScaleCallback, WindowContentScale);
 }
 
 GLFWwindow *GetWindow(const Window win)
@@ -1416,7 +1435,7 @@ static Platform fromGlfw(const i32 plat)
         return Platform_Wayland;
     case GLFW_PLATFORM_X11:
         return Platform_X11;
-    default: // GLFW_PLATFORM_NULL, or 0 if GLFW isn't initialized
+    default:
         return Platform_Any;
     }
 }
