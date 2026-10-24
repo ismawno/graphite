@@ -87,6 +87,22 @@ static u32 toGlfw(const Platform plat)
     }
     return GLFW_ANY_PLATFORM;
 }
+static Platform fromGlfw(const i32 plat)
+{
+    switch (plat)
+    {
+    case GLFW_PLATFORM_WIN32:
+        return Platform_Win32;
+    case GLFW_PLATFORM_COCOA:
+        return Platform_Cocoa;
+    case GLFW_PLATFORM_WAYLAND:
+        return Platform_Wayland;
+    case GLFW_PLATFORM_X11:
+        return Platform_X11;
+    default:
+        return Platform_Any;
+    }
+}
 
 static u32 toGlfw(const MouseCursor cursor)
 {
@@ -886,7 +902,7 @@ Window Window_Create(const WindowSpecs &specs)
     for (u32 i = 1; i < MouseCursor_Count; ++i)
         win->Cursors[i] = glfwCreateStandardCursor(toGlfw(MouseCursor(i)));
 
-    if (specs.Position != i32v2{TKIT_I32_MAX})
+    if (fromGlfw(glfwGetPlatform()) != Platform_Wayland && specs.Position != i32v2{TKIT_I32_MAX})
     {
         TKIT_ASSERT(specs.Position[0] < TKIT_I32_MAX,
                     "[GRAPH][PLATFORM] If component y of the window position is not "
@@ -1423,23 +1439,6 @@ VkSurfaceKHR GetSurface(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     return s_Windows->At(Handle_GetId(win))->Surface;
-}
-
-static Platform fromGlfw(const i32 plat)
-{
-    switch (plat)
-    {
-    case GLFW_PLATFORM_WIN32:
-        return Platform_Win32;
-    case GLFW_PLATFORM_COCOA:
-        return Platform_Cocoa;
-    case GLFW_PLATFORM_WAYLAND:
-        return Platform_Wayland;
-    case GLFW_PLATFORM_X11:
-        return Platform_X11;
-    default:
-        return Platform_Any;
-    }
 }
 
 PlatformBackendInfo GetPlatformBackendInfo()
