@@ -875,7 +875,7 @@ Window Window_Create(const WindowSpecs &specs)
     const Id id = s_Windows->Insert(tier->Create<Glfw_Window>());
     Glfw_Window *win = s_Windows->At(id);
 
-    win->Window = glfwCreateWindow(i32(specs.Dimensions[0]), i32(specs.Dimensions[1]), specs.Title, nullptr, nullptr);
+    win->Window = glfwCreateWindow(i32(specs.ScreenSize[0]), i32(specs.ScreenSize[1]), specs.Title, nullptr, nullptr);
     TKIT_ASSERT(win->Window, "[GRAPH][WINDOW] Failed to create window");
 
 #ifdef GRAPH_RENDER_BACKEND_VULKAN
@@ -997,7 +997,7 @@ i32v2 Window_GetPosition(const Window win)
     return i32v2{x, y};
 }
 
-u32v2 Window_GetScreenDimensions(const Window win)
+u32v2 Window_GetScreenSize(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 w, h;
@@ -1005,7 +1005,7 @@ u32v2 Window_GetScreenDimensions(const Window win)
     return u32v2{u32(w), u32(h)};
 }
 
-u32v2 Window_GetPixelDimensions(const Window win)
+u32v2 Window_GetPixelSize(const Window win)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 w, h;
@@ -1031,8 +1031,8 @@ f32v2 Window_GetContentScale(const Window win)
 
 f32 Window_GetAspect(const Window win)
 {
-    const u32v2 pdim = Window_GetPixelDimensions(win);
-    return f32(pdim[0]) / f32(pdim[1]);
+    const u32v2 psize = Window_GetPixelSize(win);
+    return f32(psize[0]) / f32(psize[1]);
 }
 
 f32 Window_GetOpacity(const Window win)
@@ -1081,11 +1081,10 @@ void Window_SetPosition(const Window win, const i32v2 &pos)
     glfwSetWindowPos(s_Windows->At(Handle_GetId(win))->Window, pos[0], pos[1]);
 }
 
-void Window_SetScreenDimensions(const Window win, const u32v2 &dim)
+void Window_SetScreenSize(const Window win, const u32v2 &size)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
-    TKIT_ASSERT(dim[0] != 0 && dim[1] != 0,
-                "[GRAPH][WINDOW] Cannot have window dimensions of zero! Passed values: {}, {}", dim[0], dim[1]);
+    TKIT_ASSERT(size[0] != 0 && size[1] != 0, "[GRAPH][WINDOW] Cannot have window size of zero! Passed size: {}", size);
     GLFWwindow *gwin = s_Windows->At(Handle_GetId(win))->Window;
 #if defined(TKIT_OS_APPLE) && !defined(GRAPH_GLFW_OSX_WINDOW_POS_FIX)
     i32 x;
@@ -1094,9 +1093,9 @@ void Window_SetScreenDimensions(const Window win, const u32v2 &dim)
     i32 h;
     glfwGetWindowPos(gwin, &x, &y);
     glfwGetWindowSize(gwin, &w, &h);
-    glfwSetWindowPos(gwin, x, y - h + i32(dim[1]));
+    glfwSetWindowPos(gwin, x, y - h + i32(size[1]));
 #endif
-    glfwSetWindowSize(gwin, i32(dim[0]), i32(dim[1]));
+    glfwSetWindowSize(gwin, i32(size[0]), i32(size[1]));
 }
 
 void Window_SetAspect(const Window win, const u32 numer, const u32 denom)
@@ -1302,7 +1301,7 @@ VideoMode Monitor_GetVideoMode(const Monitor monitor)
     TKIT_ASSERT(mode, "[GRAPH][PLATFORM] Failed to get video mode");
 
     VideoMode vmode;
-    vmode.Dimensions = {u32(mode->width), u32(mode->height)};
+    vmode.Size = {u32(mode->width), u32(mode->height)};
     vmode.BitDepths = {u32(mode->redBits), u32(mode->greenBits), u32(mode->blueBits)};
     vmode.RefreshRate = u32(mode->refreshRate);
 
@@ -1317,7 +1316,7 @@ MonitorArea Monitor_GetWorkArea(const Monitor monitor)
     return {{x, y}, {u32(w), u32(h)}};
 #else
     const VideoMode vmode = Monitor_GetVideoMode(monitor);
-    return {Monitor_GetPosition(monitor), vmode.Dimensions};
+    return {Monitor_GetPosition(monitor), vmode.Size};
 #endif
 }
 

@@ -70,10 +70,11 @@ void Swapchain_Terminate()
 
 Swapchain Swapchain_Create(const SwapchainSpecs &specs)
 {
-    const u32v2 extent = Window_GetPixelDimensions(specs.Window);
+    const u32v2 extent = Window_GetPixelSize(specs.Window);
     TKIT_ASSERT(extent[0] != 0 && extent[1] != 0,
-                "[GRAPH][SWAP-CHAIN] Pixel dimensions of window are zero, meaning the window is likely minimized. Wait "
-                "until that is not the case before creating a swap chain");
+                "[GRAPH][SWAP-CHAIN] Pixel size of window is zero, meaning the window is likely minimized. Wait "
+                "until that is not the case before creating a swap chain. Passed size: {}",
+                extent);
 
     const auto &instance = GetInstance();
     const auto &device = GetDevice();

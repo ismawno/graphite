@@ -227,13 +227,13 @@ void Image_DestroyViews(const Image img)
             s_Views->Remove(id);
 }
 
-usz Image_ComputeSize(const Image img)
+usz Image_ComputeBytes(const Image img)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
     return s_Images->At(Handle_GetId(img)).Image.ComputeSize();
 }
 
-u32v2 Image_GetDimensions(const Image img)
+u32v2 Image_GetSize(const Image img)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
     const VKit::DeviceImage::Info &info = s_Images->At(Handle_GetId(img)).Image.GetInfo();

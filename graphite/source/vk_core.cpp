@@ -30,7 +30,7 @@ static VkSurfaceKHR createDummySurface()
 {
     TKIT_ASSERT(s_DummyWindow == NullHandle, "[GRAPH][CORE] Can only create a single dummy surface at the same time");
     s_DummyWindow = Window_Create({.Title = "Eduardo",
-                                   .Dimensions = 120,
+                                   .ScreenSize = 120,
                                    .Flags = WindowFlag_Invisible | WindowFlag_NoDecoration | WindowFlag_NotFocused |
                                             WindowFlag_NoResize | WindowFlag_NoClientApi});
 

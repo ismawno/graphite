@@ -13,7 +13,7 @@ namespace Graph
 {
 struct VideoMode
 {
-    u32v2 Dimensions;
+    u32v2 Size;
     u32v3 BitDepths;
     u32 RefreshRate;
 };
@@ -22,7 +22,7 @@ struct WindowSpecs
 {
     const char *Title = "Graphite window";
     i32v2 Position{TKIT_I32_MAX}; // i32 max means let it be decided automatically
-    u32v2 Dimensions{800, 600};
+    u32v2 ScreenSize{800, 600};
     WindowFlags Flags = 0;
     void *UserData = nullptr;
 };
@@ -49,8 +49,8 @@ void Window_Focus(Window win);
 const char *Window_GetTitle(Window win);
 
 i32v2 Window_GetPosition(Window win);
-u32v2 Window_GetScreenDimensions(Window win);
-u32v2 Window_GetPixelDimensions(Window win);
+u32v2 Window_GetScreenSize(Window win);
+u32v2 Window_GetPixelSize(Window win);
 f32v2 Window_GetCursorScreenPosition(Window win);
 f32v2 Window_GetContentScale(Window win);
 f32 Window_GetAspect(Window win);
@@ -59,7 +59,7 @@ WindowFlags Window_GetFlags(Window win);
 
 void Window_SetTitle(Window win, const char *title);
 void Window_SetPosition(Window win, const i32v2 &pos);
-void Window_SetScreenDimensions(Window win, const u32v2 &dim);
+void Window_SetScreenSize(Window win, const u32v2 &size);
 void Window_SetAspect(Window win, u32 numer, u32 denom);
 void Window_SetFlags(Window win, WindowFlags flags);
 void Window_AddFlags(Window win, WindowFlags flags);
@@ -85,7 +85,7 @@ bool Window_IsHandleValid(Window win);
 struct MonitorArea
 {
     i32v2 Position;
-    u32v2 Dimensions;
+    u32v2 Size;
 };
 
 Monitor Monitor_GetPrimary();
