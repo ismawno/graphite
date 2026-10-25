@@ -776,6 +776,7 @@ struct DeviceInfo
 
     DeviceType Type;
     DriverId Driver;
+    SampleCount MaxSampleCount;
 
     u32 VendorId;
     u32 DeviceId;

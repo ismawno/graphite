@@ -1480,6 +1480,30 @@ static DeviceType fromVulkan(const VkPhysicalDeviceType type)
     }
 }
 
+static SampleCount fromVulkan(const VkSampleCountFlagBits samples)
+{
+    switch (samples)
+    {
+    case VK_SAMPLE_COUNT_1_BIT:
+        return SampleCount_1;
+    case VK_SAMPLE_COUNT_2_BIT:
+        return SampleCount_2;
+    case VK_SAMPLE_COUNT_4_BIT:
+        return SampleCount_4;
+    case VK_SAMPLE_COUNT_8_BIT:
+        return SampleCount_8;
+    case VK_SAMPLE_COUNT_16_BIT:
+        return SampleCount_16;
+    case VK_SAMPLE_COUNT_32_BIT:
+        return SampleCount_32;
+    case VK_SAMPLE_COUNT_64_BIT:
+        return SampleCount_64;
+    default:
+        TKIT_FATAL("[GRAPH] Unknown Vulkan sample count: {}", u32(samples));
+        return SampleCount_1;
+    }
+}
+
 RenderBackendInfo GetRenderBackendInfo()
 {
     const VKit::PhysicalDevice &physical = GetPhysical();
@@ -1511,6 +1535,21 @@ RenderBackendInfo GetRenderBackendInfo()
     std::strncpy(dev.Name, p.deviceName, sizeof(dev.Name) - 1);
     std::strncpy(dev.DriverName, driver.driverName, sizeof(dev.DriverName) - 1);
     std::strncpy(dev.DriverInfo, driver.driverInfo, sizeof(dev.DriverInfo) - 1);
+
+    const VkSampleCountFlags counts = p.limits.framebufferColorSampleCounts & p.limits.framebufferDepthSampleCounts;
+    // add & props.limits.framebufferStencilSampleCounts if you use stencil
+
+    VkSampleCountFlagBits maxSamples = VK_SAMPLE_COUNT_1_BIT;
+    for (VkSampleCountFlagBits bit : {VK_SAMPLE_COUNT_64_BIT, VK_SAMPLE_COUNT_32_BIT, VK_SAMPLE_COUNT_16_BIT,
+                                      VK_SAMPLE_COUNT_8_BIT, VK_SAMPLE_COUNT_4_BIT, VK_SAMPLE_COUNT_2_BIT})
+    {
+        if (counts & bit)
+        {
+            maxSamples = bit;
+            break;
+        }
+    }
+    dev.MaxSampleCount = fromVulkan(maxSamples);
 
     dev.Type = fromVulkan(p.deviceType);
     dev.Driver = fromVulkan(driver.driverID);
