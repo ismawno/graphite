@@ -586,12 +586,13 @@ enum ImageFlagBit : ImageFlags
     ImageFlag_DepthAttachment = 1U << 4,
     ImageFlag_StencilAttachment = 1U << 5,
     ImageFlag_InputAttachment = 1U << 6,
-    ImageFlag_Sampled = 1U << 7,
-    ImageFlag_Storage = 1U << 8,
-    ImageFlag_ForceHostVisible = 1U << 9,
-    ImageFlag_Source = 1U << 10,
-    ImageFlag_Destination = 1U << 11,
-    ImageFlag_CubeCompatible = 1U << 12,
+    ImageFlag_TransientAttachment = 1U << 7,
+    ImageFlag_Sampled = 1U << 8,
+    ImageFlag_Storage = 1U << 9,
+    ImageFlag_ForceHostVisible = 1U << 10,
+    ImageFlag_Source = 1U << 11,
+    ImageFlag_Destination = 1U << 12,
+    ImageFlag_CubeCompatible = 1U << 13,
 };
 
 using PipelineStageFlags = u16;

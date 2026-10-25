@@ -1343,6 +1343,8 @@ VKit::DeviceImageFlags ToVulkanImageFlags(const ImageFlags flags)
         result |= VKit::DeviceImageFlag_StencilAttachment;
     if (flags & ImageFlag_InputAttachment)
         result |= VKit::DeviceImageFlag_InputAttachment;
+    if (flags & ImageFlag_TransientAttachment)
+        result |= VKit::DeviceImageFlag_TransientAttachment;
     if (flags & ImageFlag_Sampled)
         result |= VKit::DeviceImageFlag_Sampled;
     if (flags & ImageFlag_Storage)
