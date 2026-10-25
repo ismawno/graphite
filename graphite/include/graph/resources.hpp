@@ -159,7 +159,7 @@ struct SamplerSpecs
     BorderColor Border = BorderColor_IntOpaqueBlack;
 };
 
-Sampler Sampler_Create(const SamplerSpecs &specs, SamplerFlags flags = 0);
+Sampler Sampler_Create(const SamplerSpecs &specs = {}, SamplerFlags flags = 0);
 void Sampler_Destroy(Sampler smp);
 
 void Sampler_SetName(Sampler smp, const char *name);
