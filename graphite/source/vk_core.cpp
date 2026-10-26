@@ -1504,6 +1504,8 @@ static SampleCount fromVulkan(const VkSampleCountFlagBits samples)
     }
 }
 
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(4996)
 RenderBackendInfo GetRenderBackendInfo()
 {
     const VKit::PhysicalDevice &physical = GetPhysical();
@@ -1561,6 +1563,7 @@ RenderBackendInfo GetRenderBackendInfo()
     dev.DriverVersion = p.driverVersion;
     return info;
 }
+TKIT_COMPILER_WARNING_IGNORE_POP()
 const Specs &GetSpecs()
 {
     return s_Specs;
