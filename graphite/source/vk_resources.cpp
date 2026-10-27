@@ -64,18 +64,37 @@ usz Format_GetBytesPerPixel(const Format fmt)
 bool Format_IsSupported(const Format format, const ImageType type, const ImageFlags flags, const ImageTiling tiling)
 {
     VkImageUsageFlags usage = 0;
+    VkFormatFeatureFlags features = 0;
     if (flags & ImageFlag_Sampled)
+    {
         usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
+        features |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
+    }
     if (flags & ImageFlag_Storage)
+    {
         usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+        features |= VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT;
+    }
     if (flags & ImageFlag_ColorAttachment)
+    {
         usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    if (flags & ImageFlag_DepthAttachment)
+        features |= VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT;
+    }
+    if (flags & (ImageFlag_DepthAttachment | ImageFlag_StencilAttachment))
+    {
         usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-    if (flags & ImageFlag_StencilAttachment)
-        usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        features |= VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    }
     if (flags & ImageFlag_InputAttachment)
         usage |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+
+    VkFormatProperties fprops{};
+    GetInstanceTable()->GetPhysicalDeviceFormatProperties(GetPhysical(), ToVulkan(format), &fprops);
+    const VkFormatFeatureFlags available =
+        tiling == ImageTiling_Linear ? fprops.linearTilingFeatures : fprops.optimalTilingFeatures;
+
+    if ((available & features) != features)
+        return false;
 
     VkImageFormatProperties props{};
     const VkResult result = GetInstanceTable()->GetPhysicalDeviceImageFormatProperties(
