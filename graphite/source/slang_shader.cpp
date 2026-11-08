@@ -4,6 +4,7 @@
 #include "tkit/container/stack_array.hpp"
 #include "tkit/utils/storage.hpp"
 #include "tkit/container/hive.hpp"
+#include "tkit/utils/defer.hpp"
 #include <slang.h>
 #include <slang-com-ptr.h>
 
@@ -446,6 +447,8 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
     ComPtr<slang::IBlob> diagnostics = nullptr;
     Slang_Compilation compilation{};
 
+    TKIT_ERROR_DEFER_SCOPE();
+    TKIT_ERROR_DEFER(compilation_Destroy(compilation));
     for (const ShaderModule &munit : specs.Modules)
     {
         TKit::StackArray<ComPtr<slang::IComponentType>> components{};
@@ -459,11 +462,8 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
             module = session->loadModule(munit.Name, diagnostics.writeRef());
 
         if (!module)
-        {
-            compilation_Destroy(compilation);
             return Result::Error(TKit::TierString::Format("[GRAPH][SHADERS] Failed to load shader module '{}': {}",
                                                           munit.Name, fromSlang(diagnostics)));
-        }
 
         components.Append(module);
         TKIT_LOG_WARNING_IF(diagnostics,
@@ -477,12 +477,9 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
             result =
                 module->findAndCheckEntryPoint(ep.Name, toSlang(ep.Stage), epoint.writeRef(), diagnostics.writeRef());
             if (SLANG_FAILED(result))
-            {
-                compilation_Destroy(compilation);
                 return Result::Error(
                     TKit::TierString::Format("[GRAPH][SHADERS] Failed to check entry point '{}' from module '{}': {}",
                                              ep.Name, munit.Name, fromSlang(diagnostics)));
-            }
 
             TKIT_LOG_WARNING_IF(
                 diagnostics,
@@ -500,12 +497,9 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
         result = session->createCompositeComponentType(rawComponents.GetData(), rawComponents.GetSize(),
                                                        program.writeRef(), diagnostics.writeRef());
         if (SLANG_FAILED(result))
-        {
-            compilation_Destroy(compilation);
             return Result::Error(TKit::TierString::Format(
                 "[GRAPH][SHADERS] Failed to create composite component type for module '{}': {}", munit.Name,
                 fromSlang(diagnostics)));
-        }
 
         TKIT_LOG_WARNING_IF(
             diagnostics,
@@ -515,12 +509,9 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
         ComPtr<slang::IComponentType> linkedProgram;
         result = program->link(linkedProgram.writeRef(), diagnostics.writeRef());
         if (SLANG_FAILED(result))
-        {
-            compilation_Destroy(compilation);
             return Result::Error(
                 TKit::TierString::Format("[GRAPH][SHADERS] Failed to link final program for module '{}': {}",
                                          munit.Name, fromSlang(diagnostics)));
-        }
 
         TKIT_LOG_WARNING_IF(diagnostics,
                             "[GRAPH][SHADERS] Linked final program for module '{}' with the following diagnostics: {}",
@@ -545,12 +536,9 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
             result = linkedProgram->getEntryPointCode(i, 0, code.writeRef(), diagnostics.writeRef());
 
             if (SLANG_FAILED(result))
-            {
-                compilation_Destroy(compilation);
                 return Result::Error(TKit::TierString::Format(
                     "[GRAPH][SHADERS] Failed to retrieve final code from entry point '{}' and module '{}': {}", ep.Name,
                     munit.Name, fromSlang(diagnostics)));
-            }
 
             TKIT_LOG_WARNING_IF(diagnostics,
                                 "[GRAPH][SHADERS] Retrieved final code for entry point '{}' and module '{}' with the "
