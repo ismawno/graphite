@@ -113,7 +113,7 @@ inline Image Image_Create(const u32v2 &size, const ImageSpecs &specs, const Imag
 void Image_Destroy(Image img);
 void Image_DestroyViews(Image img);
 
-usz Image_ComputeBytes(Image img);
+usz Image_GetBytes(Image img);
 
 u32v2 Image_GetSize(Image img);
 inline u32 Image_GetWidth(const Image img)

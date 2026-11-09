@@ -246,7 +246,7 @@ void Image_DestroyViews(const Image img)
             s_Views->Remove(id);
 }
 
-usz Image_ComputeBytes(const Image img)
+usz Image_GetBytes(const Image img)
 {
     GRAPH_CHECK_HANDLE(img, Handle_Image);
     return s_Images->At(Handle_GetId(img)).Image.ComputeSize();
