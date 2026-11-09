@@ -263,6 +263,12 @@ inline void Command_CopyBuffer(const CommandBuffer cmd, const Buffer src, const 
 }
 
 void Command_CopyBufferToImage(CommandBuffer cmd, Buffer src, Image dst, TKit::Span<const BufferImageCopy> regions);
+void Command_CopyImageToBuffer(CommandBuffer cmd, Image src, Buffer dst, TKit::Span<const BufferImageCopy> regions);
+inline void Command_CopyImageToBuffer(const CommandBuffer cmd, const Image src, const Buffer dst)
+{
+    const BufferImageCopy cpy{};
+    Command_CopyImageToBuffer(cmd, src, dst, cpy);
+}
 void Command_BlitImage(CommandBuffer cmd, Image src, Image dst, TKit::Span<const ImageBlit> regions,
                        Filter filter = Filter_Linear);
 inline void Command_BlitImage(const CommandBuffer cmd, const Image src, const Image dst,

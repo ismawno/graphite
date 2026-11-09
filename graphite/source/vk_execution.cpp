@@ -736,6 +736,36 @@ void Command_CopyBufferToImage(const CommandBuffer cmd, const Buffer src, const 
     GetDeviceTable()->CmdCopyBufferToImage2KHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &copyInfo);
 }
 
+void Command_CopyImageToBuffer(const CommandBuffer cmd, const Image src, const Buffer dst,
+                               const TKit::Span<const BufferImageCopy> regions)
+{
+    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
+    VKit::DeviceImage &image = GetImage(src);
+
+    TKit::StackArray<VkBufferImageCopy2KHR> copies{};
+    copies.Reserve(regions.GetSize());
+    for (const BufferImageCopy &r : regions)
+    {
+        VkBufferImageCopy2KHR c{};
+        c.sType = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2_KHR;
+        c.bufferOffset = r.BufferOffset;
+        c.bufferRowLength = r.BufferRowLength;
+        c.bufferImageHeight = r.BufferImageHeight;
+        c.imageSubresource = ToVulkan(image, r.Layers);
+        c.imageOffset = {i32(r.ImageOffset[0]), i32(r.ImageOffset[1]), i32(r.ImageOffset[2])};
+        c.imageExtent = resolveExtent(r.ImageExtent, getMipExtent(image, r.Layers.MipLevel));
+        copies.Append(c);
+    }
+    VkCopyImageToBufferInfo2KHR copyInfo{};
+    copyInfo.sType = VK_STRUCTURE_TYPE_COPY_IMAGE_TO_BUFFER_INFO_2_KHR;
+    copyInfo.srcImage = image;
+    copyInfo.srcImageLayout = image.Layout;
+    copyInfo.dstBuffer = GetBuffer(dst);
+    copyInfo.regionCount = copies.GetSize();
+    copyInfo.pRegions = copies.GetData();
+    GetDeviceTable()->CmdCopyImageToBuffer2KHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &copyInfo);
+}
+
 void Command_BlitImage(const CommandBuffer cmd, const Image src, const Image dst,
                        const TKit::Span<const ImageBlit> regions, const Filter filter)
 {

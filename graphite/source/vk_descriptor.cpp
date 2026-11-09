@@ -147,7 +147,8 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
     const VkDescriptorImageInfo *ptr = wd.ImageInfos.end();
 
     for (const DescriptorImageInfo &info : imageInfo)
-        wd.ImageInfos.Append(info.CombinedSampler == NullHandle ? VK_NULL_HANDLE : GetSampler(info.CombinedSampler),
+        wd.ImageInfos.Append(info.CombinedSampler == NullHandle ? VkSampler{VK_NULL_HANDLE}
+                                                                : VkSampler{GetSampler(info.CombinedSampler)},
                              GetImageView(info.View), ToVulkan(info.Layout));
 
     wd.Writer.WriteImage(binding, {ptr, imageInfo.GetSize()}, dstElement);
