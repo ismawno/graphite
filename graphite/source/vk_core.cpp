@@ -1503,6 +1503,7 @@ static SampleCount fromVulkan(const VkSampleCountFlagBits samples)
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_MSVC_WARNING_IGNORE(4996)
+TKIT_CLANG_WARNING_IGNORE("-Wdeprecated-declarations")
 RenderBackendInfo GetRenderBackendInfo()
 {
     const VKit::PhysicalDevice &physical = GetPhysical();
