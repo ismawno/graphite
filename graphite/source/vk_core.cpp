@@ -12,6 +12,7 @@
 #include "vkit/core/core.hpp"
 #include "vkit/device/logical_device.hpp"
 #include "tkit/container/stack_array.hpp"
+#include "tkit/utils/utils.hpp"
 #include <cstdio>
 #include <cstring>
 
@@ -139,11 +140,7 @@ static void createDevice()
 
     VKit::PhysicalDevice::Selector selector(&s_Instance.Get());
 
-    TKIT_COMPILER_WARNING_IGNORE_PUSH()
-    TKIT_MSVC_WARNING_IGNORE(4996)
-    const char *dev = std::getenv("GRAPH_DEVICE");
-    TKIT_COMPILER_WARNING_IGNORE_POP()
-
+    const char *dev = TKit::GetEnvironmentVariable("GRAPH_DEVICE");
     if (dev)
     {
         u32 id = TKIT_U32_MAX;
