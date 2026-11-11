@@ -19,12 +19,12 @@ struct Vulkan_Pipeline
 static TKit::Storage<TKit::ArenaHive<VKit::PipelineLayout>> s_Layouts{};
 static TKit::Storage<TKit::ArenaHive<Vulkan_Pipeline>> s_Pipelines{};
 
-template <typename F> static void pipeline_Visit(Vulkan_Pipeline &pip, F &&fun)
+template <typename F> static void pipeline_Visit(Vulkan_Pipeline &pip, F &&func)
 {
     if (pip.Type == Pipeline_Graphics)
-        fun(pip.Pipeline.Get<VKit::GraphicsPipeline>());
+        std::forward<F>(func)(pip.Pipeline.Get<VKit::GraphicsPipeline>());
     else
-        fun(pip.Pipeline.Get<VKit::ComputePipeline>());
+        std::forward<F>(func)(pip.Pipeline.Get<VKit::ComputePipeline>());
 }
 
 static void pipeline_Destroy(Vulkan_Pipeline &pip)

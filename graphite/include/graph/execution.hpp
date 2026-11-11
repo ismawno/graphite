@@ -84,10 +84,10 @@ void CommandPool_Reset(CommandPool pool);
 CommandBuffer CommandPool_BeginImmediateSubmission(CommandPool pool);
 void CommandPool_EndImmediateSubmission(CommandPool pool, CommandBuffer cmd);
 
-template <typename F> void CommandPool_ImmediateSubmission(const CommandPool pool, F &&fun)
+template <typename F> void CommandPool_ImmediateSubmission(const CommandPool pool, F &&func)
 {
     const CommandBuffer cmd = CommandPool_BeginImmediateSubmission(pool);
-    std::forward<F>(fun)(cmd);
+    std::forward<F>(func)(cmd);
     CommandPool_EndImmediateSubmission(pool, cmd);
 }
 
