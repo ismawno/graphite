@@ -81,8 +81,9 @@ void Window_SignalShouldClose(Window win);
 Monitor Window_GetMonitor(Window win);
 void Window_MoveAndResize(Window win, const i32v2 &pos, const u32v2 &size);
 
-void Window_SetMonitor(Window win, Monitor monitor, const u32v2 &size, u32 refreshRate);
-void Window_SetMonitor(Window win, Monitor monitor);
+// if refreshRate is 0, it will take current
+void Window_SetMonitor(Window win, Monitor monitor, const u32v2 &size, u32 refreshRate = 0);
+void Window_SetMonitor(Window win, Monitor monitor, u32 refreshRate = 0);
 
 bool Window_IsHandleValid(Window win);
 
