@@ -1279,17 +1279,19 @@ void Window_SetMonitor(const Window win, const Monitor monitor, const u32v2 &siz
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, s_Monitors->At(Handle_GetId(monitor))->Monitor, 0, 0,
-                         i32(size[0]), i32(size[1]), i32(refreshRate));
+    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
+    const GLFWvidmode *mode = glfwGetVideoMode(mon);
+    glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, mon, 0, 0, i32(size[0]), i32(size[1]),
+                         refreshRate == 0 ? mode->refreshRate : i32(refreshRate));
 }
-void Window_SetMonitor(const Window win, const Monitor monitor)
+void Window_SetMonitor(const Window win, const Monitor monitor, const u32 refreshRate)
 {
     GRAPH_CHECK_HANDLE(win, Handle_Window);
     GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
     GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
     const GLFWvidmode *mode = glfwGetVideoMode(mon);
     glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, mon, 0, 0, mode->width, mode->height,
-                         mode->refreshRate);
+                         refreshRate == 0 ? mode->refreshRate : i32(refreshRate));
 }
 
 bool Window_IsHandleValid(const Window win)
