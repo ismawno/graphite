@@ -561,6 +561,7 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
         }
     }
 
+    TKIT_ERROR_DEFER_COMMIT();
     return Handle_Create(Handle_Compilation, s_Compilations->Insert(compilation));
 }
 
