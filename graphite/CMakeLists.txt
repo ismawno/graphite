@@ -37,7 +37,7 @@ if(GRAPHITE_SHADER_REFLECTION_BACKEND STREQUAL "spirv-reflect")
 endif()
 
 add_library(graphite STATIC ${SOURCES})
-target_compile_definitions(graphite PUBLIC GRAPH_VERSION=\"v0.1.x\")
+target_compile_definitions(graphite PUBLIC GRAPH_VERSION=\"v0.2.x\")
 target_include_directories(graphite PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_precompile_headers(graphite PRIVATE
                           ${CMAKE_CURRENT_SOURCE_DIR}/source/pch.hpp)
