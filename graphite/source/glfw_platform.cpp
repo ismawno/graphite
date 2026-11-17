@@ -1268,6 +1268,30 @@ Monitor Window_GetMonitor(const Window win)
     return scast<const Glfw_Monitor *>(glfwGetMonitorUserPointer(mon))->Handle;
 }
 
+void Window_MoveAndResize(const Window win, const i32v2 &pos, const u32v2 &size)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, nullptr, pos[0], pos[1], i32(size[0]), i32(size[1]),
+                         0);
+}
+
+void Window_SetMonitor(const Window win, const Monitor monitor, const u32v2 &size, const u32 refreshRate)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
+    glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, s_Monitors->At(Handle_GetId(monitor))->Monitor, 0, 0,
+                         i32(size[0]), i32(size[1]), i32(refreshRate));
+}
+void Window_SetMonitor(const Window win, const Monitor monitor)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
+    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
+    const GLFWvidmode *mode = glfwGetVideoMode(mon);
+    glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, mon, 0, 0, mode->width, mode->height,
+                         mode->refreshRate);
+}
+
 bool Window_IsHandleValid(const Window win)
 {
     GRAPH_IS_HANDLE_VALID_FUNCTION_BODY(s_Windows, win, Handle_Window);
