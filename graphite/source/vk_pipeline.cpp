@@ -19,6 +19,12 @@ struct Vulkan_Pipeline
 static TKit::Storage<TKit::ArenaHive<VKit::PipelineLayout>> s_Layouts{};
 static TKit::Storage<TKit::ArenaHive<Vulkan_Pipeline>> s_Pipelines{};
 
+static Vulkan_Pipeline &getPipeline(const Pipeline pip)
+{
+    GRAPH_CHECK_HANDLE(pip, Handle_Pipeline);
+    return s_Pipelines->At(Handle_GetId(pip));
+}
+
 template <typename F> static void pipeline_Visit(Vulkan_Pipeline &pip, F &&func)
 {
     if (pip.Type == Pipeline_Graphics)
@@ -70,9 +76,8 @@ void PipelineLayout_Destroy(const PipelineLayout layout)
 
 void PipelineLayout_SetName(const PipelineLayout layout, const char *name)
 {
-    GRAPH_CHECK_HANDLE(layout, Handle_PipelineLayout);
     TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][PIPELINE] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_RESULT(s_Layouts->At(Handle_GetId(layout)).SetName(name));
+    GRAPH_CHECK_RESULT(GetPipelineLayout(layout).SetName(name));
 }
 
 bool PipelineLayout_IsHandleValid(const PipelineLayout layout)
@@ -213,16 +218,14 @@ void Pipeline_Destroy(const Pipeline pip)
 
 PipelineType Pipeline_GetType(const Pipeline pip)
 {
-    GRAPH_CHECK_HANDLE(pip, Handle_Pipeline);
-    return s_Pipelines->At(Handle_GetId(pip)).Type;
+    return getPipeline(pip).Type;
 }
 
 void Pipeline_SetName(const Pipeline pip, const char *name)
 {
-    GRAPH_CHECK_HANDLE(pip, Handle_Pipeline);
     TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][PIPELINE] To name objects, the validation capability must be enabled");
 
-    Vulkan_Pipeline &vpip = s_Pipelines->At(Handle_GetId(pip));
+    Vulkan_Pipeline &vpip = getPipeline(pip);
     pipeline_Visit(vpip, [name](auto &p) { GRAPH_CHECK_RESULT(p.SetName(name)); });
 }
 
@@ -239,8 +242,7 @@ VKit::PipelineLayout &GetPipelineLayout(const PipelineLayout layout)
 
 void BindPipeline(const VkCommandBuffer cmd, const Pipeline pip)
 {
-    GRAPH_CHECK_HANDLE(pip, Handle_Pipeline);
-    pipeline_Visit(s_Pipelines->At(Handle_GetId(pip)), [cmd](const auto &p) { p.Bind(cmd); });
+    pipeline_Visit(getPipeline(pip), [cmd](const auto &p) { p.Bind(cmd); });
 }
 
 } // namespace Graph

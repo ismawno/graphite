@@ -36,6 +36,12 @@ struct Spirv_Reflection
 
 static TKit::Storage<TKit::ArenaHive<Spirv_Reflection>> s_Reflections{};
 
+static Spirv_Reflection &getReflection(const Reflection refl)
+{
+    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
+    return s_Reflections->At(Handle_GetId(refl));
+}
+
 static void reflection_Destroy(Spirv_Reflection &refl)
 {
     for (SpvReflectShaderModule &mod : refl.Modules)
@@ -292,29 +298,24 @@ void Reflection_Destroy(const Reflection refl)
 
 TKit::Span<DescriptorSetReflectionInfo> Reflection_GetDescriptorSets(const Reflection refl)
 {
-    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
-    return s_Reflections->At(Handle_GetId(refl)).Sets;
+    return getReflection(refl).Sets;
 }
 
 TKit::Span<DescriptorBinding> Reflection_GetBindings(const Reflection refl, const u32 setIdx)
 {
-    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
-    return s_Reflections->At(Handle_GetId(refl)).Sets[setIdx].Bindings;
+    return getReflection(refl).Sets[setIdx].Bindings;
 }
 TKit::Span<PushConstantRange> Reflection_GetPushConstantRanges(const Reflection refl)
 {
-    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
-    return s_Reflections->At(Handle_GetId(refl)).PushRanges;
+    return getReflection(refl).PushRanges;
 }
 TKit::Span<ShaderStageInfo> Reflection_GetShaderStages(const Reflection refl)
 {
-    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
-    return s_Reflections->At(Handle_GetId(refl)).Stages;
+    return getReflection(refl).Stages;
 }
 TKit::Span<VertexAttributeReflectionInfo> Reflection_GetVertexAttributes(const Reflection refl)
 {
-    GRAPH_CHECK_HANDLE(refl, Handle_Reflection);
-    return s_Reflections->At(Handle_GetId(refl)).VertexAttributes;
+    return getReflection(refl).VertexAttributes;
 }
 bool Reflection_IsHandleValid(const Reflection refl)
 {

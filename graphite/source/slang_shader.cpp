@@ -20,6 +20,12 @@ using Slang_Compilation = TKit::TierArray<CompiledSpirv>;
 
 static TKit::Storage<TKit::ArenaHive<Slang_Compilation>> s_Compilations{};
 
+static Slang_Compilation &getCompilation(const Compilation comp)
+{
+    GRAPH_CHECK_HANDLE(comp, Handle_Compilation);
+    return s_Compilations->At(Handle_GetId(comp));
+}
+
 static void compilation_Destroy(const Slang_Compilation &comp)
 {
     TKit::TierAllocator *tier = TKit::GetTier();
@@ -574,8 +580,7 @@ void Compilation_Destroy(Compilation comp)
 SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, const char *module,
                                const ShaderStageFlagBit stage)
 {
-    GRAPH_CHECK_HANDLE(comp, Handle_Compilation);
-    const Slang_Compilation &compilation = s_Compilations->At(Handle_GetId(comp));
+    const Slang_Compilation &compilation = getCompilation(comp);
 
     u32 index = TKIT_U32_MAX;
     for (u32 i = 0; i < compilation.GetSize(); ++i)
@@ -599,8 +604,7 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
 
 SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, const char *module)
 {
-    GRAPH_CHECK_HANDLE(comp, Handle_Compilation);
-    const Slang_Compilation &compilation = s_Compilations->At(Handle_GetId(comp));
+    const Slang_Compilation &compilation = getCompilation(comp);
 
     u32 index = TKIT_U32_MAX;
     for (u32 i = 0; i < compilation.GetSize(); ++i)

@@ -30,6 +30,12 @@ struct Vulkan_Swapchain
 static TKit::Storage<TKit::ArenaHive<Vulkan_Swapchain>> s_Swapchains{};
 static VKit::Queue *s_PresentQueue;
 
+static Vulkan_Swapchain &getSwapchain(const Swapchain sc)
+{
+    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
+    return s_Swapchains->At(Handle_GetId(sc));
+}
+
 static void swapChain_Destroy(Vulkan_Swapchain &sc)
 {
     const auto &device = GetDevice();
@@ -139,36 +145,30 @@ void Swapchain_Destroy(const Swapchain sc)
 
 Format Swapchain_GetFormat(const Swapchain sc)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    return s_Swapchains->At(Handle_GetId(sc)).Format;
+    return getSwapchain(sc).Format;
 }
 u32 Swapchain_GetImageCount(const Swapchain sc)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    return s_Swapchains->At(Handle_GetId(sc)).Swap.GetSize();
+    return getSwapchain(sc).Swap.GetSize();
 }
 u32v2 Swapchain_GetExtent(const Swapchain sc)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    const VkExtent2D &ext = s_Swapchains->At(Handle_GetId(sc)).Swapchain.GetInfo().Extent;
+    const VkExtent2D &ext = getSwapchain(sc).Swapchain.GetInfo().Extent;
     return {ext.width, ext.height};
 }
 u32 Swapchain_GetCurrentIndex(const Swapchain sc)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    return s_Swapchains->At(Handle_GetId(sc)).ImageIndex;
+    return getSwapchain(sc).ImageIndex;
 }
 Image Swapchain_GetImage(const Swapchain sc, const u32 imgIdx)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    return s_Swapchains->At(Handle_GetId(sc)).Swap[imgIdx].Image;
+    return getSwapchain(sc).Swap[imgIdx].Image;
 }
 
 SwapchainStatus Swapchain_AcquireNextImage(const Swapchain sc, const u64 timeout)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
 
-    Vulkan_Swapchain &vsc = s_Swapchains->At(Handle_GetId(sc));
+    Vulkan_Swapchain &vsc = getSwapchain(sc);
     const u32 idx = (vsc.SyncIndex + 1) % vsc.Swap.GetSize();
     const SwapData &swap = vsc.Swap[idx];
 
@@ -198,9 +198,8 @@ SwapchainStatus Swapchain_AcquireNextImage(const Swapchain sc, const u64 timeout
 
 SwapchainStatus Swapchain_Present(const Swapchain sc)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
 
-    Vulkan_Swapchain &vsc = s_Swapchains->At(Handle_GetId(sc));
+    Vulkan_Swapchain &vsc = getSwapchain(sc);
     const SwapData &swap = vsc.Swap[vsc.ImageIndex];
     const VkSwapchainKHR vksc = vsc.Swapchain;
 
@@ -226,8 +225,7 @@ SwapchainStatus Swapchain_Present(const Swapchain sc)
 
 void Swapchain_SetName(const Swapchain sc, const char *name)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    GRAPH_CHECK_RESULT(s_Swapchains->At(Handle_GetId(sc)).Swapchain.SetName(name));
+    GRAPH_CHECK_RESULT(getSwapchain(sc).Swapchain.SetName(name));
 }
 
 bool Swapchain_IsHandleValid(const Swapchain sc)
@@ -237,20 +235,17 @@ bool Swapchain_IsHandleValid(const Swapchain sc)
 
 VkSemaphore GetRenderFinishedSemaphore(const Swapchain sc)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    const Vulkan_Swapchain &vsc = s_Swapchains->At(Handle_GetId(sc));
+    const Vulkan_Swapchain &vsc = getSwapchain(sc);
     return vsc.Swap[vsc.ImageIndex].RenderFinishedSemaphore;
 }
 VkSemaphore GetImageAvailableSemaphore(const Swapchain sc)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    const Vulkan_Swapchain &vsc = s_Swapchains->At(Handle_GetId(sc));
+    const Vulkan_Swapchain &vsc = getSwapchain(sc);
     return vsc.Swap[vsc.SyncIndex].ImageAvailableSemaphore;
 }
 void SetRenderTimelineTracker(const Swapchain sc, const Tracker &tr)
 {
-    GRAPH_CHECK_HANDLE(sc, Handle_Swapchain);
-    Vulkan_Swapchain &vsc = s_Swapchains->At(Handle_GetId(sc));
+    Vulkan_Swapchain &vsc = getSwapchain(sc);
     vsc.Swap[vsc.SyncIndex].RenderTracker = tr;
 }
 } // namespace Graph

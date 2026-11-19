@@ -46,6 +46,18 @@ struct Glfw_Monitor
 static TKit::Storage<TKit::ArenaHive<Glfw_Window *>> s_Windows{};
 static TKit::Storage<TKit::ArenaHive<Glfw_Monitor *>> s_Monitors{};
 
+static Glfw_Monitor *getGlfwMonitor(const Monitor monitor)
+{
+    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
+    return s_Monitors->At(Handle_GetId(monitor));
+}
+
+static Glfw_Window *getGlfwWindow(const Window win)
+{
+    GRAPH_CHECK_HANDLE(win, Handle_Window);
+    return s_Windows->At(Handle_GetId(win));
+}
+
 #ifdef GRAPH_RENDER_BACKEND_VULKAN
 static VkSurfaceKHR createSurface(GLFWwindow *win)
 {
@@ -956,26 +968,22 @@ void Window_Destroy(const Window win)
 
 void *Window_GetUserData(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return scast<const Glfw_Window *>(glfwGetWindowUserPointer(s_Windows->At(Handle_GetId(win))->Window))->UserData;
+    return scast<const Glfw_Window *>(glfwGetWindowUserPointer(getGlfwWindow(win)->Window))->UserData;
 }
 void Window_SetUserData(const Window win, void *data)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    scast<Glfw_Window *>(glfwGetWindowUserPointer(s_Windows->At(Handle_GetId(win))->Window))->UserData = data;
+    scast<Glfw_Window *>(glfwGetWindowUserPointer(getGlfwWindow(win)->Window))->UserData = data;
 }
 
 bool Window_ShouldClose(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwWindowShouldClose(s_Windows->At(Handle_GetId(win))->Window);
+    return glfwWindowShouldClose(getGlfwWindow(win)->Window);
 }
 
 #ifdef GRAPH_RENDER_BACKEND_VULKAN
 void Window_RecreateSurface(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    Glfw_Window *gwin = s_Windows->At(Handle_GetId(win));
+    Glfw_Window *gwin = getGlfwWindow(win);
     destroySurface(gwin->Surface);
     gwin->Surface = createSurface(gwin->Window);
 }
@@ -983,65 +991,56 @@ void Window_RecreateSurface(const Window win)
 
 void Window_Show(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwShowWindow(s_Windows->At(Handle_GetId(win))->Window);
+    glfwShowWindow(getGlfwWindow(win)->Window);
 }
 
 void Window_Hide(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwHideWindow(s_Windows->At(Handle_GetId(win))->Window);
+    glfwHideWindow(getGlfwWindow(win)->Window);
 }
 
 void Window_Focus(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwFocusWindow(s_Windows->At(Handle_GetId(win))->Window);
+    glfwFocusWindow(getGlfwWindow(win)->Window);
 }
 
 const char *Window_GetTitle(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetWindowTitle(s_Windows->At(Handle_GetId(win))->Window);
+    return glfwGetWindowTitle(getGlfwWindow(win)->Window);
 }
 
 i32v2 Window_GetPosition(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 x, y;
-    glfwGetWindowPos(s_Windows->At(Handle_GetId(win))->Window, &x, &y);
+    glfwGetWindowPos(getGlfwWindow(win)->Window, &x, &y);
     return i32v2{x, y};
 }
 
 u32v2 Window_GetScreenSize(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 w, h;
-    glfwGetWindowSize(s_Windows->At(Handle_GetId(win))->Window, &w, &h);
+    glfwGetWindowSize(getGlfwWindow(win)->Window, &w, &h);
     return u32v2{u32(w), u32(h)};
 }
 
 u32v2 Window_GetPixelSize(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 w, h;
-    glfwGetFramebufferSize(s_Windows->At(Handle_GetId(win))->Window, &w, &h);
+    glfwGetFramebufferSize(getGlfwWindow(win)->Window, &w, &h);
     return u32v2{u32(w), u32(h)};
 }
 
 f32v2 Window_GetCursorScreenPosition(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
     f64 x, y;
-    glfwGetCursorPos(s_Windows->At(Handle_GetId(win))->Window, &x, &y);
+    glfwGetCursorPos(getGlfwWindow(win)->Window, &x, &y);
     return f32v2{f32(x), f32(y)};
 }
 
 f32v2 Window_GetContentScale(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
     f32v2 sc;
-    glfwGetWindowContentScale(s_Windows->At(Handle_GetId(win))->Window, &sc[0], &sc[1]);
+    glfwGetWindowContentScale(getGlfwWindow(win)->Window, &sc[0], &sc[1]);
     return sc;
 }
 
@@ -1064,8 +1063,7 @@ f32 Window_GetOpacity(const Window win)
 
 WindowFlags Window_GetFlags(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
+    GLFWwindow *handle = getGlfwWindow(win)->Window;
 
     WindowFlags flags = 0;
     if (glfwGetWindowAttrib(handle, GLFW_RESIZABLE) == 0)
@@ -1087,21 +1085,18 @@ WindowFlags Window_GetFlags(const Window win)
 
 void Window_SetTitle(const Window win, const char *title)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowTitle(s_Windows->At(Handle_GetId(win))->Window, title);
+    glfwSetWindowTitle(getGlfwWindow(win)->Window, title);
 }
 
 void Window_SetPosition(const Window win, const i32v2 &pos)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowPos(s_Windows->At(Handle_GetId(win))->Window, pos[0], pos[1]);
+    glfwSetWindowPos(getGlfwWindow(win)->Window, pos[0], pos[1]);
 }
 
 void Window_SetScreenSize(const Window win, const u32v2 &size)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
     TKIT_ASSERT(size[0] != 0 && size[1] != 0, "[GRAPH][WINDOW] Cannot have window size of zero! Passed size: {}", size);
-    GLFWwindow *gwin = s_Windows->At(Handle_GetId(win))->Window;
+    GLFWwindow *gwin = getGlfwWindow(win)->Window;
 #if defined(TKIT_OS_APPLE) && !defined(GRAPH_GLFW_OSX_WINDOW_POS_FIX)
     i32 x;
     i32 y;
@@ -1116,14 +1111,12 @@ void Window_SetScreenSize(const Window win, const u32v2 &size)
 
 void Window_SetAspect(const Window win, const u32 numer, const u32 denom)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowAspectRatio(s_Windows->At(Handle_GetId(win))->Window, i32(numer), i32(denom));
+    glfwSetWindowAspectRatio(getGlfwWindow(win)->Window, i32(numer), i32(denom));
 }
 
 void Window_SetFlags(const Window win, const WindowFlags flags)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
+    GLFWwindow *handle = getGlfwWindow(win)->Window;
 
     glfwSetWindowAttrib(handle, GLFW_RESIZABLE, !(flags & WindowFlag_NoResize));
     glfwSetWindowAttrib(handle, GLFW_DECORATED, !(flags & WindowFlag_NoDecoration));
@@ -1133,8 +1126,7 @@ void Window_SetFlags(const Window win, const WindowFlags flags)
 
 void Window_AddFlags(const Window win, const WindowFlags flags)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
+    GLFWwindow *handle = getGlfwWindow(win)->Window;
 
     if (!(flags & WindowFlag_NoResize))
         glfwSetWindowAttrib(handle, GLFW_RESIZABLE, GLFW_TRUE);
@@ -1148,8 +1140,7 @@ void Window_AddFlags(const Window win, const WindowFlags flags)
 
 void Window_RemoveFlags(const Window win, const WindowFlags flags)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GLFWwindow *handle = s_Windows->At(Handle_GetId(win))->Window;
+    GLFWwindow *handle = getGlfwWindow(win)->Window;
 
     if (!(flags & WindowFlag_NoResize))
         glfwSetWindowAttrib(handle, GLFW_RESIZABLE, GLFW_FALSE);
@@ -1173,20 +1164,17 @@ void Window_SetOpacity(const Window win, const f32 opacity)
 
 void Window_SetMouseCursor(const Window win, const MouseCursor cursor)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    Glfw_Window *data = s_Windows->At(Handle_GetId(win));
+    Glfw_Window *data = getGlfwWindow(win);
     glfwSetCursor(data->Window, data->Cursors[cursor]);
 }
 void Window_SetCursorScreenPosition(const Window win, const f32v2 &pos)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetCursorPos(s_Windows->At(Handle_GetId(win))->Window, f64(pos[0]), f64(pos[1]));
+    glfwSetCursorPos(getGlfwWindow(win)->Window, f64(pos[0]), f64(pos[1]));
 }
 
 CursorMode Window_GetCursorMode(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    switch (glfwGetInputMode(s_Windows->At(Handle_GetId(win))->Window, GLFW_CURSOR))
+    switch (glfwGetInputMode(getGlfwWindow(win)->Window, GLFW_CURSOR))
     {
     case GLFW_CURSOR_HIDDEN:
         return CursorMode_Hidden;
@@ -1199,7 +1187,6 @@ CursorMode Window_GetCursorMode(const Window win)
 
 void Window_SetCursorMode(const Window win, const CursorMode mode)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
     i32 value = GLFW_CURSOR_NORMAL;
     switch (mode)
     {
@@ -1213,31 +1200,27 @@ void Window_SetCursorMode(const Window win, const CursorMode mode)
         value = GLFW_CURSOR_DISABLED;
         break;
     }
-    glfwSetInputMode(s_Windows->At(Handle_GetId(win))->Window, GLFW_CURSOR, value);
+    glfwSetInputMode(getGlfwWindow(win)->Window, GLFW_CURSOR, value);
 }
 
 void Window_SignalShouldClose(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowShouldClose(s_Windows->At(Handle_GetId(win))->Window, GLFW_TRUE);
+    glfwSetWindowShouldClose(getGlfwWindow(win)->Window, GLFW_TRUE);
 }
 
 bool Window_IsKeyPressed(const Window win, const Key key)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetKey(s_Windows->At(Handle_GetId(win))->Window, toGlfw(key)) == GLFW_PRESS;
+    return glfwGetKey(getGlfwWindow(win)->Window, toGlfw(key)) == GLFW_PRESS;
 }
 
 bool Window_IsKeyReleased(const Window win, const Key key)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetKey(s_Windows->At(Handle_GetId(win))->Window, toGlfw(key)) == GLFW_RELEASE;
+    return glfwGetKey(getGlfwWindow(win)->Window, toGlfw(key)) == GLFW_RELEASE;
 }
 
 bool Window_IsMousePressed(const Window win, const Mouse button)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetMouseButton(s_Windows->At(Handle_GetId(win))->Window, toGlfw(button)) == GLFW_PRESS;
+    return glfwGetMouseButton(getGlfwWindow(win)->Window, toGlfw(button)) == GLFW_PRESS;
 }
 const char *Key_GetName(const Key key, const i32 scancode)
 {
@@ -1253,8 +1236,7 @@ const char *Key_GetName(const Key key, const i32 scancode)
 
 bool Window_IsMouseReleased(const Window win, const Mouse button)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return glfwGetMouseButton(s_Windows->At(Handle_GetId(win))->Window, toGlfw(button)) == GLFW_RELEASE;
+    return glfwGetMouseButton(getGlfwWindow(win)->Window, toGlfw(button)) == GLFW_RELEASE;
 }
 
 Monitor Window_GetMonitor(const Window win)
@@ -1270,27 +1252,21 @@ Monitor Window_GetMonitor(const Window win)
 
 void Window_MoveAndResize(const Window win, const i32v2 &pos, const u32v2 &size)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, nullptr, pos[0], pos[1], i32(size[0]), i32(size[1]),
-                         0);
+    glfwSetWindowMonitor(getGlfwWindow(win)->Window, nullptr, pos[0], pos[1], i32(size[0]), i32(size[1]), 0);
 }
 
 void Window_SetMonitor(const Window win, const Monitor monitor, const u32v2 &size, const u32 refreshRate)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
+    GLFWmonitor *mon = getGlfwMonitor(monitor)->Monitor;
     const GLFWvidmode *mode = glfwGetVideoMode(mon);
-    glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, mon, 0, 0, i32(size[0]), i32(size[1]),
+    glfwSetWindowMonitor(getGlfwWindow(win)->Window, mon, 0, 0, i32(size[0]), i32(size[1]),
                          refreshRate == 0 ? mode->refreshRate : i32(refreshRate));
 }
 void Window_SetMonitor(const Window win, const Monitor monitor, const u32 refreshRate)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
+    GLFWmonitor *mon = getGlfwMonitor(monitor)->Monitor;
     const GLFWvidmode *mode = glfwGetVideoMode(mon);
-    glfwSetWindowMonitor(s_Windows->At(Handle_GetId(win))->Window, mon, 0, 0, mode->width, mode->height,
+    glfwSetWindowMonitor(getGlfwWindow(win)->Window, mon, 0, 0, mode->width, mode->height,
                          refreshRate == 0 ? mode->refreshRate : i32(refreshRate));
 }
 
@@ -1316,20 +1292,16 @@ Monitor Monitor_Get(const u32 index)
 }
 void *Monitor_GetUserData(const Monitor monitor)
 {
-    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    return scast<const Glfw_Monitor *>(glfwGetMonitorUserPointer(s_Monitors->At(Handle_GetId(monitor))->Monitor))
-        ->UserData;
+    return scast<const Glfw_Monitor *>(glfwGetMonitorUserPointer(getGlfwMonitor(monitor)->Monitor))->UserData;
 }
 void Monitor_SetUserData(const Monitor monitor, void *data)
 {
-    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    scast<Glfw_Monitor *>(glfwGetMonitorUserPointer(s_Monitors->At(Handle_GetId(monitor))->Monitor))->UserData = data;
+    scast<Glfw_Monitor *>(glfwGetMonitorUserPointer(getGlfwMonitor(monitor)->Monitor))->UserData = data;
 }
 
 i32v2 Monitor_GetPosition(const Monitor monitor)
 {
-    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
+    GLFWmonitor *mon = getGlfwMonitor(monitor)->Monitor;
     i32 x, y;
     glfwGetMonitorPos(mon, &x, &y);
     return {x, y};
@@ -1337,8 +1309,7 @@ i32v2 Monitor_GetPosition(const Monitor monitor)
 
 VideoMode Monitor_GetVideoMode(const Monitor monitor)
 {
-    GRAPH_CHECK_HANDLE(monitor, Handle_Monitor);
-    GLFWmonitor *mon = s_Monitors->At(Handle_GetId(monitor))->Monitor;
+    GLFWmonitor *mon = getGlfwMonitor(monitor)->Monitor;
     const GLFWvidmode *mode = glfwGetVideoMode(mon);
     TKIT_ASSERT(mode, "[GRAPH][PLATFORM] Failed to get video mode");
 
@@ -1383,8 +1354,7 @@ bool Monitor_IsHandleValid(const Monitor monitor)
 }
 
 #define SET_CALLBACK(tname, vname, fname)                                                                              \
-    GRAPH_CHECK_HANDLE(win, Handle_Window);                                                                            \
-    Glfw_Window *data = s_Windows->At(Handle_GetId(win));                                                              \
+    Glfw_Window *data = getGlfwWindow(win);                                                                            \
     tname prev = data->vname;                                                                                          \
     data->vname = callback;                                                                                            \
     glfwSet##fname##Callback(data->Window, callback ? callback_##fname : nullptr);                                     \
@@ -1458,13 +1428,11 @@ WindowContentScaleCallback Window_Callback_ContentScale(const Window win, const 
 
 GLFWwindow *GetWindow(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return s_Windows->At(Handle_GetId(win))->Window;
+    return getGlfwWindow(win)->Window;
 }
 VkSurfaceKHR GetSurface(const Window win)
 {
-    GRAPH_CHECK_HANDLE(win, Handle_Window);
-    return s_Windows->At(Handle_GetId(win))->Surface;
+    return getGlfwWindow(win)->Surface;
 }
 
 PlatformBackendInfo GetPlatformBackendInfo()

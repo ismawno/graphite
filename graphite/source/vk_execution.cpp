@@ -31,6 +31,18 @@ static TKit::Storage<TKit::ArenaHive<Vulkan_CommandPool>> s_CommandPools{};
 static TKit::Storage<TKit::ArenaHive<Vulkan_CommandBuffer>> s_CommandBuffers{};
 static TKit::FixedArray<VKit::Queue *, Queue_Count> s_Queues{};
 
+static Vulkan_CommandBuffer &getCommandBuffer(const CommandBuffer cmd)
+{
+    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
+    return s_CommandBuffers->At(Handle_GetId(cmd));
+}
+
+static Vulkan_CommandPool &getCommandPool(const CommandPool pool)
+{
+    GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
+    return s_CommandPools->At(Handle_GetId(pool));
+}
+
 void Execution_Initialize(const u32 maxPools, const u32 maxCmdBuffers)
 {
     s_CommandPools.Construct();
@@ -157,10 +169,9 @@ void Queue_Submit(const QueueType queue, const TKit::Span<const SubmitInfo> info
             vkinfo.commandBufferInfoCount = info.Commands.GetSize();
             for (const CommandBuffer cmd : info.Commands)
             {
-                GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
                 VkCommandBufferSubmitInfoKHR cinfo{};
                 cinfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO_KHR;
-                cinfo.commandBuffer = s_CommandBuffers->At(Handle_GetId(cmd)).Buffer;
+                cinfo.commandBuffer = getCommandBuffer(cmd).Buffer;
                 commands.Append(cinfo);
             }
         }
@@ -281,13 +292,11 @@ void CommandPool_Destroy(const CommandPool pool)
 }
 QueueType CommandPool_GetQueueType(const CommandPool pool)
 {
-    GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
-    return s_CommandPools->At(Handle_GetId(pool)).Type;
+    return getCommandPool(pool).Type;
 }
 void CommandPool_Reset(const CommandPool pool)
 {
-    GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
-    Vulkan_CommandPool &p = s_CommandPools->At(Handle_GetId(pool));
+    Vulkan_CommandPool &p = getCommandPool(pool);
     GRAPH_CHECK_RESULT(p.Pool.Reset());
     p.NextCommand = 0;
 }
@@ -302,20 +311,17 @@ static CommandBuffer commandPool_CreateCommand(const CommandPool pool, const VkC
 }
 CommandBuffer CommandPool_BeginImmediateSubmission(const CommandPool pool)
 {
-    GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
-    return commandPool_CreateCommand(
-        pool, GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.BeginSingleTimeCommands()));
+    return commandPool_CreateCommand(pool, GRAPH_CHECK_RESULT(getCommandPool(pool).Pool.BeginSingleTimeCommands()));
 }
 void CommandPool_EndImmediateSubmission(const CommandPool pool, const CommandBuffer cmd)
 {
-    GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
     GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    const Vulkan_CommandPool &p = s_CommandPools->At(Handle_GetId(pool));
+    const Vulkan_CommandPool &p = getCommandPool(pool);
     GRAPH_CHECK_QUEUE(p.Type);
 
     const Id id = Handle_GetId(cmd);
-    GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool))
-                           .Pool.EndSingleTimeCommands(s_CommandBuffers->At(id).Buffer, *s_Queues[p.Type]));
+    GRAPH_CHECK_RESULT(
+        getCommandPool(pool).Pool.EndSingleTimeCommands(s_CommandBuffers->At(id).Buffer, *s_Queues[p.Type]));
 
     s_CommandBuffers->Remove(id);
 }
@@ -336,9 +342,8 @@ CommandBuffer CommandPool_NextCommandBuffer(const CommandPool pool)
 
 void CommandPool_SetName(const CommandPool pool, const char *name)
 {
-    GRAPH_CHECK_HANDLE(pool, Handle_CommandPool);
     TKIT_ASSERT(IsValidationEnabled(), "[GRAPH][EXECUTION] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_RESULT(s_CommandPools->At(Handle_GetId(pool)).Pool.SetName(name));
+    GRAPH_CHECK_RESULT(getCommandPool(pool).Pool.SetName(name));
 }
 
 bool CommandPool_IsHandleValid(const CommandPool pool)
@@ -348,18 +353,16 @@ bool CommandPool_IsHandleValid(const CommandPool pool)
 
 void CommandBuffer_Begin(const CommandBuffer cmd)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
     VkCommandBufferBeginInfo info{};
     info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    GRAPH_CHECK_RESULT(GetDeviceTable()->BeginCommandBuffer(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &info));
+    GRAPH_CHECK_RESULT(GetDeviceTable()->BeginCommandBuffer(getCommandBuffer(cmd).Buffer, &info));
 }
 
 void CommandBuffer_End(const CommandBuffer cmd)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GRAPH_CHECK_RESULT(GetDeviceTable()->EndCommandBuffer(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer));
+    GRAPH_CHECK_RESULT(GetDeviceTable()->EndCommandBuffer(getCommandBuffer(cmd).Buffer));
 }
 
 bool CommandBuffer_IsHandleValid(const CommandBuffer cmd)
@@ -449,7 +452,6 @@ template <typename T> static BarrierMasks createBarrierMasks(const QueueType cmd
 
 void Command_BeginRenderPass(const CommandBuffer cmd, const RenderPassInfo &info)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
 
     TKit::StackArray<VkRenderingAttachmentInfoKHR> colors{};
     colors.Reserve(info.ColorAttachments.GetSize());
@@ -477,20 +479,18 @@ void Command_BeginRenderPass(const CommandBuffer cmd, const RenderPassInfo &info
         stencil = createAttachmentInfo(*info.StencilAttachment, false);
         vkinfo.pStencilAttachment = &stencil;
     }
-    GetDeviceTable()->CmdBeginRenderingKHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &vkinfo);
+    GetDeviceTable()->CmdBeginRenderingKHR(getCommandBuffer(cmd).Buffer, &vkinfo);
 }
 
 void Command_EndRenderPass(const CommandBuffer cmd)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdEndRenderingKHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer);
+    GetDeviceTable()->CmdEndRenderingKHR(getCommandBuffer(cmd).Buffer);
 }
 
 void Command_PipelineBarrier(const CommandBuffer cmd, const PipelineBarrierInfo &info)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
 
-    const Vulkan_CommandBuffer &vkcmd = s_CommandBuffers->At(Handle_GetId(cmd));
+    const Vulkan_CommandBuffer &vkcmd = getCommandBuffer(cmd);
     const QueueType cmdQueue = s_CommandPools->At(Handle_GetId(vkcmd.Pool)).Type;
 
     TKit::StackArray<VkMemoryBarrier2KHR> memory{};
@@ -557,35 +557,29 @@ void Command_PipelineBarrier(const CommandBuffer cmd, const PipelineBarrierInfo 
 
 void Command_BindPipeline(const CommandBuffer cmd, const Pipeline pip)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    BindPipeline(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, pip);
+    BindPipeline(getCommandBuffer(cmd).Buffer, pip);
 }
 
 void Command_BindDescriptorSets(const CommandBuffer cmd, const PipelineLayout layout, const BindPoint bpoint,
                                 const TKit::Span<const DescriptorSet> sets, const u32 firstSet)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
 
     TKit::StackArray<VkDescriptorSet> vksets{};
     vksets.Reserve(sets.GetSize());
     for (const DescriptorSet set : sets)
         vksets.Append(GetDescriptorSet(set));
 
-    GetDeviceTable()->CmdBindDescriptorSets(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, ToVulkan(bpoint),
-                                            GetPipelineLayout(layout), firstSet, vksets.GetSize(), vksets.GetData(), 0,
-                                            nullptr);
+    GetDeviceTable()->CmdBindDescriptorSets(getCommandBuffer(cmd).Buffer, ToVulkan(bpoint), GetPipelineLayout(layout),
+                                            firstSet, vksets.GetSize(), vksets.GetData(), 0, nullptr);
 }
 
 void Command_BindIndexBuffer(const CommandBuffer cmd, const Buffer buffer, const IndexType type)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdBindIndexBuffer(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, GetBuffer(buffer), 0,
-                                         ToVulkan(type));
+    GetDeviceTable()->CmdBindIndexBuffer(getCommandBuffer(cmd).Buffer, GetBuffer(buffer), 0, ToVulkan(type));
 }
 
 void Command_BindVertexBuffers(const CommandBuffer cmd, const TKit::Span<const Buffer> buffers, const u32 firstBinding)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
 
     TKit::StackArray<VkBuffer> vkbuffers{};
     TKit::StackArray<VkDeviceSize> offsets{};
@@ -596,54 +590,47 @@ void Command_BindVertexBuffers(const CommandBuffer cmd, const TKit::Span<const B
         vkbuffers.Append(GetBuffer(buffer));
         offsets.Append(0);
     }
-    GetDeviceTable()->CmdBindVertexBuffers(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, firstBinding,
-                                           vkbuffers.GetSize(), vkbuffers.GetData(), offsets.GetData());
+    GetDeviceTable()->CmdBindVertexBuffers(getCommandBuffer(cmd).Buffer, firstBinding, vkbuffers.GetSize(),
+                                           vkbuffers.GetData(), offsets.GetData());
 }
 
 void Command_PushConstants(const CommandBuffer cmd, const PipelineLayout layout, const ShaderStageFlags stages,
                            const void *values, const u32 size, const u32 offset)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdPushConstants(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, GetPipelineLayout(layout),
+    GetDeviceTable()->CmdPushConstants(getCommandBuffer(cmd).Buffer, GetPipelineLayout(layout),
                                        ToVulkanShaderStageFlags(stages), offset, size, values);
 }
 
 void Command_SetViewport(const CommandBuffer cmd, const f32v2 &pos, const f32v2 &size, const f32v2 &depth)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
 
     const VkViewport viewport{pos[0], pos[1], size[0], size[1], depth[0], depth[1]};
-    GetDeviceTable()->CmdSetViewport(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, 0, 1, &viewport);
+    GetDeviceTable()->CmdSetViewport(getCommandBuffer(cmd).Buffer, 0, 1, &viewport);
 }
 
 void Command_SetScissor(const CommandBuffer cmd, const i32v2 &pos, const u32v2 &size)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
 
     const VkRect2D scissor{{pos[0], pos[1]}, {size[0], size[1]}};
-    GetDeviceTable()->CmdSetScissor(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, 0, 1, &scissor);
+    GetDeviceTable()->CmdSetScissor(getCommandBuffer(cmd).Buffer, 0, 1, &scissor);
 }
 
 void Command_SetCullMode(const CommandBuffer cmd, const CullMode cullMode)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdSetCullModeEXT(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, ToVulkan(cullMode));
+    GetDeviceTable()->CmdSetCullModeEXT(getCommandBuffer(cmd).Buffer, ToVulkan(cullMode));
 }
 
 void Command_Draw(const CommandBuffer cmd, const u32 vertexCount, const u32 instanceCount, const u32 firstVertex,
                   const u32 firstInstance)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdDraw(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, vertexCount, instanceCount, firstVertex,
-                              firstInstance);
+    GetDeviceTable()->CmdDraw(getCommandBuffer(cmd).Buffer, vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
 void Command_DrawIndexed(const CommandBuffer cmd, const u32 indexCount, const u32 instanceCount, const u32 firstIndex,
                          const u32 firstInstance, const u32 vertexOffset)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdDrawIndexed(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, indexCount, instanceCount,
-                                     firstIndex, i32(vertexOffset), firstInstance);
+    GetDeviceTable()->CmdDrawIndexed(getCommandBuffer(cmd).Buffer, indexCount, instanceCount, firstIndex,
+                                     i32(vertexOffset), firstInstance);
 }
 
 static_assert(sizeof(DrawIndirectCommand) == sizeof(VkDrawIndirectCommand));
@@ -651,40 +638,34 @@ static_assert(sizeof(DrawIndexedIndirectCommand) == sizeof(VkDrawIndexedIndirect
 
 void Command_DrawIndirect(const CommandBuffer cmd, const Buffer buffer, const u32 drawCount, const usz offset)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdDrawIndirect(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, GetBuffer(buffer), offset,
-                                      drawCount, sizeof(VkDrawIndirectCommand));
+    GetDeviceTable()->CmdDrawIndirect(getCommandBuffer(cmd).Buffer, GetBuffer(buffer), offset, drawCount,
+                                      sizeof(VkDrawIndirectCommand));
 }
 
 void Command_DrawIndexedIndirect(const CommandBuffer cmd, const Buffer buffer, const u32 drawCount, const usz offset)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdDrawIndexedIndirect(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, GetBuffer(buffer), offset,
-                                             drawCount, sizeof(VkDrawIndexedIndirectCommand));
+    GetDeviceTable()->CmdDrawIndexedIndirect(getCommandBuffer(cmd).Buffer, GetBuffer(buffer), offset, drawCount,
+                                             sizeof(VkDrawIndexedIndirectCommand));
 }
 
 void Command_Dispatch(const CommandBuffer cmd, const u32 groupsX, const u32 groupsY, const u32 groupsZ)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
-    GetDeviceTable()->CmdDispatch(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, groupsX, groupsY, groupsZ);
+    GetDeviceTable()->CmdDispatch(getCommandBuffer(cmd).Buffer, groupsX, groupsY, groupsZ);
 }
 
 void Command_UpdateBuffer(const CommandBuffer cmd, const Buffer buffer, const void *data, const usz size,
                           const usz offset)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
     TKIT_ASSERT(size <= 65536 && size % 4 == 0 && offset % 4 == 0,
                 "[GRAPH][COMMAND] Buffer updates must be at most 65536 bytes, and size and offset must be multiples of "
                 "4. Size: {}, offset: {}",
                 size, offset);
-    GetDeviceTable()->CmdUpdateBuffer(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, GetBuffer(buffer), offset, size,
-                                      data);
+    GetDeviceTable()->CmdUpdateBuffer(getCommandBuffer(cmd).Buffer, GetBuffer(buffer), offset, size, data);
 }
 
 void Command_CopyBuffer(const CommandBuffer cmd, const Buffer src, const Buffer dst,
                         const TKit::Span<const BufferCopy> regions)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
 
     TKit::StackArray<VkBufferCopy2KHR> copies{};
     copies.Reserve(regions.GetSize());
@@ -703,13 +684,12 @@ void Command_CopyBuffer(const CommandBuffer cmd, const Buffer src, const Buffer 
     copyInfo.dstBuffer = GetBuffer(dst);
     copyInfo.regionCount = copies.GetSize();
     copyInfo.pRegions = copies.GetData();
-    GetDeviceTable()->CmdCopyBuffer2KHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &copyInfo);
+    GetDeviceTable()->CmdCopyBuffer2KHR(getCommandBuffer(cmd).Buffer, &copyInfo);
 }
 
 void Command_CopyBufferToImage(const CommandBuffer cmd, const Buffer src, const Image dst,
                                const TKit::Span<const BufferImageCopy> regions)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
     VKit::DeviceImage &image = GetImage(dst);
 
     TKit::StackArray<VkBufferImageCopy2KHR> copies{};
@@ -733,13 +713,12 @@ void Command_CopyBufferToImage(const CommandBuffer cmd, const Buffer src, const 
     copyInfo.dstImageLayout = image.Layout;
     copyInfo.regionCount = copies.GetSize();
     copyInfo.pRegions = copies.GetData();
-    GetDeviceTable()->CmdCopyBufferToImage2KHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &copyInfo);
+    GetDeviceTable()->CmdCopyBufferToImage2KHR(getCommandBuffer(cmd).Buffer, &copyInfo);
 }
 
 void Command_CopyImageToBuffer(const CommandBuffer cmd, const Image src, const Buffer dst,
                                const TKit::Span<const BufferImageCopy> regions)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
     VKit::DeviceImage &image = GetImage(src);
 
     TKit::StackArray<VkBufferImageCopy2KHR> copies{};
@@ -763,13 +742,12 @@ void Command_CopyImageToBuffer(const CommandBuffer cmd, const Image src, const B
     copyInfo.dstBuffer = GetBuffer(dst);
     copyInfo.regionCount = copies.GetSize();
     copyInfo.pRegions = copies.GetData();
-    GetDeviceTable()->CmdCopyImageToBuffer2KHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &copyInfo);
+    GetDeviceTable()->CmdCopyImageToBuffer2KHR(getCommandBuffer(cmd).Buffer, &copyInfo);
 }
 
 void Command_BlitImage(const CommandBuffer cmd, const Image src, const Image dst,
                        const TKit::Span<const ImageBlit> regions, const Filter filter)
 {
-    GRAPH_CHECK_HANDLE(cmd, Handle_CommandBuffer);
     VKit::DeviceImage &simg = GetImage(src);
     VKit::DeviceImage &dimg = GetImage(dst);
 
@@ -799,6 +777,6 @@ void Command_BlitImage(const CommandBuffer cmd, const Image src, const Image dst
     blitInfo.regionCount = blits.GetSize();
     blitInfo.pRegions = blits.GetData();
     blitInfo.filter = ToVulkan(filter);
-    GetDeviceTable()->CmdBlitImage2KHR(s_CommandBuffers->At(Handle_GetId(cmd)).Buffer, &blitInfo);
+    GetDeviceTable()->CmdBlitImage2KHR(getCommandBuffer(cmd).Buffer, &blitInfo);
 }
 } // namespace Graph

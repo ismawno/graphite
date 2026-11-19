@@ -28,6 +28,12 @@ static TKit::Storage<VKit::DescriptorPool> s_DescriptorPool{};
 static TKit::Storage<TKit::ArenaHive<VKit::DescriptorSetLayout>> s_Layouts{};
 static TKit::Storage<TKit::ArenaHive<Vulkan_DescriptorSet>> s_Sets{};
 
+static Vulkan_DescriptorSet &getVulkanDescriptorSet(const DescriptorSet set)
+{
+    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
+    return s_Sets->At(Handle_GetId(set));
+}
+
 void Descriptor_Initialize(const u32 maxSets, const TKit::FixedArray<u32, Descriptor_Count> &poolSizes)
 {
     s_DescriptorPool.Construct();
@@ -84,10 +90,9 @@ void DescriptorSetLayout_Destroy(const DescriptorSetLayout layout)
 
 void DescriptorSetLayout_SetName(const DescriptorSetLayout layout, const char *name)
 {
-    GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
     TKIT_ASSERT(IsValidationEnabled(),
                 "[GRAPH][DESCRIPTOR] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_RESULT(s_Layouts->At(Handle_GetId(layout)).SetName(name));
+    GRAPH_CHECK_RESULT(GetDescriptorSetLayout(layout).SetName(name));
 }
 
 bool DescriptorSetLayout_IsHandleValid(const DescriptorSetLayout layout)
@@ -97,9 +102,8 @@ bool DescriptorSetLayout_IsHandleValid(const DescriptorSetLayout layout)
 
 DescriptorSet DescriptorSet_Create(const DescriptorSetLayout layout)
 {
-    GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
 
-    const VKit::DescriptorSet set = GRAPH_CHECK_RESULT(s_DescriptorPool->Allocate(s_Layouts->At(Handle_GetId(layout))));
+    const VKit::DescriptorSet set = GRAPH_CHECK_RESULT(s_DescriptorPool->Allocate(GetDescriptorSetLayout(layout)));
     return Handle_Create(Handle_DescriptorSet, s_Sets->Insert(set, layout));
 }
 
@@ -114,22 +118,19 @@ void DescriptorSet_Destroy(const DescriptorSet set)
 
 void DescriptorSet_BeginRecordWrite(const DescriptorSet set, DescriptorSetLayout layout)
 {
-    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
 
-    Vulkan_DescriptorSet &vset = s_Sets->At(Handle_GetId(set));
+    Vulkan_DescriptorSet &vset = getVulkanDescriptorSet(set);
     if (layout == NullHandle)
         layout = vset.Layout;
 
-    GRAPH_CHECK_HANDLE(layout, Handle_DescriptorSetLayout);
-    vset.SetWriter.Construct(GetDevice(), &s_Layouts->At(Handle_GetId(layout)));
+    vset.SetWriter.Construct(GetDevice(), &GetDescriptorSetLayout(layout));
 }
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
                                const TKit::Span<const DescriptorBufferInfo> bufferInfo, const u32 dstElement)
 {
-    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
     TKIT_ASSERT(!bufferInfo.IsEmpty(), "[GRAPH][DESCRIPTOR] Writes cannot be empty");
 
-    WriteData &wd = s_Sets->At(Handle_GetId(set)).SetWriter.Get();
+    WriteData &wd = getVulkanDescriptorSet(set).SetWriter.Get();
     const VkDescriptorBufferInfo *ptr = wd.BufferInfos.end();
 
     for (const DescriptorBufferInfo &info : bufferInfo)
@@ -140,10 +141,9 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
                                const TKit::Span<const DescriptorImageInfo> imageInfo, const u32 dstElement)
 {
-    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
     TKIT_ASSERT(!imageInfo.IsEmpty(), "[GRAPH][DESCRIPTOR] Writes cannot be empty");
 
-    WriteData &wd = s_Sets->At(Handle_GetId(set)).SetWriter.Get();
+    WriteData &wd = getVulkanDescriptorSet(set).SetWriter.Get();
     const VkDescriptorImageInfo *ptr = wd.ImageInfos.end();
 
     for (const DescriptorImageInfo &info : imageInfo)
@@ -156,10 +156,9 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding,
 void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding, const TKit::Span<const Sampler> samplers,
                                const u32 dstElement)
 {
-    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
     TKIT_ASSERT(!samplers.IsEmpty(), "[GRAPH][DESCRIPTOR] Writes cannot be empty");
 
-    WriteData &wd = s_Sets->At(Handle_GetId(set)).SetWriter.Get();
+    WriteData &wd = getVulkanDescriptorSet(set).SetWriter.Get();
     const VkDescriptorImageInfo *ptr = wd.ImageInfos.end();
 
     for (const Sampler smp : samplers)
@@ -169,18 +168,16 @@ void DescriptorSet_RecordWrite(const DescriptorSet set, const u32 binding, const
 }
 void DescriptorSet_EndRecordWrite(const DescriptorSet set)
 {
-    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
-    Vulkan_DescriptorSet &vset = s_Sets->At(Handle_GetId(set));
+    Vulkan_DescriptorSet &vset = getVulkanDescriptorSet(set);
     vset.SetWriter->Writer.Overwrite(vset.Set);
     vset.SetWriter.Destruct();
 }
 
 void DescriptorSet_SetName(const DescriptorSet set, const char *name)
 {
-    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
     TKIT_ASSERT(IsValidationEnabled(),
                 "[GRAPH][DESCRIPTOR] To name objects, the validation capability must be enabled");
-    GRAPH_CHECK_RESULT(s_Sets->At(Handle_GetId(set)).Set.SetName(name));
+    GRAPH_CHECK_RESULT(getVulkanDescriptorSet(set).Set.SetName(name));
 }
 bool DescriptorSet_IsHandleValid(const DescriptorSet set)
 {
@@ -194,8 +191,7 @@ VKit::DescriptorSetLayout &GetDescriptorSetLayout(const DescriptorSetLayout layo
 }
 VKit::DescriptorSet &GetDescriptorSet(const DescriptorSet set)
 {
-    GRAPH_CHECK_HANDLE(set, Handle_DescriptorSet);
-    return s_Sets->At(Handle_GetId(set)).Set;
+    return getVulkanDescriptorSet(set).Set;
 }
 
 } // namespace Graph
