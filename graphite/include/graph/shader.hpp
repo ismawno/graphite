@@ -267,12 +267,17 @@ struct ShaderModule
     const char *Path;
     TKit::Span<const EntryPoint> EntryPoints;
 
-    static constexpr ShaderModule Create(const char *name, const TKit::Span<const EntryPoint> eps)
+    static constexpr ShaderModule Create(const char *name, const TKit::Span<const EntryPoint> eps = {})
     {
         return ShaderModule{name, nullptr, nullptr, eps};
     }
+    static constexpr ShaderModule Create(const char *name, const char *code,
+                                         const TKit::Span<const EntryPoint> eps = {})
+    {
+        return ShaderModule{name, code, nullptr, eps};
+    }
     static constexpr ShaderModule Create(const char *name, const char *code, const char *path,
-                                         const TKit::Span<const EntryPoint> eps)
+                                         const TKit::Span<const EntryPoint> eps = {})
     {
         return ShaderModule{name, code, path, eps};
     }
@@ -281,6 +286,7 @@ struct ShaderModule
 struct CompilationSpecs
 {
     TKit::Span<const ShaderModule> Modules{};
+    TKit::Span<const ShaderModule> Libraries{};
     TKit::Span<const ShaderArgument> Arguments{};
     TKit::Span<const ShaderMacro> Macros{};
     TKit::Span<const char *const> SearchPaths{};

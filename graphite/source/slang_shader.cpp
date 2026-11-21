@@ -455,6 +455,20 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
 
     TKIT_ERROR_DEFER_SCOPE();
     TKIT_ERROR_DEFER(compilation_Destroy(compilation));
+
+    TKit::StackArray<ComPtr<slang::IModule>> libraries{};
+    libraries.Reserve(specs.Libraries.GetSize());
+    for (const ShaderModule &lib : specs.Libraries)
+    {
+        ComPtr<slang::IModule> module = nullptr;
+        module = lib.SourceCode
+                     ? session->loadModuleFromSourceString(lib.Name, lib.Path, lib.SourceCode, diagnostics.writeRef())
+                     : session->loadModule(lib.Name, diagnostics.writeRef());
+        if (!module)
+            return Result::Error(TKit::TierString::Format("[GRAPH][SHADERS] Failed to load library module '{}': {}",
+                                                          lib.Name, fromSlang(diagnostics)));
+        libraries.Append(module);
+    }
     for (const ShaderModule &munit : specs.Modules)
     {
         TKit::StackArray<ComPtr<slang::IComponentType>> components{};
@@ -494,6 +508,9 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
 
             components.Append(epoint);
         }
+        for (const auto &lib : libraries)
+            components.Append(lib);
+
         ComPtr<slang::IComponentType> program = nullptr;
         TKit::StackArray<slang::IComponentType *> rawComponents;
         rawComponents.Reserve(components.GetSize());
