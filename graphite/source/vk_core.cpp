@@ -1312,6 +1312,8 @@ VKit::DeviceBufferFlags ToVulkanBufferFlags(const BufferFlags flags)
         result |= VKit::DeviceBufferFlag_Vertex;
     if (flags & BufferFlag_Index)
         result |= VKit::DeviceBufferFlag_Index;
+    if (flags & BufferFlag_Uniform)
+        result |= VKit::DeviceBufferFlag_Uniform;
     if (flags & BufferFlag_Storage)
         result |= VKit::DeviceBufferFlag_Storage;
     if (flags & BufferFlag_Indirect)

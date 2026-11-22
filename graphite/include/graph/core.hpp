@@ -570,10 +570,11 @@ enum BufferFlagBit : BufferFlags
     BufferFlag_Staging = 1U << 4,
     BufferFlag_Vertex = 1U << 5,
     BufferFlag_Index = 1U << 6,
-    BufferFlag_Storage = 1U << 7,
-    BufferFlag_Indirect = 1U << 8,
-    BufferFlag_HostMapped = 1U << 9,
-    BufferFlag_HostRandomAccess = 1U << 10,
+    BufferFlag_Uniform = 1U << 7,
+    BufferFlag_Storage = 1U << 8,
+    BufferFlag_Indirect = 1U << 9,
+    BufferFlag_HostMapped = 1U << 10,
+    BufferFlag_HostRandomAccess = 1U << 11,
 };
 
 using ImageFlags = u16;

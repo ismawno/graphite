@@ -148,6 +148,8 @@ static BufferFlags fromVulkanBufferFlags(const VKit::DeviceBufferFlags flags)
         result |= BufferFlag_Vertex;
     if (flags & VKit::DeviceBufferFlag_Index)
         result |= BufferFlag_Index;
+    if (flags & VKit::DeviceBufferFlag_Uniform)
+        result |= BufferFlag_Uniform;
     if (flags & VKit::DeviceBufferFlag_Storage)
         result |= BufferFlag_Storage;
     if (flags & VKit::DeviceBufferFlag_Indirect)
