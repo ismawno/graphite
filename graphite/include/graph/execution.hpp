@@ -120,10 +120,15 @@ struct ClearDepthStencil
     u32 Stencil = 0;
 };
 
-struct ClearInfo
-{
-    f32v4 Color{0.f};
-    ClearDepthStencil DepthStencil{};
+union ClearColor {
+    f32v4 Float32;
+    i32v4 Int32;
+    u32v4 Uint32;
+};
+
+union ClearInfo {
+    ClearColor Color;
+    ClearDepthStencil DepthStencil;
 };
 
 struct AttachmentInfo

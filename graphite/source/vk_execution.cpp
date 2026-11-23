@@ -379,8 +379,7 @@ static VkRenderingAttachmentInfoKHR createAttachmentInfo(const AttachmentInfo &a
     info.loadOp = ToVulkan(att.LoadOp);
     info.storeOp = ToVulkan(att.StoreOp);
     if (color)
-        for (u32 i = 0; i < 4; ++i)
-            info.clearValue.color.float32[i] = att.ClearValue.Color[i];
+        TKit::ForwardCopy(&info.clearValue.color, &att.ClearValue.Color, sizeof(VkClearColorValue));
     else
     {
         info.clearValue.depthStencil.depth = att.ClearValue.DepthStencil.Depth;
