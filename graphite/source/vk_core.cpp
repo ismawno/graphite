@@ -1552,6 +1552,7 @@ RenderBackendInfo GetRenderBackendInfo()
         }
     }
     dev.MaxSampleCount = fromVulkan(maxSamples);
+    dev.MaxColorAttachments = p.limits.maxColorAttachments;
 
     dev.Type = fromVulkan(p.deviceType);
     dev.Driver = fromVulkan(driver.driverID);
