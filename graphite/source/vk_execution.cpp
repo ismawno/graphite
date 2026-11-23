@@ -373,6 +373,11 @@ bool CommandBuffer_IsHandleValid(const CommandBuffer cmd)
 static VkRenderingAttachmentInfoKHR createAttachmentInfo(const AttachmentInfo &att, const bool color)
 {
     VkRenderingAttachmentInfoKHR info{};
+    if (att.View == Graph::NullHandle)
+    {
+        info.imageView = VK_NULL_HANDLE;
+        return info;
+    }
     info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
     info.imageView = GetImageView(att.View);
     info.imageLayout = ToVulkan(att.Layout);
