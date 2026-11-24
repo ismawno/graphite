@@ -472,7 +472,7 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
     for (const ShaderModule &munit : specs.Modules)
     {
         TKit::StackArray<ComPtr<slang::IComponentType>> components{};
-        components.Reserve(munit.EntryPoints.GetSize() + 1);
+        components.Reserve(munit.EntryPoints.GetSize() + specs.Libraries.GetSize() + 1);
 
         ComPtr<slang::IModule> module = nullptr;
         if (munit.SourceCode)
