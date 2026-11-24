@@ -188,9 +188,13 @@ void Buffer_Write(const Buffer buffer, const void *data, const BufferCopy &copy)
 {
     GetBuffer(buffer).Write(data, {.srcOffset = copy.SrcOffset, .dstOffset = copy.DstOffset, .size = copy.Size});
 }
-void Buffer_Flush(const Buffer buffer)
+void Buffer_Flush(const Buffer buffer, const usz size, const usz offset)
 {
-    GRAPH_CHECK_RESULT(GetBuffer(buffer).Flush());
+    GRAPH_CHECK_RESULT(GetBuffer(buffer).Flush(size, offset));
+}
+void Buffer_Invalidate(const Buffer buffer, const usz size, const usz offset)
+{
+    GRAPH_CHECK_RESULT(GetBuffer(buffer).Invalidate(size, offset));
 }
 void Buffer_SetName(const Buffer buffer, const char *name)
 {

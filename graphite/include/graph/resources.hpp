@@ -80,7 +80,8 @@ inline void Buffer_Write(const Buffer buffer, const void *data, const usz size)
     Buffer_Write(buffer, data, {.Size = size});
 }
 
-void Buffer_Flush(Buffer buffer);
+void Buffer_Flush(Buffer buffer, usz size = GRAPH_WHOLE_THING, usz offset = 0);
+void Buffer_Invalidate(Buffer buffer, usz size = GRAPH_WHOLE_THING, usz offset = 0);
 
 void Buffer_SetName(Buffer buffer, const char *name);
 bool Buffer_IsHandleValid(Buffer buffer);
