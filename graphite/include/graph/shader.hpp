@@ -226,31 +226,31 @@ struct ShaderMacro
 
 struct ShaderArgument
 {
-    ShaderArgumentValue Value;
     ShaderArgumentName Name;
+    ShaderArgumentValue Value;
 
     static constexpr ShaderArgument Create(const ShaderArgumentName name, const char *val0, const char *val1 = nullptr)
     {
-        ShaderArgumentValue val;
+        ShaderArgumentValue val{};
         val.Type = ShaderArgument_String;
         val.String0 = val0;
         val.String1 = val1;
-        return {val, name};
+        return {name, val};
     }
     static constexpr ShaderArgument Create(const ShaderArgumentName name, const i32 val0, const i32 val1 = 0)
     {
-        ShaderArgumentValue val;
+        ShaderArgumentValue val{};
         val.Type = ShaderArgument_Integer;
         val.Value0 = val0;
         val.Value1 = val1;
-        return {val, name};
+        return {name, val};
     }
     static constexpr ShaderArgument Create(const ShaderArgumentName name)
     {
-        ShaderArgumentValue val;
+        ShaderArgumentValue val{};
         val.Type = ShaderArgument_Integer;
         val.Value0 = 1;
-        return {val, name};
+        return {name, val};
     }
 };
 
