@@ -596,17 +596,21 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
         }
     }
 
-    TKit::StackArray<const char *> sourceOnlyHashes{};
+    TKit::StackArray<TKit::TierString> sourceOnlyHashes{};
     sourceOnlyHashes.Reserve(allModules.GetSize());
 
     u32 idx = 0;
-    for (const ShaderModule &lib : specs.Libraries)
-        if (!lib.Path)
-            sourceOnlyHashes.Append(allModules[idx++]->getFilePath());
+    const auto gatherFilePaths = [&](const TKit::Span<const ShaderModule> modules) {
+        for (const ShaderModule &mod : modules)
+        {
+            slang::IModule *m = allModules[idx++];
+            if (!mod.Path)
+                sourceOnlyHashes.Append(m->getFilePath());
+        }
+    };
 
-    for (const ShaderModule &mod : specs.Modules)
-        if (!mod.Path)
-            sourceOnlyHashes.Append(allModules[idx++]->getFilePath());
+    gatherFilePaths(specs.Libraries);
+    gatherFilePaths(specs.Modules);
 
     TKit::StackArray<TKit::TierString> visited{};
     visited.Reserve(allModules.GetSize());
