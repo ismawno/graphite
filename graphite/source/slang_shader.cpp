@@ -16,7 +16,12 @@ struct CompiledSpirv
     EntryPoint EntryPoint;
     SpirvData Spirv;
 };
-using Slang_Compilation = TKit::TierArray<CompiledSpirv>;
+
+struct Slang_Compilation
+{
+    TKit::TierArray<CompiledSpirv> Spirv{};
+    TKit::TierArray<CompilationDependency> Dependencies{};
+};
 
 static TKit::Storage<TKit::ArenaHive<Slang_Compilation>> s_Compilations{};
 
@@ -29,7 +34,7 @@ static Slang_Compilation &getCompilation(const Compilation comp)
 static void compilation_Destroy(const Slang_Compilation &comp)
 {
     TKit::TierAllocator *tier = TKit::GetTier();
-    for (const CompiledSpirv &spr : comp)
+    for (const CompiledSpirv &spr : comp.Spirv)
         tier->Deallocate(scast<const void *>(spr.Spirv.Code), spr.Spirv.Size);
 }
 
@@ -458,6 +463,10 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
 
     TKit::StackArray<ComPtr<slang::IModule>> libraries{};
     libraries.Reserve(specs.Libraries.GetSize());
+
+    TKit::StackArray<ComPtr<slang::IModule>> allModules{};
+    allModules.Reserve(specs.Libraries.GetSize() + specs.Modules.GetSize());
+
     for (const ShaderModule &lib : specs.Libraries)
     {
         ComPtr<slang::IModule> module = nullptr;
@@ -468,7 +477,9 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
             return Result::Error(TKit::TierString::Format("[GRAPH][SHADERS] Failed to load library module '{}': {}",
                                                           lib.Name, fromSlang(diagnostics)));
         libraries.Append(module);
+        allModules.Append(module);
     }
+
     for (const ShaderModule &munit : specs.Modules)
     {
         TKit::StackArray<ComPtr<slang::IComponentType>> components{};
@@ -486,6 +497,7 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
                                                           munit.Name, fromSlang(diagnostics)));
 
         components.Append(module);
+        allModules.Append(module);
         TKIT_LOG_WARNING_IF(diagnostics,
                             "[GRAPH][SHADERS] Shader module '{}' loaded with the following diagnostics: {}", munit.Name,
                             fromSlang(diagnostics));
@@ -580,9 +592,36 @@ Result Compilation_Create(const CompilationSpecs &specs, const CompilationFlags 
             sp.Spirv.Code = scast<u32 *>(mem);
             sp.Spirv.Size = u32(size);
 
-            compilation.Append(sp);
+            compilation.Spirv.Append(sp);
         }
     }
+
+    TKit::StackArray<const char *> sourceOnlyHashes{};
+    sourceOnlyHashes.Reserve(allModules.GetSize());
+
+    u32 idx = 0;
+    for (const ShaderModule &lib : specs.Libraries)
+        if (!lib.Path)
+            sourceOnlyHashes.Append(allModules[idx++]->getFilePath());
+
+    for (const ShaderModule &mod : specs.Modules)
+        if (!mod.Path)
+            sourceOnlyHashes.Append(allModules[idx++]->getFilePath());
+
+    TKit::StackArray<TKit::TierString> visited{};
+    visited.Reserve(allModules.GetSize());
+    for (const auto &mod : allModules)
+        for (SlangInt32 i = 0; i < mod->getDependencyFileCount(); ++i)
+        {
+            const char *path = mod->getDependencyFilePath(i);
+            if (!visited.Contains(path))
+            {
+                const bool hash = sourceOnlyHashes.Contains(path);
+                const CompilationDependencyType type = hash ? CompilationDependency_Hash : CompilationDependency_Path;
+                compilation.Dependencies.Append(type, path);
+                visited.Append(path);
+            }
+        }
 
     TKIT_ERROR_DEFER_COMMIT();
     return Handle_Create(Handle_Compilation, s_Compilations->Insert(compilation));
@@ -600,9 +639,9 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
     const Slang_Compilation &compilation = getCompilation(comp);
 
     u32 index = TKIT_U32_MAX;
-    for (u32 i = 0; i < compilation.GetSize(); ++i)
+    for (u32 i = 0; i < compilation.Spirv.GetSize(); ++i)
     {
-        const CompiledSpirv &spr = compilation[i];
+        const CompiledSpirv &spr = compilation.Spirv[i];
         bool match = strcmp(entryPoint, spr.EntryPoint.Name) == 0;
         match &= !module || strcmp(module, spr.Module) == 0;
         match &= stage == spr.EntryPoint.Stage;
@@ -616,7 +655,7 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
         }
     }
     TKIT_ASSERT(index != TKIT_U32_MAX, "[GRAPH][SHADERS] Entry point named '{}' was not found", entryPoint);
-    return compilation[index].Spirv;
+    return compilation.Spirv[index].Spirv;
 }
 
 SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, const char *module)
@@ -624,9 +663,9 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
     const Slang_Compilation &compilation = getCompilation(comp);
 
     u32 index = TKIT_U32_MAX;
-    for (u32 i = 0; i < compilation.GetSize(); ++i)
+    for (u32 i = 0; i < compilation.Spirv.GetSize(); ++i)
     {
-        const CompiledSpirv &spr = compilation[i];
+        const CompiledSpirv &spr = compilation.Spirv[i];
         bool match = strcmp(entryPoint, spr.EntryPoint.Name) == 0;
         match &= !module || strcmp(module, spr.Module) == 0;
         if (match)
@@ -639,7 +678,12 @@ SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, c
         }
     }
     TKIT_ASSERT(index != TKIT_U32_MAX, "[GRAPH][SHADERS] Entry point named '{}' was not found", entryPoint);
-    return compilation[index].Spirv;
+    return compilation.Spirv[index].Spirv;
+}
+
+const TKit::TierArray<CompilationDependency> &Compilation_GetDependencies(const Compilation comp)
+{
+    return getCompilation(comp).Dependencies;
 }
 
 bool Compilation_IsHandleValid(const Compilation comp)

@@ -301,12 +301,26 @@ enum CompilationFlagBit : CompilationFlags
     CompilationFlag_EnableGlsl = 1U << 3,
 };
 
+enum CompilationDependencyType : u8
+{
+    CompilationDependency_Path,
+    CompilationDependency_Hash,
+};
+
+struct CompilationDependency
+{
+    CompilationDependencyType Type;
+    TKit::TierString Data;
+};
+
 TKit::Result<Compilation, TKit::TierString> Compilation_Create(const CompilationSpecs &specs,
                                                                CompilationFlags flags = 0);
 void Compilation_Destroy(Compilation comp);
 
 SpirvData Compilation_GetSpirv(Compilation comp, const char *entryPoint, const char *module, ShaderStageFlagBit stage);
 SpirvData Compilation_GetSpirv(Compilation comp, const char *entryPoint, const char *module = nullptr);
+
+const TKit::TierArray<CompilationDependency> &Compilation_GetDependencies(Compilation comp);
 
 inline SpirvData Compilation_GetSpirv(const Compilation comp, const char *entryPoint, const ShaderStageFlagBit stage,
                                       const char *module = nullptr)
